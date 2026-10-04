@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<!--/* Test-only template: proves the fmt bean works from Thymeleaf expressions. */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+	<p id="money" th:text="${@fmt.money(total)}"></p>
+	<p id="time" th:text="${@fmt.time(placedAt)}"></p>
+	<p id="date-time" th:text="${@fmt.dateTime(placedAt)}"></p>
+	<p id="relative" th:text="${@fmt.relative(placedAt)}"></p>
+</body>
+</html>

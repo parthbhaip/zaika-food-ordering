@@ -22,7 +22,7 @@ How this file works
   - Typed `@ConfigurationProperties` `AppProperties` with validation: brand name, zone, upload dir, seed-demo flag, platform fee (₹5), GST rate (5%), free-delivery threshold (₹499), rider base payout.
   - `.env.example` lists every env var with a comment. A context-loads test passes on the `test` profile.
 
-- [ ] T03 Core building blocks
+- [x] T03 Core building blocks
   - `BaseEntity` (id, createdAt, updatedAt via JPA auditing, `@Version`), `Clock` bean (Asia/Kolkata), `NotFoundException`, `ForbiddenException`, `@ControllerAdvice` that maps them to error pages.
   - Formatting helper bean usable in Thymeleaf (e.g. `${@fmt.money(x)}`, `${@fmt.time(t)}`, `${@fmt.relative(t)}`): ₹ with en-IN grouping, IST times, "5 min ago".
   - Branded error templates for 403, 404 and 500 with helpful copy and a link home.

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--/* Shared shell for the error pages in templates/error/ and templates/error.html. Standalone on purpose:
+     error pages must render even when the main layout or its model is what failed. */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="page(code, title, heading, message)">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex">
+	<title th:text="${title} + ' | Zaika'">Something went wrong | Zaika</title>
+	<link rel="stylesheet" th:href="@{/css/tokens.css}" href="/css/tokens.css">
+	<link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+</head>
+<body class="error-body">
+	<a class="skip-link" href="#main">Skip to content</a>
+
+	<header class="error-header">
+		<a class="wordmark" th:href="@{/}" href="/">Zaika<span class="visually-hidden"> home</span></a>
+	</header>
+
+	<main id="main" class="error-page">
+		<svg class="error-art" viewBox="0 0 152 120" aria-hidden="true" focusable="false"
+			fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+			<path class="steam" d="M60 22c-4-5 4-9 0-14M76 18c-4-5 4-9 0-14M92 22c-4-5 4-9 0-14" stroke-width="2.5"/>
+			<path class="plate" d="M16 92h120c0 10-14 18-60 18S16 102 16 92z"/>
+			<path d="M28 88c0-26 21-46 48-46s48 20 48 46"/>
+			<path d="M10 92h132"/>
+			<circle cx="76" cy="36" r="5"/>
+			<path d="M50 70c4-8 12-13 20-14" stroke-width="2.5"/>
+		</svg>
+		<p class="error-code"><span class="visually-hidden">Error </span><span th:text="${code}">500</span></p>
+		<h1 th:text="${heading}">Something went wrong</h1>
+		<p class="error-message" th:text="${message}">Please try again in a moment.</p>
+		<div class="error-actions">
+			<a class="btn btn-primary" th:href="@{/}" href="/">Back to home</a>
+			<a class="btn btn-secondary" th:if="${code == '403'}" th:href="@{/login}" href="/login">Sign in with another account</a>
+		</div>
+	</main>
+
+	<footer class="error-footer">
+		<p>Zaika &middot; Your city's best kitchens, delivered.</p>
+	</footer>
+</body>
+</html>

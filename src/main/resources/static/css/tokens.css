@@ -1,0 +1,69 @@
+/* Zaika design tokens. The only file with raw colour values; everything else uses these variables. */
+:root {
+	/* Brand */
+	--color-primary: #D1440F;
+	--color-primary-hover: #B23A0C;
+	--color-primary-tint: #FFF1EB;
+	--color-accent: #F2A516;
+
+	/* Text and lines */
+	--color-ink: #1C1C22;
+	--color-text-secondary: #4A4A55;
+	--color-text-muted: #6B6B76;
+	--color-line: #ECE8E3;
+
+	/* Surfaces */
+	--color-bg: #FAF8F5;
+	--color-surface: #FFFFFF;
+	--color-on-primary: #FFFFFF;
+
+	/* Status */
+	--color-success: #17803A;
+	--color-danger: #B3261E;
+	--color-warning: #B26A00;
+	--color-veg: var(--color-success);
+	--color-non-veg: var(--color-danger);
+
+	/* Shape */
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 20px;
+	--radius-pill: 999px;
+
+	/* Elevation: soft, at most two layers */
+	--shadow-sm: 0 1px 2px rgba(28, 28, 34, 0.06);
+	--shadow-md: 0 1px 2px rgba(28, 28, 34, 0.05), 0 6px 16px rgba(28, 28, 34, 0.06);
+	--shadow-lg: 0 2px 4px rgba(28, 28, 34, 0.05), 0 16px 40px rgba(28, 28, 34, 0.10);
+	--focus-ring: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-primary);
+
+	/* Spacing, 4px scale */
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 20px;
+	--space-6: 24px;
+	--space-8: 32px;
+	--space-10: 40px;
+	--space-12: 48px;
+	--space-16: 64px;
+
+	/* Type */
+	--font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	--text-xs: 0.75rem;
+	--text-sm: 0.875rem;
+	--text-md: 1rem;
+	--text-lg: 1.125rem;
+	--text-xl: 1.375rem;
+	--text-2xl: 1.75rem;
+	--text-3xl: 2.25rem;
+	--weight-regular: 400;
+	--weight-medium: 500;
+	--weight-semibold: 600;
+	--weight-bold: 700;
+	--weight-extrabold: 800;
+
+	/* Layout */
+	--content-max: 1200px;
+	--gutter: 16px;
+}

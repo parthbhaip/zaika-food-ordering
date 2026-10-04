@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<!--/* Fallback for any error status without its own page in templates/error/ (400, 405, 503, ...). */-->
+<html th:replace="~{fragments/error-page :: page(${status != null ? '' + status : 'Error'},
+		${status == null or status >= 500 ? 'Something went wrong' : 'Request not understood'},
+		${status == null or status >= 500 ? 'Something got burnt in our kitchen' : 'That request didn’t go as planned'},
+		${status == null or status >= 500 ? 'An unexpected error happened on our side. Please try again in a moment.'
+			: 'Something about that request didn’t look right. Head back home and try again from there.'})}"
+	xmlns:th="http://www.thymeleaf.org"></html>
