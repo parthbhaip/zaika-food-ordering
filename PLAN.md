@@ -10,7 +10,7 @@ How this file works
 
 ## Phase 0 - Foundation
 
-- [ ] T01 Generate the Spring Boot project
+- [x] T01 Generate the Spring Boot project
   - Use the start.spring.io HTTP API (curl) to generate a Maven project into `_starter/`: latest stable Spring Boot 4.x, Java 21, groupId `com.zaika`, artifactId `zaika`, name `Zaika`, package `com.zaika`, jar packaging. Dependencies: web, thymeleaf, security, data-jpa, validation, flyway, h2, mysql, mail, devtools, actuator. If an ID is rejected, check `https://start.spring.io/dependencies` for the current IDs.
   - Copy into the repo root WITHOUT overwriting existing files (`cp -rn _starter/. .`), then merge the starter's `.gitignore` entries into ours. `_starter/` stays git-ignored.
   - Add: htmx WebJar, `webjars-locator-lite`, Thymeleaf Spring Security extras matching the generated Spring Security version.
