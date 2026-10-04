@@ -1,0 +1,19 @@
+# Build output
+target/
+
+# Runtime data (H2 files, uploads, loop logs, starter scratch)
+data/
+uploads/
+logs/
+_starter/
+
+# Secrets
+.env
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Claude Code local settings
+.claude/settings.local.json

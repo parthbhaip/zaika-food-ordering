@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw *)", "Bash(sh mvnw *)", "Bash(bash mvnw *)", "Bash(mvn *)", "Bash(chmod +x mvnw)", "Bash(java *)",
+      "Bash(git init *)", "Bash(git status *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git show *)",
+      "Bash(git add *)", "Bash(git commit *)", "Bash(git stash push *)", "Bash(git stash list *)", "Bash(git rm *)", "Bash(git mv *)",
+      "Bash(curl *)", "Bash(tar *)", "Bash(unzip *)", "Bash(mkdir *)", "Bash(cp *)", "Bash(mv *)", "Bash(touch *)",
+      "PowerShell(.\\mvnw.cmd *)", "PowerShell(./mvnw.cmd *)", "PowerShell(mvnw.cmd *)", "PowerShell(mvn *)", "PowerShell(java *)",
+      "PowerShell(git init *)", "PowerShell(git status *)", "PowerShell(git diff *)", "PowerShell(git log *)", "PowerShell(git show *)",
+      "PowerShell(git add *)", "PowerShell(git commit *)", "PowerShell(git stash push *)", "PowerShell(git stash list *)",
+      "PowerShell(git rm *)", "PowerShell(git mv *)",
+      "PowerShell(Invoke-WebRequest *)", "PowerShell(Expand-Archive *)", "PowerShell(New-Item *)", "PowerShell(Copy-Item *)", "PowerShell(Move-Item *)"
+    ],
+    "deny": [
+      "Bash(git push *)", "Bash(git reset --hard *)", "Bash(git clean *)", "Bash(git checkout -- *)", "Bash(git restore *)",
+      "Bash(git stash drop *)", "Bash(git stash clear *)", "Bash(git rebase *)", "Bash(git commit --amend *)", "Bash(git branch -D *)",
+      "Bash(rm -rf *)", "Bash(rm -fr *)", "Bash(rm -r *)",
+      "PowerShell(git push *)", "PowerShell(git reset --hard *)", "PowerShell(git clean *)", "PowerShell(git checkout -- *)", "PowerShell(git restore *)",
+      "PowerShell(git stash drop *)", "PowerShell(git stash clear *)", "PowerShell(git rebase *)", "PowerShell(git commit --amend *)",
+      "PowerShell(Remove-Item * -Recurse *)", "PowerShell(rm -r *)"
+    ]
+  }
+}
