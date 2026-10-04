@@ -3,8 +3,11 @@ package com.zaika.user;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-/** Account rules: sign-up today, profile and password changes later. */
+import com.zaika.common.NotFoundException;
+
+/** Account rules: sign-up, profile edits and password changes. */
 @Service
 public class UserService {
 
@@ -36,6 +39,38 @@ public class UserService {
 		catch (DataIntegrityViolationException ex) {
 			throw new EmailTakenException();
 		}
+	}
+
+	/** @throws NotFoundException if there is no such account */
+	@Transactional(readOnly = true)
+	public User get(long userId) {
+		return users.findById(userId).orElseThrow(() -> new NotFoundException("User " + userId));
+	}
+
+	@Transactional(readOnly = true)
+	public ProfileForm profileForm(long userId) {
+		return ProfileForm.of(get(userId));
+	}
+
+	/** Saves the name (trimmed) and the normalized mobile number. */
+	@Transactional
+	public void updateProfile(long userId, ProfileForm form) {
+		get(userId).updateProfile(form.getName().strip(), form.getPhone());
+	}
+
+	/**
+	 * Sets a new password after checking the current one. Remember-me cookies are signed with the old hash, so they
+	 * stop working everywhere.
+	 *
+	 * @throws WrongPasswordException if the current password is wrong
+	 */
+	@Transactional
+	public void changePassword(long userId, PasswordChangeForm form) {
+		User user = get(userId);
+		if (!passwordEncoder.matches(form.getCurrentPassword(), user.getPasswordHash())) {
+			throw new WrongPasswordException();
+		}
+		user.setPasswordHash(passwordEncoder.encode(form.getNewPassword()));
 	}
 
 }

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Heading and tabs shared by the customer account pages. current: 'profile' or 'addresses'. */-->
+<header th:fragment="head(current)" class="account-head">
+	<div class="account-title">
+		<span class="account-avatar" aria-hidden="true"><svg th:replace="~{fragments/icon :: icon('user')}"></svg></span>
+		<div>
+			<h1>Your account</h1>
+			<p class="account-email" sec:authentication="name">customer@zaika.test</p>
+		</div>
+	</div>
+	<nav class="tabs" aria-label="Account sections">
+		<a class="tab" th:href="@{/account}" href="/account" th:aria-current="${current == 'profile'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('user')}"></svg>Profile and password</a>
+		<a class="tab" th:href="@{/account/addresses}" href="/account/addresses" th:aria-current="${current == 'addresses'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('location')}"></svg>Addresses</a>
+	</nav>
+</header>
+</body>
+</html>

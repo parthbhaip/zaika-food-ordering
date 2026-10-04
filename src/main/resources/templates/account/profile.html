@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Your account | Zaika</title></head>
+<body>
+<!--/* /account. Two independent forms: "profile" (ProfileForm, POST /account/profile) and "passwordForm"
+     (PasswordChangeForm, POST /account/password). A failed submit re-renders this page with that form's errors. */-->
+<main id="main" class="account-page">
+	<div class="container account-container">
+		<header th:replace="~{fragments/account-nav :: head('profile')}"></header>
+
+		<div class="account-grid">
+			<section class="card account-card" id="profile" aria-labelledby="profile-title">
+				<div class="card-body">
+					<h2 class="card-title" id="profile-title">Profile details</h2>
+					<p class="card-subtitle">Restaurants and riders see your name and use this number for your orders.</p>
+
+					<form class="account-form" th:action="@{/account/profile}" action="/account/profile" method="post" th:object="${profile}" novalidate>
+						<div class="alert alert-error" role="alert" th:if="${#fields.hasErrors('*')}">
+							<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+							<p>Your profile was not saved. Fix the fields marked below.</p>
+						</div>
+						<div th:replace="~{fragments/form :: field('name', 'Full name', 'text', null, 'name')}"></div>
+						<div class="field">
+							<label class="field-label" for="account-email">Email</label>
+							<input class="input" type="email" id="account-email" th:value="${#authentication.name}" value="customer@zaika.test" readonly aria-describedby="account-email-help">
+							<p class="field-help" id="account-email-help">This is how you sign in, so it can't be changed here. Write to support@zaika.test if you need a new one.</p>
+						</div>
+						<div th:replace="~{fragments/form :: field('phone', 'Mobile number', 'tel', 'Your rider calls this number if they cannot find you.', 'tel-national')}"></div>
+						<div class="account-form-actions">
+							<button type="submit" class="btn btn-primary">Save profile</button>
+						</div>
+					</form>
+				</div>
+			</section>
+
+			<section class="card account-card" id="password" aria-labelledby="password-title">
+				<div class="card-body">
+					<h2 class="card-title" id="password-title">Change password</h2>
+					<p class="card-subtitle">You'll stay signed in here. "Remember me" on other devices will ask you to sign in again.</p>
+
+					<form class="account-form" th:action="@{/account/password#password}" action="/account/password#password" method="post" th:object="${passwordForm}" novalidate>
+						<div class="alert alert-error" role="alert" th:if="${#fields.hasErrors('*')}">
+							<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+							<p>Your password was not changed. Fix the fields marked below.</p>
+						</div>
+						<div th:replace="~{fragments/form :: password('currentPassword', 'Current password', null, 'current-password')}"></div>
+						<div th:replace="~{fragments/form :: password('newPassword', 'New password', 'At least 8 characters, with a letter and a digit.', 'new-password')}"></div>
+						<div th:replace="~{fragments/form :: password('confirmPassword', 'Confirm new password', null, 'new-password')}"></div>
+						<div class="account-form-actions">
+							<button type="submit" class="btn btn-primary">Change password</button>
+						</div>
+					</form>
+				</div>
+			</section>
+		</div>
+	</div>
+</main>
+</body>
+</html>

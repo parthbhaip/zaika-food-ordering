@@ -44,14 +44,23 @@ public class RegistrationForm {
 
 	/** Rules across fields: the confirmation matches and the password fits BCrypt's limit. */
 	public void checkPasswords(Errors errors) {
+		checkNewPassword(errors, "password", password, "confirmPassword", confirmPassword);
+	}
+
+	/**
+	 * The shared rules for any new password beyond {@link #PASSWORD_PATTERN}: at most 72 bytes, and the
+	 * confirmation field typed and equal. Sign-up, password change and reset all use it.
+	 */
+	public static void checkNewPassword(Errors errors, String passwordField, String password, String confirmField,
+			String confirm) {
 		if (password.getBytes(StandardCharsets.UTF_8).length > PASSWORD_MAX_BYTES) {
-			errors.rejectValue("password", "tooLong", "Keep it to 72 characters or fewer.");
+			errors.rejectValue(passwordField, "tooLong", "Keep it to 72 characters or fewer.");
 		}
-		if (confirmPassword.isEmpty()) {
-			errors.rejectValue("confirmPassword", "required", "Type your password again.");
+		if (confirm.isEmpty()) {
+			errors.rejectValue(confirmField, "required", "Type your password again.");
 		}
-		else if (!confirmPassword.equals(password)) {
-			errors.rejectValue("confirmPassword", "mismatch", "The passwords don't match.");
+		else if (!confirm.equals(password)) {
+			errors.rejectValue(confirmField, "mismatch", "The passwords don't match.");
 		}
 	}
 

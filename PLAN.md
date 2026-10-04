@@ -59,7 +59,7 @@ How this file works
   - `/register`: name, email, phone, password + confirm (8+ chars, at least one letter and one digit), accept-terms checkbox. Duplicate email shows an inline error.
   - Auto-login after sign-up, welcome flash. Tests for validation and success.
 
-- [ ] T09 Account area and address book
+- [x] T09 Account area and address book
   - `/account`: edit profile, change password (current password required).
   - Address book CRUD: label (Home/Work/Other), house/flat, street/area, landmark, city, 6-digit pincode, default flag. Max 10 per user.
   - Ownership enforced in the service. Tests including another user's address -> 404.

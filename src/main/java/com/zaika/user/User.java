@@ -98,6 +98,16 @@ public class User extends BaseEntity {
 		return digits;
 	}
 
+	/** Name and mobile number from the profile form (already validated and normalized). */
+	void updateProfile(String name, String phone) {
+		this.name = name;
+		this.phone = phone;
+	}
+
+	void setPasswordHash(String passwordHash) {
+		this.passwordHash = passwordHash;
+	}
+
 	/** True while a lock set after too many failed logins is still in force at {@code now}. */
 	public boolean isLockedAt(LocalDateTime now) {
 		return lockedUntil != null && lockedUntil.isAfter(now);

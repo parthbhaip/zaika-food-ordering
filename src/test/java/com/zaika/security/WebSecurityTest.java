@@ -67,7 +67,7 @@ class WebSecurityTest {
 	void eachRoleGets403InOtherRolesAreasAndIsLetIntoItsOwn() throws Exception {
 		for (Role role : Role.values()) {
 			for (Map.Entry<String, Role> area : AREA_URLS.entrySet()) {
-				int status = mvc.perform(get(area.getKey()).with(user("someone@zaika.test").roles(role.name())))
+				int status = mvc.perform(get(area.getKey()).with(user(new CurrentUser(Long.MAX_VALUE, "someone@zaika.test", "unused", true, role))))
 					.andReturn().getResponse().getStatus();
 				if (area.getValue() == role) {
 					assertThat(status).as("%s in %s", role, area.getKey()).isNotIn(302, 401, 403);

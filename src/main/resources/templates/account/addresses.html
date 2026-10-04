@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Saved addresses | Zaika</title></head>
+<body>
+<!--/* /account/addresses: the address book (default first). Model: addresses (List<Address>), max (the cap). */-->
+<main id="main" class="account-page">
+	<div class="container account-container">
+		<header th:replace="~{fragments/account-nav :: head('addresses')}"></header>
+
+		<div class="address-toolbar" th:with="full=${#lists.size(addresses) >= max}">
+			<div>
+				<h2 class="section-title">Saved addresses</h2>
+				<p class="address-count muted" th:unless="${#lists.isEmpty(addresses)}" th:text="|${#lists.size(addresses)} of ${max} saved. Checkout picks your default address first.|">2 of 10 saved.</p>
+			</div>
+			<a th:unless="${full}" class="btn btn-primary" th:href="@{/account/addresses/new}" href="/account/addresses/new"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg>Add address</a>
+			<p th:if="${full}" class="alert alert-info address-full"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="|Your address book is full (${max} addresses). Delete one to add another.|">Your address book is full.</span></p>
+		</div>
+
+		<div th:if="${#lists.isEmpty(addresses)}" class="card">
+			<div th:replace="~{fragments/ui :: emptyState('location', 'No saved addresses yet', 'Save your home or office once and checkout takes a single tap.', 'Add your first address', '/account/addresses/new')}"></div>
+		</div>
+
+		<ul class="address-grid" th:unless="${#lists.isEmpty(addresses)}">
+			<li class="card address-card" th:each="a : ${addresses}" th:classappend="${a.defaultAddress} ? 'is-default'">
+				<div class="card-body">
+					<div class="address-card-head">
+						<h3 class="address-label"><svg th:replace="~{fragments/icon :: icon('location')}"></svg><span th:text="${a.label.displayName}">Home</span></h3>
+						<span th:if="${a.defaultAddress}" class="badge badge-success"><svg th:replace="~{fragments/icon :: icon('check')}"></svg>Default</span>
+					</div>
+					<address class="address-lines">
+						<span th:text="${a.house}">Flat 4B, Shree Apartments</span>
+						<span th:text="${a.street}">Rajarampuri 5th Lane</span>
+						<span th:if="${a.landmark != null}" th:text="|Near ${a.landmark}|">Near Ganesh Mandir</span>
+						<span th:text="|${a.city} ${a.pincode}|">Kolhapur 416008</span>
+					</address>
+				</div>
+				<div class="card-footer address-actions" th:with="name=|${a.label.displayName} address, ${a.house}|">
+					<div class="address-actions-main">
+						<a class="btn btn-secondary btn-sm" th:href="@{/account/addresses/{id}/edit(id=${a.id})}" href="/account/addresses/1/edit"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Edit<span class="visually-hidden" th:text="| ${name}|"> Home address</span></a>
+						<form th:unless="${a.defaultAddress}" th:action="@{/account/addresses/{id}/default(id=${a.id})}" action="/account/addresses/1/default" method="post">
+							<button type="submit" class="btn btn-ghost btn-sm">Set as default<span class="visually-hidden" th:text="|: ${name}|">: Home address</span></button>
+						</form>
+					</div>
+					<details class="confirm" data-menu>
+						<summary class="btn btn-ghost btn-sm"><svg th:replace="~{fragments/icon :: icon('trash')}"></svg>Delete<span class="visually-hidden" th:text="| ${name}|"> Home address</span></summary>
+						<div class="confirm-panel">
+							<p>Delete this address?</p>
+							<form th:action="@{/account/addresses/{id}/delete(id=${a.id})}" action="/account/addresses/1/delete" method="post">
+								<button type="submit" class="btn btn-danger btn-sm">Yes, delete</button>
+							</form>
+						</div>
+					</details>
+				</div>
+			</li>
+		</ul>
+	</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${address == null} ? 'Add an address | Zaika' : 'Edit address | Zaika'">Add an address | Zaika</title></head>
+<body>
+<!--/* New or edit address. Model: form (AddressForm), address (the saved Address when editing, else absent). */-->
+<main id="main" class="account-page">
+	<div class="container account-container">
+		<header th:replace="~{fragments/account-nav :: head('addresses')}"></header>
+
+		<section class="card account-card address-form-card" aria-labelledby="address-form-title">
+			<div class="card-body">
+				<h2 class="card-title" id="address-form-title" th:text="${address == null} ? 'Add an address' : 'Edit address'">Add an address</h2>
+				<p class="card-subtitle">A flat number and a landmark help your rider find you faster.</p>
+
+				<form class="account-form" method="post" th:object="${form}" novalidate
+					th:action="${address == null} ? @{/account/addresses} : @{/account/addresses/{id}(id=${address.id})}" action="/account/addresses">
+					<div class="alert alert-error" role="alert" th:if="${#fields.hasErrors('*')}">
+						<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+						<p>The address was not saved. Fix the fields marked below.</p>
+					</div>
+
+					<fieldset class="field choice-field" th:with="invalid=${#fields.hasErrors('label')}" th:classappend="${invalid} ? 'has-error'"
+						th:aria-describedby="${invalid} ? 'label-error'">
+						<legend class="field-label">Save as</legend>
+						<div class="choice-row">
+							<label class="choice" th:each="l : ${T(com.zaika.user.AddressLabel).values()}">
+								<input class="radio" type="radio" name="label" th:value="${l}" th:id="|label-${l}|" th:checked="${form.label == l}"><span th:text="${l.displayName}">Home</span>
+							</label>
+						</div>
+						<p class="field-error" th:if="${invalid}" id="label-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('label'), ' ')}">Choose Home, Work or Other.</span></p>
+					</fieldset>
+
+					<div th:replace="~{fragments/form :: field('house', 'House, flat or building', 'text', 'For example: Flat 4B, Shree Apartments', 'address-line1')}"></div>
+					<div th:replace="~{fragments/form :: field('street', 'Street or area', 'text', 'For example: Rajarampuri 5th Lane', 'address-line2')}"></div>
+					<div th:replace="~{fragments/form :: field('landmark', 'Landmark (optional)', 'text', 'Something nearby a rider can spot, like a temple or a school.', 'off')}"></div>
+					<div class="field-pair">
+						<div th:replace="~{fragments/form :: field('city', 'City', 'text', null, 'address-level2')}"></div>
+						<th:block th:with="inputmode='numeric'"><div th:replace="~{fragments/form :: field('pincode', 'PIN code', 'text', null, 'postal-code')}"></div></th:block>
+					</div>
+
+					<label class="check" th:unless="${address != null and address.defaultAddress}">
+						<input class="checkbox" type="checkbox" id="makeDefault" name="makeDefault" value="true" th:checked="*{makeDefault}">
+						<span class="check-text">Make this my default address <small>Checkout picks it first.</small></span>
+					</label>
+					<p class="address-default-note" th:if="${address != null and address.defaultAddress}"><svg th:replace="~{fragments/icon :: icon('check')}"></svg>This is your default address.</p>
+
+					<div class="account-form-actions">
+						<button type="submit" class="btn btn-primary" th:text="${address == null} ? 'Save address' : 'Save changes'">Save address</button>
+						<a class="btn btn-ghost" th:href="@{/account/addresses}" href="/account/addresses">Cancel</a>
+					</div>
+				</form>
+			</div>
+		</section>
+	</div>
+</main>
+</body>
+</html>

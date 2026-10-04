@@ -1537,6 +1537,100 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.auth-aside { padding: var(--space-8) var(--space-6); }
 }
 
+/* ------------------------------------------------------------------ Customer account area (templates/account) */
+.account-page { padding-block: var(--space-6) var(--space-16); }
+.account-container { display: grid; gap: var(--space-6); max-width: calc(1040px + 2 * var(--gutter)); }
+.account-head { display: grid; gap: var(--space-5); }
+.account-title { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
+.account-title h1 { font-size: var(--text-2xl); font-weight: var(--weight-extrabold); letter-spacing: -0.02em; }
+.account-avatar {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 52px;
+	height: 52px;
+	border-radius: var(--radius-pill);
+	background: var(--color-primary-tint);
+	color: var(--color-primary);
+}
+.account-avatar .icon { width: 26px; height: 26px; }
+.account-email { color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.account-grid { display: grid; gap: var(--space-6); align-items: start; }
+.account-card .card-body { display: grid; gap: var(--space-1); }
+.account-form { display: grid; gap: var(--space-4); margin-top: var(--space-4); }
+.account-form .field + .field { margin-top: 0; }
+.account-form .input[readonly] { background: var(--color-surface-muted); color: var(--color-text-secondary); }
+.account-form-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); padding-top: var(--space-2); }
+.field-pair { display: grid; gap: var(--space-4); }
+
+/* Radio choices shown as pills (Home / Work / Other) */
+.choice-field { min-width: 0; margin: 0; padding: 0; border: 0; }
+.choice-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.choice {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-height: 44px;
+	padding: var(--space-2) var(--space-4) var(--space-2) var(--space-3);
+	border: 1px solid var(--color-input-border);
+	border-radius: var(--radius-pill);
+	background: var(--color-surface);
+	font-weight: var(--weight-semibold);
+	cursor: pointer;
+}
+.choice:hover { border-color: var(--color-ink); }
+.choice:has(:checked) { border-color: var(--color-primary); background: var(--color-primary-tint); color: var(--color-primary-hover); }
+
+/* Address book */
+.address-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-4); }
+.address-toolbar .section-title { margin-bottom: var(--space-1); }
+.address-count { font-size: var(--text-sm); }
+.address-full { max-width: 420px; }
+.address-grid { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.address-card { display: flex; flex-direction: column; }
+.address-card .card-body { flex: 1; display: grid; align-content: start; gap: var(--space-3); }
+.address-card.is-default { border-color: var(--color-success); }
+.address-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.address-label { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-lg); font-weight: var(--weight-bold); }
+.address-label .icon { color: var(--color-primary); }
+.address-lines { display: grid; color: var(--color-text-secondary); font-style: normal; overflow-wrap: anywhere; }
+.address-lines span:first-child { color: var(--color-ink); font-weight: var(--weight-semibold); }
+.address-actions-main { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.address-form-card { max-width: 640px; }
+.address-default-note { display: flex; align-items: center; gap: var(--space-2); color: var(--color-success); font-weight: var(--weight-semibold); }
+
+/* Inline "are you sure?" for destructive actions: <details class="confirm" data-menu> with a summary button */
+.confirm { position: relative; }
+.confirm > summary { list-style: none; }
+.confirm > summary::-webkit-details-marker { display: none; }
+.confirm[open] > summary { background: var(--color-danger-tint); color: var(--color-danger); }
+.confirm-panel {
+	position: absolute;
+	right: 0;
+	bottom: calc(100% + var(--space-2));
+	z-index: 10;
+	display: grid;
+	gap: var(--space-3);
+	width: max-content;
+	max-width: 240px;
+	padding: var(--space-4);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-md);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-lg);
+	font-weight: var(--weight-semibold);
+}
+
+@media (min-width: 640px) {
+	.account-page { padding-top: var(--space-10); }
+	.field-pair { grid-template-columns: minmax(0, 1fr) 180px; }
+	.address-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 960px) {
+	.account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.address-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */
 .error-body {
 	min-height: 100vh;
