@@ -40,7 +40,8 @@ import com.zaika.notification.SmtpMailService;
  */
 @SpringBootTest(properties = { "DB_URL=jdbc:h2:mem:mysqlprofile;MODE=MySQL;DATABASE_TO_LOWER=TRUE", "DB_USER=sa",
 		"DB_PASSWORD=", "SMTP_HOST=smtp.zaika.test", "SMTP_PORT=2525", "SMTP_USERNAME=mailer", "SMTP_PASSWORD=",
-		"SMTP_AUTH=false", "SMTP_STARTTLS=false", "MAIL_FROM=Zaika Test <mailer@zaika.test>", "APP_BASE_URL=https://zaika.example.in/", "SEED_DEMO=false", "REMEMBER_ME_KEY=mysql-profile-test-key" })
+		"SMTP_AUTH=false", "SMTP_STARTTLS=false", "MAIL_FROM=Zaika Test <mailer@zaika.test>", "APP_BASE_URL=https://zaika.example.in/", "SEED_DEMO=false", "REMEMBER_ME_KEY=mysql-profile-test-key",
+		"ADMIN_EMAIL=", "ADMIN_PASSWORD=" })
 @AutoConfigureMockMvc
 @ActiveProfiles("mysql")
 class MysqlProfileTest {
@@ -87,6 +88,9 @@ class MysqlProfileTest {
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.port"))).isEqualTo("587");
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.mail.from"))).isEqualTo("Zaika <no-reply@zaika.test>");
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.base-url"))).isEqualTo("http://localhost:8080");
+		// no built-in admin password outside dev: without ADMIN_EMAIL / ADMIN_PASSWORD no admin is created
+		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.admin.email"))).isEmpty();
+		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.admin.password"))).isEmpty();
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.properties.mail.smtp.auth"))).isEqualTo("true");
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.properties.mail.smtp.starttls.enable")))
 			.isEqualTo("true");
@@ -123,7 +127,8 @@ class MysqlProfileTest {
 			.flatMap(value -> ENV_PLACEHOLDER.matcher(value).results().map(m -> m.group(1)))
 			.toList();
 
-		assertThat(referenced).contains("DB_URL", "DB_USER", "DB_PASSWORD", "SMTP_HOST", "SEED_DEMO");
+		assertThat(referenced).contains("DB_URL", "DB_USER", "DB_PASSWORD", "SMTP_HOST", "SEED_DEMO", "ADMIN_EMAIL",
+				"ADMIN_PASSWORD");
 		for (String name : referenced) {
 			int line = indexOfKey(lines, name);
 			assertThat(line).as("%s is listed in .env.example", name).isPositive();

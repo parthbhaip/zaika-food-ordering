@@ -28,6 +28,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	boolean existsByEmail(String email);
 
+	/** Is there at least one account with this role (e.g. an admin, checked on startup)? Uses idx_users_role. */
+	boolean existsByRole(Role role);
+
+	/** Exact stored email with a row lock, so concurrent failed sign-ins are all counted. */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select u from User u where u.email = :email")
+	Optional<User> findForUpdateByEmail(String email);
+
 	/** Loads the user with a row lock, to serialize per-user limits (e.g. the 10-address cap). */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select u from User u where u.id = :id")

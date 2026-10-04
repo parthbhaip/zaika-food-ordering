@@ -20,8 +20,11 @@ import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.PropertySourcesPropertyResolver;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -29,6 +32,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import com.zaika.notification.LoggingMailService;
 import com.zaika.notification.MailService;
 import com.zaika.security.SecurityConfig;
+import com.zaika.user.Role;
+import com.zaika.user.User;
+import com.zaika.user.UserRepository;
 
 /**
  * The dev profile boots with its own settings. The datasource is swapped for an in-memory one so the test
@@ -54,11 +60,30 @@ class DevProfileTest {
 	@Autowired
 	ApplicationContext context;
 
+	@Autowired
+	UserRepository users;
+
+	@Autowired
+	PasswordEncoder passwordEncoder;
+
 	@Test
 	void devProfileSeedsDemoDataAndOnlyLogsMail() {
 		assertThat(env.getActiveProfiles()).containsExactly("dev");
 		assertThat(app.seedDemo()).isTrue();
 		assertThat(mail).isInstanceOf(LoggingMailService.class);
+	}
+
+	@Test
+	void devProfileCreatesTheDemoAdminOnStartup() throws Exception {
+		Properties dev = PropertiesLoaderUtils.loadProperties(new ClassPathResource("application-dev.properties"));
+		PropertySourcesPropertyResolver noVariables = new PropertySourcesPropertyResolver(new MutablePropertySources());
+		assertThat(noVariables.resolvePlaceholders(dev.getProperty("app.admin.email"))).isEqualTo("admin@zaika.test");
+		assertThat(noVariables.resolvePlaceholders(dev.getProperty("app.admin.password"))).isEqualTo("Demo@1234");
+
+		// whatever ADMIN_EMAIL / ADMIN_PASSWORD the shell has, the account matches the resolved settings
+		User admin = users.findByEmailIgnoreCase(env.getProperty("app.admin.email")).orElseThrow();
+		assertThat(admin.getRole()).isEqualTo(Role.ADMIN);
+		assertThat(passwordEncoder.matches(env.getProperty("app.admin.password"), admin.getPasswordHash())).isTrue();
 	}
 
 	@Test

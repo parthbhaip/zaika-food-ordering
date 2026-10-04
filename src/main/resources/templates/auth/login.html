@@ -3,9 +3,10 @@
 <head><title>Sign in | Zaika</title></head>
 <body>
 <!--/* Spring Security handles POST /login (fields email, password, remember-me). Query flags: ?error (wrong email or
-     password), ?disabled (right password, account switched off), ?logout. The typed email comes back as the flash
-     attribute "email" after a failed attempt. */-->
-<main id="main" class="auth-page" th:with="failed=${param.error != null or param.disabled != null}">
+     password), ?locked (too many wrong passwords; flash attribute "lockedUntil" holds the unlock time), ?disabled
+     (right password, account switched off), ?logout. The typed email comes back as the flash attribute "email" after
+     a failed attempt. */-->
+<main id="main" class="auth-page" th:with="failed=${param.error != null or param.locked != null or param.disabled != null}">
 	<div class="container auth-layout">
 		<section class="auth-card" aria-labelledby="auth-title">
 			<header class="auth-head">
@@ -16,6 +17,10 @@
 			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.error != null}">
 				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
 				<p><strong>That email and password don't match.</strong> Check both and try again.</p>
+			</div>
+			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.locked != null}">
+				<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+				<p><strong>Too many wrong passwords.</strong> To keep your account safe, sign-in is paused <span th:text="${lockedUntil != null} ? |until ${@fmt.time(lockedUntil)}| : 'for a few minutes'">for a few minutes</span>. <a th:href="@{/forgot-password}" href="/forgot-password">Reset your password</a> to get back in right away.</p>
 			</div>
 			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.disabled != null}">
 				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>

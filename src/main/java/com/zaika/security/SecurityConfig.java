@@ -1,7 +1,9 @@
 package com.zaika.security;
 
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Map;
 
@@ -15,6 +17,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.RememberMeAuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -25,6 +28,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 
 import com.zaika.user.Role;
+import com.zaika.user.UserService;
 
 /**
  * Web security: public pages and assets, members-only areas per role ({@link #AREAS}), the custom login page with
@@ -91,17 +95,29 @@ public class SecurityConfig {
 	@Bean
 	@Order(2)
 	SecurityFilterChain webSecurity(HttpSecurity http, ZaikaUserDetailsService users, PasswordEncoder passwordEncoder,
-			Environment env, @Value("${app.remember-me-key:}") String rememberMeKey) throws Exception {
+			UserService userService, Clock clock, Environment env,
+			@Value("${app.remember-me-key:}") String rememberMeKey) throws Exception {
 		boolean dev = env.acceptsProfiles(Profiles.of("dev"));
 		String key = rememberMeKey.isBlank() ? randomKey() : rememberMeKey;
 
-		// Account status (disabled, later locked) is checked only after the password matched, so a wrong password
-		// never reveals whether an account exists or is switched off.
+		// A sign-in lock (too many wrong passwords) rejects even the right password, before it is checked, so
+		// attempts during the lock are not counted. Other account status (disabled) is checked only after the
+		// password matched, so a wrong password never reveals whether an account exists or is switched off.
+		// The right password then wipes the failure count (LoginFailureHandler does the counting).
+		AccountStatusUserDetailsChecker statusChecker = new AccountStatusUserDetailsChecker();
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(users);
 		provider.setPasswordEncoder(passwordEncoder);
 		provider.setPreAuthenticationChecks(user -> {
+			if (user instanceof CurrentUser current && current.isSignInLockedAt(LocalDateTime.now(clock))) {
+				throw new LockedException("Sign-in locked after too many wrong passwords");
+			}
 		});
-		provider.setPostAuthenticationChecks(new AccountStatusUserDetailsChecker());
+		provider.setPostAuthenticationChecks(user -> {
+			statusChecker.check(user);
+			if (user instanceof CurrentUser current) {
+				userService.recordSuccessfulLogin(current.getId());
+			}
+		});
 
 		// set explicitly, so it must also accept the tokens the remember-me filter hands it
 		http.authenticationManager(new ProviderManager(provider, new RememberMeAuthenticationProvider(key)))
@@ -120,7 +136,7 @@ public class SecurityConfig {
 				.loginPage("/login")
 				.usernameParameter("email")
 				.successHandler(new LoginSuccessHandler())
-				.failureHandler(new LoginFailureHandler()))
+				.failureHandler(new LoginFailureHandler(userService)))
 			.rememberMe(remember -> remember
 				.key(key)
 				.userDetailsService(users)

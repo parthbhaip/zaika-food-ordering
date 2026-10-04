@@ -1,5 +1,10 @@
 package com.zaika.user;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -7,17 +12,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zaika.common.NotFoundException;
 
-/** Account rules: sign-up, profile edits and password changes. */
+/** Account rules: sign-up, profile edits, password changes and the lock after repeated wrong passwords. */
 @Service
 public class UserService {
+
+	/** Wrong passwords in a row that lock sign-in. */
+	public static final int MAX_FAILED_LOGINS = 5;
+
+	/** How long sign-in stays locked after {@link #MAX_FAILED_LOGINS} wrong passwords. */
+	public static final Duration LOGIN_LOCK = Duration.ofMinutes(15);
 
 	private final UserRepository users;
 
 	private final PasswordEncoder passwordEncoder;
 
-	UserService(UserRepository users, PasswordEncoder passwordEncoder) {
+	private final Clock clock;
+
+	UserService(UserRepository users, PasswordEncoder passwordEncoder, Clock clock) {
 		this.users = users;
 		this.passwordEncoder = passwordEncoder;
+		this.clock = clock;
 	}
 
 	/**
@@ -71,6 +85,26 @@ public class UserService {
 			throw new WrongPasswordException();
 		}
 		user.setPasswordHash(passwordEncoder.encode(form.getNewPassword()));
+	}
+
+	/**
+	 * Counts a wrong password for the account with this email (any letter case). Unknown emails are ignored, so they
+	 * never show a lock.
+	 *
+	 * @return when sign-in unlocks, if the account is locked now (by this attempt or an earlier one)
+	 */
+	@Transactional
+	public Optional<LocalDateTime> recordFailedLogin(String email) {
+		LocalDateTime now = LocalDateTime.now(clock);
+		Optional<User> user = users.findForUpdateByEmail(User.normalizeEmail(email));
+		user.ifPresent(u -> u.recordFailedLogin(now, MAX_FAILED_LOGINS, LOGIN_LOCK));
+		return user.filter(u -> u.isLockedAt(now)).map(User::getLockedUntil);
+	}
+
+	/** Called after a correct password: the failure count starts again from zero. Writes only if there was one. */
+	@Transactional
+	public void recordSuccessfulLogin(long userId) {
+		users.findById(userId).ifPresent(User::clearFailedLogins);
 	}
 
 }

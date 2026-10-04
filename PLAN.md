@@ -68,7 +68,7 @@ How this file works
   - Random token stored hashed, 30-minute expiry, single use. Same response whether or not the email exists.
   - `MailService` interface: `LoggingMailService` (dev/test, logs the reset link) and `SmtpMailService` (mysql profile). Tests.
 
-- [ ] T11 Admin bootstrap and login hardening
+- [x] T11 Admin bootstrap and login hardening
   - On startup create the admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` if no admin exists (dev defaults from CLAUDE.md).
   - Lock an account for 15 minutes after 5 failed logins; reset on success; friendly message on the login page. Tests.
 

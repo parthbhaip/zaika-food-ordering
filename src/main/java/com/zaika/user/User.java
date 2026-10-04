@@ -1,5 +1,6 @@
 package com.zaika.user;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.Objects;
@@ -111,6 +112,29 @@ public class User extends BaseEntity {
 	/** A password set through a reset link also lifts a lock from failed logins: the owner proved who they are. */
 	void resetPassword(String passwordHash) {
 		this.passwordHash = passwordHash;
+		clearFailedLogins();
+	}
+
+	/**
+	 * Counts one wrong password at {@code now}; the {@code maxFailures}-th in a row locks sign-in for {@code lockFor}.
+	 * Attempts during a lock neither count nor extend it, and the first failure after a lock ran out starts a fresh
+	 * count.
+	 */
+	void recordFailedLogin(LocalDateTime now, int maxFailures, Duration lockFor) {
+		if (isLockedAt(now)) {
+			return;
+		}
+		if (lockedUntil != null) {
+			clearFailedLogins();
+		}
+		failedLoginCount++;
+		if (failedLoginCount >= maxFailures) {
+			lockedUntil = now.plus(lockFor);
+		}
+	}
+
+	/** A successful sign-in (or a password reset) wipes the failure count and any lock. */
+	void clearFailedLogins() {
 		this.failedLoginCount = 0;
 		this.lockedUntil = null;
 	}
