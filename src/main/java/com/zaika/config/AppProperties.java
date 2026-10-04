@@ -9,6 +9,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +25,8 @@ import org.springframework.validation.annotation.Validated;
  * @param gstRate               GST as a fraction, 0.05 = 5%
  * @param freeDeliveryThreshold food subtotal from which delivery is free, INR
  * @param riderBasePayout       rider earning per delivered order before extras, INR
+ * @param baseUrl               public address of the site (scheme, host, optional port and path, no trailing slash);
+ *                              links in emails start with it
  */
 @Validated
 @ConfigurationProperties("app")
@@ -35,12 +38,15 @@ public record AppProperties(
 		@NotNull @DecimalMin("0.00") @Digits(integer = 6, fraction = 2) BigDecimal platformFee,
 		@NotNull @DecimalMin("0.00") @DecimalMax("1.00") @Digits(integer = 1, fraction = 4) BigDecimal gstRate,
 		@NotNull @DecimalMin("0.00") @Digits(integer = 6, fraction = 2) BigDecimal freeDeliveryThreshold,
-		@NotNull @DecimalMin("0.00") @Digits(integer = 6, fraction = 2) BigDecimal riderBasePayout) {
+		@NotNull @DecimalMin("0.00") @Digits(integer = 6, fraction = 2) BigDecimal riderBasePayout,
+		@NotBlank @Pattern(regexp = "https?://[^\\s/]+(/\\S*)?",
+				message = "must be an http(s) address like https://zaika.example.in") String baseUrl) {
 
 	public AppProperties {
 		platformFee = money(platformFee);
 		freeDeliveryThreshold = money(freeDeliveryThreshold);
 		riderBasePayout = money(riderBasePayout);
+		baseUrl = baseUrl == null ? null : baseUrl.replaceAll("/+$", "");
 	}
 
 	/** Money is always scale 2. Null is left for validation to report. Over-precise values are already rejected by @Digits. */

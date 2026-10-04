@@ -64,7 +64,7 @@ How this file works
   - Address book CRUD: label (Home/Work/Other), house/flat, street/area, landmark, city, 6-digit pincode, default flag. Max 10 per user.
   - Ownership enforced in the service. Tests including another user's address -> 404.
 
-- [ ] T10 Forgot and reset password
+- [x] T10 Forgot and reset password
   - Random token stored hashed, 30-minute expiry, single use. Same response whether or not the email exists.
   - `MailService` interface: `LoggingMailService` (dev/test, logs the reset link) and `SmtpMailService` (mysql profile). Tests.
 

@@ -22,12 +22,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.zaika.notification.LoggingMailSender;
+import com.zaika.notification.LoggingMailService;
+import com.zaika.notification.MailService;
 import com.zaika.security.SecurityConfig;
 
 /**
@@ -49,7 +49,7 @@ class DevProfileTest {
 	AppProperties app;
 
 	@Autowired
-	JavaMailSender mailSender;
+	MailService mail;
 
 	@Autowired
 	ApplicationContext context;
@@ -58,7 +58,7 @@ class DevProfileTest {
 	void devProfileSeedsDemoDataAndOnlyLogsMail() {
 		assertThat(env.getActiveProfiles()).containsExactly("dev");
 		assertThat(app.seedDemo()).isTrue();
-		assertThat(mailSender).isInstanceOf(LoggingMailSender.class);
+		assertThat(mail).isInstanceOf(LoggingMailService.class);
 	}
 
 	@Test

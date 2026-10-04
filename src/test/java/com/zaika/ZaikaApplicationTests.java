@@ -5,8 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.ZoneId;
 
-import jakarta.mail.internet.MimeMessage;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +15,12 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.zaika.config.AppProperties;
-import com.zaika.notification.LoggingMailSender;
+import com.zaika.notification.LoggingMailService;
+import com.zaika.notification.MailService;
 
 /** The application context starts on the test profile with the shared settings from application.properties. */
 @SpringBootTest
@@ -38,7 +35,7 @@ class ZaikaApplicationTests {
 	AppProperties app;
 
 	@Autowired
-	JavaMailSender mailSender;
+	MailService mail;
 
 	@Autowired
 	WebProperties webProperties;
@@ -82,28 +79,19 @@ class ZaikaApplicationTests {
 		assertThat(app.gstRate()).isEqualByComparingTo("0.05");
 		assertThat(app.freeDeliveryThreshold()).isEqualTo(new BigDecimal("499.00"));
 		assertThat(app.riderBasePayout()).isEqualTo(new BigDecimal("30.00"));
+		assertThat(app.baseUrl()).isEqualTo("http://localhost:8080");
 	}
 
 	@Test
-	void mailIsOnlyLoggedInTests(CapturedOutput output) throws Exception {
-		assertThat(mailSender).isInstanceOf(LoggingMailSender.class);
+	void mailIsOnlyLoggedInTests(CapturedOutput output) {
+		assertThat(context.getBeansOfType(MailService.class).values()).singleElement().isInstanceOf(LoggingMailService.class);
+		assertThat(context.getBeansOfType(JavaMailSender.class)).as("no SMTP sender outside the mysql profile").isEmpty();
 
-		SimpleMailMessage simple = new SimpleMailMessage();
-		simple.setTo("customer@zaika.test");
-		simple.setSubject("Your order is on its way");
-		simple.setText("secret-link-body");
-		mailSender.send(simple);
+		mail.send("customer@zaika.test", "Your order is on its way", "Track it at http://localhost:8080/orders/ZK-26-000123/track");
 
-		MimeMessage mime = mailSender.createMimeMessage();
-		MimeMessageHelper helper = new MimeMessageHelper(mime);
-		helper.setTo("owner1@zaika.test");
-		helper.setSubject("New order ZK-26-000123");
-		helper.setText("secret-link-body");
-		mailSender.send(mime);
-
-		assertThat(output).contains("to=[customer@zaika.test] subject=\"Your order is on its way\"")
-			.contains("to=[owner1@zaika.test] subject=\"New order ZK-26-000123\"")
-			.doesNotContain("secret-link-body");
+		// The body is logged on purpose (dev and test only): developers open reset links from the log
+		assertThat(output).contains("[mail not sent: log-only] to=customer@zaika.test subject=\"Your order is on its way\"")
+			.contains("http://localhost:8080/orders/ZK-26-000123/track");
 	}
 
 }

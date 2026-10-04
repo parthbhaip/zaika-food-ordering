@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.MutablePropertySources;
@@ -28,6 +29,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import com.zaika.notification.MailService;
+import com.zaika.notification.SmtpMailService;
+
 /**
  * The mysql profile takes the database, SMTP and seed settings from environment variables. Here the variables
  * are supplied as test properties and point at in-memory H2, so no MySQL server is needed. Every variable is pinned
@@ -36,7 +40,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  */
 @SpringBootTest(properties = { "DB_URL=jdbc:h2:mem:mysqlprofile;MODE=MySQL;DATABASE_TO_LOWER=TRUE", "DB_USER=sa",
 		"DB_PASSWORD=", "SMTP_HOST=smtp.zaika.test", "SMTP_PORT=2525", "SMTP_USERNAME=mailer", "SMTP_PASSWORD=",
-		"SMTP_AUTH=false", "SMTP_STARTTLS=false", "SEED_DEMO=false", "REMEMBER_ME_KEY=mysql-profile-test-key" })
+		"SMTP_AUTH=false", "SMTP_STARTTLS=false", "MAIL_FROM=Zaika Test <mailer@zaika.test>", "APP_BASE_URL=https://zaika.example.in/", "SEED_DEMO=false", "REMEMBER_ME_KEY=mysql-profile-test-key" })
 @AutoConfigureMockMvc
 @ActiveProfiles("mysql")
 class MysqlProfileTest {
@@ -67,6 +71,10 @@ class MysqlProfileTest {
 		assertThat(sender.getUsername()).isEqualTo("mailer");
 		assertThat(sender.getJavaMailProperties()).containsEntry("mail.smtp.auth", "false")
 			.containsEntry("mail.smtp.starttls.enable", "false");
+		assertThat(context.getBean(MailService.class)).isInstanceOf(SmtpMailService.class);
+		assertThat(AopUtils.isAopProxy(context.getBean(MailService.class))).as("@Async proxy: mail is sent off the request thread").isTrue();
+		assertThat(env.getProperty("app.mail.from")).isEqualTo("Zaika Test <mailer@zaika.test>");
+		assertThat(context.getBean(AppProperties.class).baseUrl()).as("trailing slash dropped").isEqualTo("https://zaika.example.in");
 	}
 
 	@Test
@@ -77,6 +85,8 @@ class MysqlProfileTest {
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.seed-demo"))).isEqualTo("false");
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.host"))).isEqualTo("localhost");
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.port"))).isEqualTo("587");
+		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.mail.from"))).isEqualTo("Zaika <no-reply@zaika.test>");
+		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.base-url"))).isEqualTo("http://localhost:8080");
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.properties.mail.smtp.auth"))).isEqualTo("true");
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.properties.mail.smtp.starttls.enable")))
 			.isEqualTo("true");

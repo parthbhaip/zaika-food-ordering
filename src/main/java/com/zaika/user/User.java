@@ -108,6 +108,13 @@ public class User extends BaseEntity {
 		this.passwordHash = passwordHash;
 	}
 
+	/** A password set through a reset link also lifts a lock from failed logins: the owner proved who they are. */
+	void resetPassword(String passwordHash) {
+		this.passwordHash = passwordHash;
+		this.failedLoginCount = 0;
+		this.lockedUntil = null;
+	}
+
 	/** True while a lock set after too many failed logins is still in force at {@code now}. */
 	public boolean isLockedAt(LocalDateTime now) {
 		return lockedUntil != null && lockedUntil.isAfter(now);
