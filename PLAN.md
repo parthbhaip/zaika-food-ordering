@@ -55,7 +55,7 @@ How this file works
   - Custom login page (email, password with show/hide, remember me), POST logout, role-based landing page after login, `UserDetailsService`, disabled users rejected, CSP and security headers from CLAUDE.md.
   - Tests: anonymous redirected to login; each role gets 403 in other roles' areas; login redirects by role.
 
-- [ ] T08 Customer registration
+- [x] T08 Customer registration
   - `/register`: name, email, phone, password + confirm (8+ chars, at least one letter and one digit), accept-terms checkbox. Duplicate email shows an inline error.
   - Auto-login after sign-up, welcome flash. Tests for validation and success.
 

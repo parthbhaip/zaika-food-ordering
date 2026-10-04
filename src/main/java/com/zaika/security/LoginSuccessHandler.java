@@ -50,7 +50,16 @@ class LoginSuccessHandler implements AuthenticationSuccessHandler {
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
-		Role role = roleOf(authentication);
+		String target = targetUrl(request, response, roleOf(authentication));
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			session.removeAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
+		}
+		redirectStrategy.sendRedirect(request, response, target);
+	}
+
+	/** Where a freshly signed-in user goes; consumes the saved request. Shared with sign-up's auto-login. */
+	String targetUrl(HttpServletRequest request, HttpServletResponse response, Role role) {
 		String target = landingPage(role);
 		SavedRequest saved = requestCache.getRequest(request, response);
 		if (saved != null) {
@@ -61,11 +70,7 @@ class LoginSuccessHandler implements AuthenticationSuccessHandler {
 				target = saved.getRedirectUrl();
 			}
 		}
-		HttpSession session = request.getSession(false);
-		if (session != null) {
-			session.removeAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
-		}
-		redirectStrategy.sendRedirect(request, response, target);
+		return target;
 	}
 
 }

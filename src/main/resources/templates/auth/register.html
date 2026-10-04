@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Create your account | Zaika</title></head>
+<body>
+<!--/* Customer sign-up, bound to RegistrationForm as "form". POST /register re-renders this page with inline errors
+     (typed values kept, passwords cleared) or signs the customer in and redirects with a welcome toast. */-->
+<main id="main" class="auth-page">
+	<div class="container auth-layout">
+		<section class="auth-card" aria-labelledby="auth-title">
+			<header class="auth-head">
+				<h1 id="auth-title">Create your account</h1>
+				<p class="auth-lede">Order from Kolhapur's favourite kitchens and follow every delivery to your door.</p>
+			</header>
+
+			<div class="alert alert-error" role="alert" th:if="${#fields.hasErrors('${form.*}')}">
+				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+				<p><strong>A few details need another look.</strong> Fix the fields marked below and try again.</p>
+			</div>
+
+			<form class="auth-form" th:action="@{/register}" action="/register" method="post" th:object="${form}" novalidate>
+				<div th:replace="~{fragments/form :: field('name', 'Full name', 'text', null, 'name')}"></div>
+				<div th:replace="~{fragments/form :: field('email', 'Email', 'email', 'Your sign-in. Receipts and order updates land here too.', 'email')}"></div>
+				<div th:replace="~{fragments/form :: field('phone', 'Mobile number', 'tel', 'Your rider calls this number if they cannot find you.', 'tel-national')}"></div>
+				<div th:replace="~{fragments/form :: password('password', 'Password', 'At least 8 characters, with a letter and a digit.', 'new-password')}"></div>
+				<div th:replace="~{fragments/form :: password('confirmPassword', 'Confirm password', null, 'new-password')}"></div>
+
+				<div class="field" th:with="invalid=${#fields.hasErrors('acceptTerms')}" th:classappend="${invalid} ? 'has-error'">
+					<label class="check"><input class="checkbox" type="checkbox" id="acceptTerms" name="acceptTerms" value="true"
+						th:checked="*{acceptTerms}" th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? 'acceptTerms-error'"><span class="check-text">I agree to the <a th:href="@{/terms}" href="/terms" target="_blank" rel="noopener">Terms of use</a> and <a th:href="@{/privacy}" href="/privacy" target="_blank" rel="noopener">Privacy policy</a></span></label>
+					<p class="field-error" th:if="${invalid}" id="acceptTerms-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('acceptTerms'), ' ')}">Please accept the terms to create your account.</span></p>
+				</div>
+
+				<button type="submit" class="btn btn-primary btn-lg btn-block">Create account</button>
+			</form>
+
+			<p class="auth-switch">Already have an account? <a th:href="@{/login}" href="/login">Sign in</a></p>
+		</section>
+
+		<aside class="auth-aside" aria-labelledby="auth-aside-title">
+			<h2 id="auth-aside-title">Good food, fewer surprises</h2>
+			<ul class="auth-perks">
+				<li><svg th:replace="~{fragments/icon :: icon('bike')}"></svg><span>Watch your order from the kitchen to your door</span></li>
+				<li><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg><span>Pay on delivery or online, with every fee shown up front</span></li>
+				<li><svg th:replace="~{fragments/icon :: icon('location')}"></svg><span>Save home and work addresses for one-tap checkout</span></li>
+			</ul>
+			<p>Own a restaurant or ride a bike? <a th:href="@{/partner-with-us}" href="/partner-with-us">Partner with us</a></p>
+		</aside>
+	</div>
+</main>
+</body>
+</html>

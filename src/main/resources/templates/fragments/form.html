@@ -19,5 +19,22 @@
 	<p class="field-help" th:if="${help != null}" th:id="${name + '-help'}" th:text="${help}">We'll send your order updates here.</p>
 	<p class="field-error" th:if="${invalid}" th:id="${name + '-error'}"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors(name), ' ')}">Enter a valid email address.</span></p>
 </div>
+
+<!--/* The same for a password, with the Show/Hide button (js/password-toggle.js). The value is never echoed back.
+       <div th:replace="~{fragments/form :: password('password', 'Password', 'At least 8 characters', 'new-password')}"></div> */-->
+<div th:fragment="password(name, label, help, autocomplete)" class="field"
+	th:with="invalid=${#fields.hasErrors(name)},
+		describedBy=${(invalid ? name + '-error ' : '') + (help != null ? name + '-help' : '')}"
+	th:classappend="${invalid} ? 'has-error'">
+	<label class="field-label" th:for="${name}" th:text="${label}">Password</label>
+	<div class="password-input">
+		<input class="input" type="password" th:id="${name}" th:name="${name}" th:autocomplete="${autocomplete}"
+			th:aria-invalid="${invalid} ? 'true'"
+			th:aria-describedby="${#strings.isEmpty(#strings.trim(describedBy))} ? null : ${#strings.trim(describedBy)}">
+		<button type="button" class="password-toggle" th:data-password-toggle="${name}" th:aria-controls="${name}" hidden><span data-password-toggle-label>Show</span><span class="visually-hidden" th:text="' ' + ${#strings.toLowerCase(label)}"> password</span></button>
+	</div>
+	<p class="field-help" th:if="${help != null}" th:id="${name + '-help'}" th:text="${help}">At least 8 characters.</p>
+	<p class="field-error" th:if="${invalid}" th:id="${name + '-error'}"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors(name), ' ')}">The passwords don't match.</span></p>
+</div>
 </body>
 </html>

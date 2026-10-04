@@ -76,6 +76,28 @@ public class User extends BaseEntity {
 		return email == null ? null : email.strip().toLowerCase(Locale.ROOT);
 	}
 
+	/**
+	 * A typed mobile number in the stored form: spaces, dashes and brackets removed, and a leading +91, 91 (12
+	 * digits) or 0 (11 digits) dropped. Anything else is returned as typed (minus separators) for validation to
+	 * reject. {@code null} stays {@code null}.
+	 */
+	public static String normalizePhone(String phone) {
+		if (phone == null) {
+			return null;
+		}
+		String digits = phone.replaceAll("[\\s()-]", "");
+		if (digits.startsWith("+91")) {
+			return digits.substring(3);
+		}
+		if (digits.length() == 12 && digits.startsWith("91")) {
+			return digits.substring(2);
+		}
+		if (digits.length() == 11 && digits.startsWith("0")) {
+			return digits.substring(1);
+		}
+		return digits;
+	}
+
 	/** True while a lock set after too many failed logins is still in force at {@code now}. */
 	public boolean isLockedAt(LocalDateTime now) {
 		return lockedUntil != null && lockedUntil.isAfter(now);
