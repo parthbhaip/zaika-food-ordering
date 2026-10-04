@@ -28,7 +28,7 @@ How this file works
   - Branded error templates for 403, 404 and 500 with helpful copy and a link home.
   - Unit tests for the formatters (₹1,23,456.50, ₹0.00, rounding).
 
-- [ ] T04 Design system
+- [x] T04 Design system
   - `static/css/tokens.css` and `static/css/app.css` implementing every component listed in CLAUDE.md > UI, including hover/focus/disabled states.
   - Self-hosted Plus Jakarta Sans woff2 (400, 500, 600, 700, 800; latin) downloaded from Fontsource into `static/fonts/`, `font-display: swap`.
   - `static/img/icons.svg` sprite with original line icons: search, cart, user, location, clock, star, heart, plus, minus, trash, chevron-down, chevron-right, check, x, menu, bell, filter, bike, store, receipt, logout, edit, upload, phone, info, leaf.
@@ -50,7 +50,7 @@ How this file works
   - Repository with case-insensitive email lookup. Tests.
 
 - [ ] T07 Web security configuration
-  - Public: home, listings, restaurant pages, search, static assets, uploads, placeholders, login, register, partner-with-us pages, legal pages.
+  - Public: home, listings, restaurant pages, search, static assets, uploads, placeholders, login, register, partner-with-us pages, legal pages; in the dev profile only, `/dev/**` (UI kit).
   - Protected: `/account/**`, `/checkout/**`, `/orders/**`, `/pay/**` -> CUSTOMER; `/owner/**` -> RESTAURANT_OWNER; `/partner/**` -> DELIVERY_PARTNER; `/admin/**` -> ADMIN.
   - Custom login page (email, password with show/hide, remember me), POST logout, role-based landing page after login, `UserDetailsService`, disabled users rejected, CSP and security headers from CLAUDE.md.
   - Tests: anonymous redirected to login; each role gets 403 in other roles' areas; login redirects by role.

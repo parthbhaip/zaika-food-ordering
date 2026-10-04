@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<!--/* Dev-only living style guide (UiKitController, dev profile). Standalone page: the shared layout arrives in T05. */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex">
+	<title>UI kit | Zaika</title>
+	<link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
+	<link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/plus-jakarta-sans-latin-400-normal.woff2}" href="/fonts/plus-jakarta-sans-latin-400-normal.woff2">
+	<link rel="stylesheet" th:href="@{/css/tokens.css}" href="/css/tokens.css">
+	<link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+</head>
+<body class="has-cart-bar">
+	<a class="skip-link" href="#main">Skip to content</a>
+
+	<header class="kit-header">
+		<div class="container kit-header-inner">
+			<img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="Zaika" width="128" height="40">
+			<span class="badge badge-primary">UI kit</span>
+			<span class="badge badge-dot badge-warning">Dev profile only</span>
+		</div>
+	</header>
+
+	<div class="container kit-layout">
+		<nav class="kit-nav" aria-label="UI kit sections">
+			<ul>
+				<li><a href="#colours">Colours</a></li>
+				<li><a href="#type">Type</a></li>
+				<li><a href="#icons">Icons</a></li>
+				<li><a href="#buttons">Buttons</a></li>
+				<li><a href="#forms">Form fields</a></li>
+				<li><a href="#choices">Checkbox, radio, switch</a></li>
+				<li><a href="#cards">Cards</a></li>
+				<li><a href="#restaurant-cards">Restaurant cards</a></li>
+				<li><a href="#menu-items">Menu items</a></li>
+				<li><a href="#badges">Badges and chips</a></li>
+				<li><a href="#ratings">Ratings and veg marks</a></li>
+				<li><a href="#tabs">Tabs</a></li>
+				<li><a href="#stepper">Order stepper</a></li>
+				<li><a href="#tables">Tables</a></li>
+				<li><a href="#pagination">Pagination</a></li>
+				<li><a href="#feedback">Flash and toasts</a></li>
+				<li><a href="#modal">Modal</a></li>
+				<li><a href="#empty">Empty states</a></li>
+				<li><a href="#skeletons">Skeletons</a></li>
+				<li><a href="#cart-bar">Cart bar</a></li>
+			</ul>
+		</nav>
+
+		<main id="main" class="kit-main">
+			<section class="kit-section" id="colours" aria-labelledby="colours-title">
+				<h2 id="colours-title">Colours</h2>
+				<p>Every colour lives in <code>tokens.css</code>. Components only ever use the variables.</p>
+				<div class="kit-swatches">
+					<div class="kit-swatch"><span class="swatch-primary"></span><code>--color-primary</code></div>
+					<div class="kit-swatch"><span class="swatch-primary-hover"></span><code>--color-primary-hover</code></div>
+					<div class="kit-swatch"><span class="swatch-primary-tint"></span><code>--color-primary-tint</code></div>
+					<div class="kit-swatch"><span class="swatch-accent"></span><code>--color-accent</code></div>
+					<div class="kit-swatch"><span class="swatch-ink"></span><code>--color-ink</code></div>
+					<div class="kit-swatch"><span class="swatch-secondary"></span><code>--color-text-secondary</code></div>
+					<div class="kit-swatch"><span class="swatch-muted"></span><code>--color-text-muted</code></div>
+					<div class="kit-swatch"><span class="swatch-line"></span><code>--color-line</code></div>
+					<div class="kit-swatch"><span class="swatch-bg"></span><code>--color-bg</code></div>
+					<div class="kit-swatch"><span class="swatch-success"></span><code>--color-success</code></div>
+					<div class="kit-swatch"><span class="swatch-danger"></span><code>--color-danger</code></div>
+					<div class="kit-swatch"><span class="swatch-warning"></span><code>--color-warning</code></div>
+				</div>
+			</section>
+
+			<section class="kit-section" id="type" aria-labelledby="type-title">
+				<h2 id="type-title">Type</h2>
+				<div class="kit-panel kit-type">
+					<p class="display">Your city's best kitchens, delivered.</p>
+					<h3>Popular in Rajarampuri</h3>
+					<p>Plus Jakarta Sans, self-hosted. Body copy sits at 16px with a relaxed line height so menus stay easy to scan.</p>
+					<p class="text-secondary">Secondary text: Misal, thalis and late-night biryani near you.</p>
+					<p class="muted">Muted text: Prices include taxes where shown.</p>
+					<p><span class="price">₹249</span><span class="price-old">₹299</span></p>
+				</div>
+			</section>
+
+			<section class="kit-section" id="icons" aria-labelledby="icons-title">
+				<h2 id="icons-title">Icons</h2>
+				<p>One sprite, <code>/img/icons.svg</code>: 24px grid, 1.75 stroke, <code>currentColor</code>.</p>
+				<ul class="kit-icons">
+					<li th:each="name : ${icons}">
+						<svg class="icon" aria-hidden="true" focusable="false"><use th:href="@{/img/icons.svg} + '#' + ${name}" href="/img/icons.svg#search"></use></svg>
+						<code th:text="${name}">search</code>
+					</li>
+				</ul>
+			</section>
+
+			<section class="kit-section" id="buttons" aria-labelledby="buttons-title">
+				<h2 id="buttons-title">Buttons</h2>
+				<div class="kit-panel">
+					<span class="kit-label">Variants</span>
+					<div class="kit-row">
+						<button type="button" class="btn btn-primary">Place order</button>
+						<button type="button" class="btn btn-secondary">Change address</button>
+						<button type="button" class="btn btn-ghost">View menu</button>
+						<button type="button" class="btn btn-danger">Cancel order</button>
+					</div>
+				</div>
+				<div class="kit-panel">
+					<span class="kit-label">Sizes and icons</span>
+					<div class="kit-row">
+						<button type="button" class="btn btn-primary btn-sm"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg>Add</button>
+						<button type="button" class="btn btn-primary"><svg th:replace="~{fragments/icon :: icon('cart')}"></svg>View cart</button>
+						<button type="button" class="btn btn-primary btn-lg">Pay ₹458</button>
+						<button type="button" class="btn btn-secondary btn-icon" aria-label="Edit address"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg></button>
+						<button type="button" class="btn btn-ghost btn-icon btn-sm" aria-label="Remove item"><svg th:replace="~{fragments/icon :: icon('trash')}"></svg></button>
+					</div>
+				</div>
+				<div class="kit-panel">
+					<span class="kit-label">Disabled and loading</span>
+					<div class="kit-row">
+						<button type="button" class="btn btn-primary" disabled>Add ₹80 more to order</button>
+						<a class="btn btn-secondary" aria-disabled="true">Sold out</a>
+						<button type="button" class="btn btn-primary is-loading" aria-busy="true">Placing order</button>
+						<button type="button" class="btn btn-secondary is-loading" aria-busy="true">Saving</button>
+					</div>
+				</div>
+			</section>
+
+			<section class="kit-section" id="forms" aria-labelledby="forms-title">
+				<h2 id="forms-title">Form fields</h2>
+				<div class="kit-grid-2">
+					<div class="kit-panel">
+						<div class="field">
+							<label class="field-label" for="kit-name">Full name</label>
+							<input class="input" id="kit-name" name="name" type="text" autocomplete="name" value="Aditi Patil">
+						</div>
+						<div class="field">
+							<label class="field-label" for="kit-phone">Mobile number</label>
+							<input class="input" id="kit-phone" name="phone" type="tel" inputmode="numeric" placeholder="98765 43210" aria-describedby="kit-phone-help">
+							<p class="field-help" id="kit-phone-help">Your rider calls this number if they can't find you.</p>
+						</div>
+						<div class="field has-error">
+							<label class="field-label" for="kit-pincode">Pincode</label>
+							<input class="input" id="kit-pincode" name="pincode" type="text" inputmode="numeric" value="41600" aria-invalid="true" aria-describedby="kit-pincode-error">
+							<p class="field-error" id="kit-pincode-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg>Enter a 6-digit pincode.</p>
+						</div>
+						<div class="field">
+							<label class="field-label" for="kit-email">Email</label>
+							<input class="input" id="kit-email" name="email" type="email" value="customer@zaika.test" disabled>
+							<p class="field-help">Contact support to change your email.</p>
+						</div>
+					</div>
+					<div class="kit-panel">
+						<div class="field">
+							<label class="field-label" for="kit-search">Search</label>
+							<div class="input-group">
+								<svg th:replace="~{fragments/icon :: icon('search')}"></svg>
+								<input class="input" id="kit-search" name="q" type="search" placeholder="Search for misal, biryani, cafés">
+							</div>
+						</div>
+						<div class="field">
+							<label class="field-label" for="kit-label">Save address as</label>
+							<div class="select-wrap">
+								<select class="select" id="kit-label" name="label">
+									<option>Home</option>
+									<option>Work</option>
+									<option>Other</option>
+								</select>
+							</div>
+						</div>
+						<div class="field">
+							<label class="field-label" for="kit-note">Cooking instructions <span class="optional">(optional)</span></label>
+							<textarea class="textarea" id="kit-note" name="note" placeholder="Less spicy, no onions" aria-describedby="kit-note-help"></textarea>
+							<p class="field-help" id="kit-note-help">The kitchen will try their best to follow it.</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="kit-section" id="choices" aria-labelledby="choices-title">
+				<h2 id="choices-title">Checkbox, radio, switch</h2>
+				<div class="kit-grid-2">
+					<fieldset class="kit-panel">
+						<legend class="kit-label">Filters</legend>
+						<label class="check"><input class="checkbox" type="checkbox" name="pureVeg" checked><span class="check-text">Pure veg</span></label>
+						<label class="check"><input class="checkbox" type="checkbox" name="rating4"><span class="check-text">Rated 4.0+</span></label>
+						<label class="check"><input class="checkbox" type="checkbox" name="freeDelivery" disabled><span class="check-text">Free delivery <small>Not available in your area yet</small></span></label>
+					</fieldset>
+					<fieldset class="kit-panel">
+						<legend class="kit-label">Payment</legend>
+						<label class="check"><input class="radio" type="radio" name="payment" value="ONLINE" checked><span class="check-text">Pay online <small>UPI, cards and netbanking</small></span></label>
+						<label class="check"><input class="radio" type="radio" name="payment" value="COD"><span class="check-text">Cash on delivery</span></label>
+						<label class="check"><input class="radio" type="radio" name="payment" value="WALLET" disabled><span class="check-text">Zaika wallet <small>Balance ₹0.00</small></span></label>
+					</fieldset>
+				</div>
+				<div class="kit-panel">
+					<span class="kit-label">Switches</span>
+					<label class="check"><input class="switch" type="checkbox" role="switch" name="accepting" checked><span class="check-text">Accepting orders</span></label>
+					<label class="check"><input class="switch" type="checkbox" role="switch" name="online"><span class="check-text">Go online for deliveries</span></label>
+					<label class="check"><input class="switch" type="checkbox" role="switch" name="locked" disabled><span class="check-text">Auto-accept orders <small>Turned on by the admin team only</small></span></label>
+				</div>
+			</section>
+
+			<section class="kit-section" id="cards" aria-labelledby="cards-title">
+				<h2 id="cards-title">Cards</h2>
+				<div class="kit-grid-2">
+					<article class="card">
+						<div class="card-body">
+							<h3 class="card-title">Order ZK-26-000123</h3>
+							<p class="card-subtitle">Delivered in 32 min · 3 items</p>
+						</div>
+						<div class="card-footer">
+							<span class="price">₹458.00</span>
+							<a class="btn btn-secondary btn-sm" href="#cards">Reorder</a>
+						</div>
+					</article>
+					<article class="card card-interactive">
+						<div class="card-body">
+							<h3 class="card-title">Home</h3>
+							<p class="card-subtitle">Flat 4, Shivneri Apartments, Rajarampuri 5th Lane, Kolhapur 416008</p>
+						</div>
+					</article>
+				</div>
+			</section>
+
+			<section class="kit-section" id="restaurant-cards" aria-labelledby="restaurant-cards-title">
+				<h2 id="restaurant-cards-title">Restaurant cards</h2>
+				<div class="restaurant-grid">
+					<article class="restaurant-card">
+						<div class="restaurant-card-media">
+							<img th:src="@{/img/placeholder-food.svg}" src="/img/placeholder-food.svg" alt="" width="400" height="250" loading="lazy">
+							<span class="restaurant-card-offer">Free delivery above ₹499</span>
+							<button type="button" class="restaurant-card-fav" aria-pressed="true"><svg th:replace="~{fragments/icon :: icon('heart')}"></svg><span class="visually-hidden">Remove from favourites</span></button>
+						</div>
+						<div class="restaurant-card-body">
+							<div class="restaurant-card-head">
+								<h3 class="restaurant-card-name"><a class="restaurant-card-link" href="#restaurant-cards">Panchganga Misal House</a></h3>
+								<span class="rating-pill"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>4.5<span class="visually-hidden"> out of 5</span></span>
+							</div>
+							<p class="restaurant-card-cuisines">Maharashtrian, Street food</p>
+							<p class="restaurant-card-facts">
+								<span><svg th:replace="~{fragments/icon :: icon('clock')}"></svg>25-30 min</span>
+								<span>₹300 for two</span>
+								<span class="badge badge-success"><svg th:replace="~{fragments/icon :: icon('leaf')}"></svg>Pure veg</span>
+							</p>
+						</div>
+					</article>
+					<article class="restaurant-card">
+						<div class="restaurant-card-media">
+							<img th:src="@{/img/placeholder-food.svg}" src="/img/placeholder-food.svg" alt="" width="400" height="250" loading="lazy">
+							<button type="button" class="restaurant-card-fav" aria-pressed="false"><svg th:replace="~{fragments/icon :: icon('heart')}"></svg><span class="visually-hidden">Add to favourites</span></button>
+						</div>
+						<div class="restaurant-card-body">
+							<div class="restaurant-card-head">
+								<h3 class="restaurant-card-name"><a class="restaurant-card-link" href="#restaurant-cards">Tambda Rassa Junction</a></h3>
+								<span class="rating-pill is-new">New</span>
+							</div>
+							<p class="restaurant-card-cuisines">Kolhapuri, Non-veg thalis, Biryani</p>
+							<p class="restaurant-card-facts">
+								<span><svg th:replace="~{fragments/icon :: icon('clock')}"></svg>35-40 min</span>
+								<span>₹550 for two</span>
+							</p>
+						</div>
+					</article>
+					<article class="restaurant-card is-closed">
+						<div class="restaurant-card-media">
+							<img th:src="@{/img/placeholder-food.svg}" src="/img/placeholder-food.svg" alt="" width="400" height="250" loading="lazy">
+							<span class="restaurant-card-closed">Closed now · Opens at 6:00 PM</span>
+						</div>
+						<div class="restaurant-card-body">
+							<div class="restaurant-card-head">
+								<h3 class="restaurant-card-name"><a class="restaurant-card-link" href="#restaurant-cards">Rankala Night Kitchen</a></h3>
+								<span class="rating-pill"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>4.1<span class="visually-hidden"> out of 5</span></span>
+							</div>
+							<p class="restaurant-card-cuisines">North Indian, Chinese</p>
+							<p class="restaurant-card-facts">
+								<span><svg th:replace="~{fragments/icon :: icon('clock')}"></svg>40-45 min</span>
+								<span>₹400 for two</span>
+							</p>
+						</div>
+					</article>
+				</div>
+			</section>
+
+			<section class="kit-section" id="menu-items" aria-labelledby="menu-items-title">
+				<h2 id="menu-items-title">Menu items</h2>
+				<div class="kit-panel menu-list">
+					<article class="menu-item">
+						<div class="menu-item-info">
+							<div class="menu-item-tags">
+								<span class="veg-mark" role="img" aria-label="Vegetarian"></span>
+								<span class="badge badge-bestseller"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>Bestseller</span>
+							</div>
+							<h3 class="menu-item-name">Kolhapuri Misal Pav</h3>
+							<p class="menu-item-price price">₹120</p>
+							<p class="menu-item-desc">Fiery sprouted-moth curry topped with farsan, onion and lemon, with two soft pavs on the side.</p>
+						</div>
+						<div class="menu-item-media">
+							<img th:src="@{/img/placeholder-food.svg}" src="/img/placeholder-food.svg" alt="Kolhapuri Misal Pav" width="136" height="136" loading="lazy">
+							<div class="menu-item-action"><button type="button" class="btn btn-add">ADD<span class="visually-hidden"> Kolhapuri Misal Pav to cart</span></button></div>
+						</div>
+					</article>
+					<article class="menu-item">
+						<div class="menu-item-info">
+							<div class="menu-item-tags">
+								<span class="veg-mark non-veg" role="img" aria-label="Non-vegetarian"></span>
+								<span class="badge badge-danger">Very spicy</span>
+							</div>
+							<h3 class="menu-item-name">Mutton Tambda Rassa Thali</h3>
+							<p class="menu-item-price price">₹380</p>
+							<p class="menu-item-desc">Slow-cooked mutton, red and white rassa, bhakri, rice and kanda-lemon salad. Serves one hungry person.</p>
+						</div>
+						<div class="menu-item-media">
+							<img th:src="@{/img/placeholder-food.svg}" src="/img/placeholder-food.svg" alt="Mutton Tambda Rassa Thali" width="136" height="136" loading="lazy">
+							<div class="menu-item-action">
+								<div class="qty" role="group" aria-label="Quantity of Mutton Tambda Rassa Thali">
+									<button type="button" class="qty-btn" aria-label="Remove one"><svg th:replace="~{fragments/icon :: icon('minus')}"></svg></button>
+									<span class="qty-value" aria-live="polite">2</span>
+									<button type="button" class="qty-btn" aria-label="Add one"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg></button>
+								</div>
+							</div>
+						</div>
+					</article>
+					<article class="menu-item is-unavailable">
+						<div class="menu-item-info">
+							<div class="menu-item-tags">
+								<span class="veg-mark" role="img" aria-label="Vegetarian"></span>
+								<span class="badge">Sold out today</span>
+							</div>
+							<h3 class="menu-item-name">Pandhra Rassa Bowl</h3>
+							<p class="menu-item-price price">₹160</p>
+							<p class="menu-item-desc">Mild coconut and cashew broth, best with jeera rice.</p>
+						</div>
+						<div class="menu-item-media">
+							<img th:src="@{/img/placeholder-food.svg}" src="/img/placeholder-food.svg" alt="Pandhra Rassa Bowl" width="136" height="136" loading="lazy">
+							<div class="menu-item-action"><button type="button" class="btn btn-add" disabled>ADD<span class="visually-hidden"> Pandhra Rassa Bowl, sold out</span></button></div>
+						</div>
+					</article>
+				</div>
+			</section>
+
+			<section class="kit-section" id="badges" aria-labelledby="badges-title">
+				<h2 id="badges-title">Badges and chips</h2>
+				<div class="kit-panel">
+					<span class="kit-label">Badges</span>
+					<div class="kit-row">
+						<span class="badge">Pending</span>
+						<span class="badge badge-primary">20% off up to ₹100</span>
+						<span class="badge badge-success badge-dot">Delivered</span>
+						<span class="badge badge-warning badge-dot">Preparing</span>
+						<span class="badge badge-danger badge-dot">Cancelled</span>
+						<span class="badge badge-bestseller"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>Bestseller</span>
+					</div>
+				</div>
+				<div class="kit-panel">
+					<span class="kit-label">Filter chips</span>
+					<div class="chip-row">
+						<button type="button" class="chip"><svg th:replace="~{fragments/icon :: icon('filter')}"></svg>Filters</button>
+						<button type="button" class="chip" aria-pressed="true"><svg th:replace="~{fragments/icon :: icon('leaf')}"></svg>Pure veg</button>
+						<button type="button" class="chip" aria-pressed="false">Rating 4.0+</button>
+						<button type="button" class="chip" aria-pressed="false">Under 30 min</button>
+						<a class="chip is-active" href="#badges">Biryani<svg th:replace="~{fragments/icon :: icon('x')}"></svg><span class="visually-hidden"> (remove filter)</span></a>
+						<button type="button" class="chip" disabled>Offers</button>
+					</div>
+				</div>
+			</section>
+
+			<section class="kit-section" id="ratings" aria-labelledby="ratings-title">
+				<h2 id="ratings-title">Ratings and veg marks</h2>
+				<div class="kit-panel kit-row">
+					<span class="rating-pill"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>4.3<span class="visually-hidden"> out of 5</span></span>
+					<span class="rating-count">1,240 ratings</span>
+					<span class="rating-pill is-new">New</span>
+					<span class="stars" role="img" aria-label="Rated 4 out of 5">
+						<svg class="icon is-on" aria-hidden="true"><use th:href="@{/img/icons.svg} + '#star-filled'" href="/img/icons.svg#star-filled"></use></svg>
+						<svg class="icon is-on" aria-hidden="true"><use th:href="@{/img/icons.svg} + '#star-filled'" href="/img/icons.svg#star-filled"></use></svg>
+						<svg class="icon is-on" aria-hidden="true"><use th:href="@{/img/icons.svg} + '#star-filled'" href="/img/icons.svg#star-filled"></use></svg>
+						<svg class="icon is-on" aria-hidden="true"><use th:href="@{/img/icons.svg} + '#star-filled'" href="/img/icons.svg#star-filled"></use></svg>
+						<svg class="icon" aria-hidden="true"><use th:href="@{/img/icons.svg} + '#star'" href="/img/icons.svg#star"></use></svg>
+					</span>
+					<span><span class="veg-mark" aria-hidden="true"></span> Veg</span>
+					<span><span class="veg-mark non-veg" aria-hidden="true"></span> Non-veg</span>
+				</div>
+			</section>
+
+			<section class="kit-section" id="tabs" aria-labelledby="tabs-title">
+				<h2 id="tabs-title">Tabs</h2>
+				<nav class="tabs" aria-label="Order filters">
+					<a class="tab" href="#tabs" aria-current="page">Active <span class="badge badge-primary">3</span></a>
+					<a class="tab" href="#tabs">Delivered</a>
+					<a class="tab" href="#tabs">Cancelled</a>
+					<a class="tab" href="#tabs">All orders</a>
+				</nav>
+			</section>
+
+			<section class="kit-section" id="stepper" aria-labelledby="stepper-title">
+				<h2 id="stepper-title">Order-status stepper</h2>
+				<div class="kit-panel">
+					<ol class="stepper stepper-horizontal" aria-label="Order progress">
+						<li class="step is-done"><span class="step-marker"><svg th:replace="~{fragments/icon :: icon('check')}"></svg></span><span class="step-label">Placed</span><span class="step-time">7:02 PM</span></li>
+						<li class="step is-done"><span class="step-marker"><svg th:replace="~{fragments/icon :: icon('check')}"></svg></span><span class="step-label">Accepted</span><span class="step-time">7:04 PM</span></li>
+						<li class="step is-current" aria-current="step"><span class="step-marker"><svg th:replace="~{fragments/icon :: icon('store')}"></svg></span><span class="step-label">Preparing</span><span class="step-time">Ready in about 12 min</span></li>
+						<li class="step"><span class="step-marker"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span><span class="step-label">On the way</span></li>
+						<li class="step"><span class="step-marker"><svg th:replace="~{fragments/icon :: icon('location')}"></svg></span><span class="step-label">Delivered</span></li>
+					</ol>
+				</div>
+				<div class="kit-panel">
+					<span class="kit-label">Vertical, with a cancelled order</span>
+					<ol class="stepper" aria-label="Order progress">
+						<li class="step is-done"><span class="step-marker"><svg th:replace="~{fragments/icon :: icon('check')}"></svg></span><span class="step-label">Placed</span><span class="step-time">6:41 PM</span></li>
+						<li class="step is-failed" aria-current="step"><span class="step-marker"><svg th:replace="~{fragments/icon :: icon('x')}"></svg></span><span class="step-label">Cancelled by restaurant</span><span class="step-time">Kitchen closing early. Refund of ₹312.00 started.</span></li>
+					</ol>
+				</div>
+			</section>
+
+			<section class="kit-section" id="tables" aria-labelledby="tables-title">
+				<h2 id="tables-title">Tables</h2>
+				<div class="table-wrap">
+					<table class="table">
+						<caption>Today's orders</caption>
+						<thead>
+							<tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Status</th><th scope="col" class="num">Items</th><th scope="col" class="num">Total</th></tr>
+						</thead>
+						<tbody>
+							<tr><th scope="row"><a href="#tables">ZK-26-000123</a></th><td>Aditi P.</td><td><span class="badge badge-warning badge-dot">Preparing</span></td><td class="num">3</td><td class="num">₹458.00</td></tr>
+							<tr><th scope="row"><a href="#tables">ZK-26-000122</a></th><td>Rohan K.</td><td><span class="badge badge-success badge-dot">Delivered</span></td><td class="num">1</td><td class="num">₹1,240.50</td></tr>
+							<tr><th scope="row"><a href="#tables">ZK-26-000121</a></th><td>Sneha J.</td><td><span class="badge badge-danger badge-dot">Cancelled</span></td><td class="num">2</td><td class="num">₹312.00</td></tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="kit-section" id="pagination" aria-labelledby="pagination-title">
+				<h2 id="pagination-title">Pagination</h2>
+				<nav class="pagination" aria-label="Pages">
+					<ul>
+						<li><span class="page-link page-prev is-disabled" aria-disabled="true"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg><span class="visually-hidden">Previous page</span></span></li>
+						<li><a class="page-link" href="#pagination" aria-current="page">1</a></li>
+						<li><a class="page-link" href="#pagination">2</a></li>
+						<li><a class="page-link" href="#pagination">3</a></li>
+						<li><span class="page-gap" aria-hidden="true">…</span></li>
+						<li><a class="page-link" href="#pagination">12</a></li>
+						<li><a class="page-link" href="#pagination"><span class="visually-hidden">Next page</span><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></a></li>
+					</ul>
+				</nav>
+			</section>
+
+			<section class="kit-section" id="feedback" aria-labelledby="feedback-title">
+				<h2 id="feedback-title">Flash and toasts</h2>
+				<div class="kit-grid-2">
+					<div class="kit-row">
+						<div class="alert alert-success" role="status"><svg th:replace="~{fragments/icon :: icon('check')}"></svg><p><strong>Address saved.</strong> We'll deliver to Home by default.</p></div>
+						<div class="alert alert-error" role="alert"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><p><strong>Couldn't apply ZAIKA50.</strong> Add ₹80 more to use this coupon.</p></div>
+						<div class="alert alert-warning" role="status"><svg th:replace="~{fragments/icon :: icon('clock')}"></svg><p>Heavy rain in Kolhapur. Deliveries may take 10 min longer.</p></div>
+						<div class="alert alert-info" role="status"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg><p>Free delivery on orders above ₹499.</p></div>
+					</div>
+					<div class="kit-toasts" aria-live="polite">
+						<div class="toast toast-success"><svg th:replace="~{fragments/icon :: icon('check')}"></svg><div class="toast-body"><span class="toast-title">Added to cart</span><span class="toast-text">Kolhapuri Misal Pav × 1</span></div></div>
+						<div class="toast toast-error"><svg th:replace="~{fragments/icon :: icon('x')}"></svg><div class="toast-body"><span class="toast-title">Payment failed</span><span class="toast-text">No money was taken. Try again or pick cash on delivery.</span></div></div>
+						<div class="toast toast-warning"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><div class="toast-body"><span class="toast-title">Restaurant closes soon</span><span class="toast-text">Last orders at 10:30 PM.</span></div></div>
+						<div class="toast"><svg th:replace="~{fragments/icon :: icon('bell')}"></svg><div class="toast-body"><span class="toast-title">Order accepted</span><span class="toast-text">Panchganga Misal House is preparing your food.</span></div></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="kit-section" id="modal" aria-labelledby="modal-title">
+				<h2 id="modal-title">Modal</h2>
+				<p>Native <code>&lt;dialog&gt;</code>, opened with <code>commandfor</code> (no JavaScript). Esc and the close buttons dismiss it; it becomes a bottom sheet on phones.</p>
+				<div class="kit-row">
+					<button type="button" class="btn btn-secondary" commandfor="kit-dialog" command="show-modal">Open the modal</button>
+				</div>
+				<dialog class="modal" id="kit-dialog" aria-labelledby="kit-dialog-title">
+					<div class="modal-header">
+						<h3 class="modal-title" id="kit-dialog-title">Start a new cart?</h3>
+						<button type="button" class="modal-close" commandfor="kit-dialog" command="close"><svg th:replace="~{fragments/icon :: icon('x')}"></svg><span class="visually-hidden">Close</span></button>
+					</div>
+					<div class="modal-body">
+						<p>Your cart has dishes from Panchganga Misal House. Adding this dish will clear them.</p>
+					</div>
+					<form class="modal-footer" method="dialog">
+						<button class="btn btn-secondary" value="keep">Keep current cart</button>
+						<button class="btn btn-primary" value="replace">Start new cart</button>
+					</form>
+				</dialog>
+			</section>
+
+			<section class="kit-section" id="empty" aria-labelledby="empty-title">
+				<h2 id="empty-title">Empty states</h2>
+				<div class="kit-grid-2">
+					<div class="kit-panel empty-state">
+						<span class="empty-state-icon"><svg th:replace="~{fragments/icon :: icon('cart')}"></svg></span>
+						<h3 class="empty-state-title">Your cart is empty</h3>
+						<p class="empty-state-text">Good food is a few taps away. Start with something from a kitchen near you.</p>
+						<a class="btn btn-primary" href="#restaurant-cards">Browse restaurants</a>
+					</div>
+					<div class="kit-panel empty-state">
+						<span class="empty-state-icon"><svg th:replace="~{fragments/icon :: icon('search')}"></svg></span>
+						<h3 class="empty-state-title">No matches for “pizza”</h3>
+						<p class="empty-state-text">Try a different dish or cuisine, or clear your filters.</p>
+						<a class="btn btn-secondary" href="#badges">Clear filters</a>
+					</div>
+				</div>
+			</section>
+
+			<section class="kit-section" id="skeletons" aria-labelledby="skeletons-title">
+				<h2 id="skeletons-title">Skeleton loaders</h2>
+				<div class="restaurant-grid" aria-busy="true" aria-label="Loading restaurants">
+					<div class="kit-skeleton-card" th:each="i : ${#numbers.sequence(1, 3)}">
+						<span class="skeleton skeleton-media"></span>
+						<span class="skeleton skeleton-title"></span>
+						<span class="skeleton skeleton-text skeleton-w-60"></span>
+						<span class="skeleton skeleton-text skeleton-w-40"></span>
+					</div>
+				</div>
+			</section>
+
+			<section class="kit-section" id="cart-bar" aria-labelledby="cart-bar-title">
+				<h2 id="cart-bar-title">Cart bar</h2>
+				<p>Pinned to the bottom of the screen on phones whenever the cart has items; hidden from 960px, where the header cart takes over. Resize the window to see it.</p>
+			</section>
+		</main>
+	</div>
+
+	<a class="cart-bar" href="#cart-bar">
+		<span class="cart-bar-summary"><span>2 items · ₹458</span><small>From Panchganga Misal House</small></span>
+		<span class="cart-bar-cta">View cart<svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></span>
+	</a>
+</body>
+</html>

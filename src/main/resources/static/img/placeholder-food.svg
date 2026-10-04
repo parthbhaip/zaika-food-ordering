@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" preserveAspectRatio="xMidYMid slice">
+	<!-- Fallback for restaurant and dish photos. Artwork sits in the middle so 16:10 and 1:1 crops both keep it. -->
+	<rect width="400" height="400" fill="#FFF1EB"/>
+	<g fill="none" stroke="#D1440F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.55">
+		<path d="M128 222h144"/>
+		<path d="M144 216c0-31 25-56 56-56s56 25 56 56"/>
+		<circle cx="200" cy="152" r="6"/>
+		<path d="M168 196c5-10 13-16 23-18"/>
+	</g>
+	<path d="M178 140c-4-6 4-10 0-17M200 132c-4-6 4-10 0-17M222 140c-4-6 4-10 0-17" fill="none" stroke="#F2A516" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+</svg>

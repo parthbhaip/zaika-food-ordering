@@ -5,6 +5,7 @@
 	--color-primary-hover: #B23A0C;
 	--color-primary-tint: #FFF1EB;
 	--color-accent: #F2A516;
+	--color-link: var(--color-primary-hover); /* text links; #D1440F is only 4.36:1 on the page background */
 
 	/* Text and lines */
 	--color-ink: #1C1C22;
@@ -24,6 +25,21 @@
 	--color-veg: var(--color-success);
 	--color-non-veg: var(--color-danger);
 
+	/* Derived tints and helpers (backgrounds behind status text, skeletons, overlays) */
+	--color-success-tint: #EAF6EE;
+	--color-danger-tint: #FCEDEC;
+	--color-danger-hover: #93201A;
+	--color-warning-tint: #FFF5E1;
+	--color-warning-ink: #8A5200; /* warning text on light backgrounds; #B26A00 is below AA for small text */
+	--color-accent-tint: #FEF3DC;
+	--color-surface-muted: #F4F1EC;
+	--color-line-strong: #D8D2CA;
+	--color-input-border: #8E8A93; /* 3:1 against white for form control outlines */
+	--color-star: var(--color-warning); /* filled review stars; the accent is 2.07:1 on white, below 3:1 for graphics */
+	--color-disabled-bg: #EFEBE6;
+	--color-disabled-text: #9A97A0;
+	--color-overlay: rgba(28, 28, 34, 0.48);
+
 	/* Shape */
 	--radius-sm: 8px;
 	--radius-md: 12px;
@@ -34,7 +50,7 @@
 	--shadow-sm: 0 1px 2px rgba(28, 28, 34, 0.06);
 	--shadow-md: 0 1px 2px rgba(28, 28, 34, 0.05), 0 6px 16px rgba(28, 28, 34, 0.06);
 	--shadow-lg: 0 2px 4px rgba(28, 28, 34, 0.05), 0 16px 40px rgba(28, 28, 34, 0.10);
-	--focus-ring: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-primary);
+	--focus-outline: 2px solid var(--color-primary); /* an outline, so component shadows cannot hide it and forced-colors keeps it */
 
 	/* Spacing, 4px scale */
 	--space-1: 4px;
@@ -63,7 +79,13 @@
 	--weight-bold: 700;
 	--weight-extrabold: 800;
 
-	/* Layout */
+	/* Motion */
+	--ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+	--duration-fast: 0.15s;
+	--duration-base: 0.25s;
+
+	/* Layout. Breakpoints (media queries cannot read variables): 640 / 960 / 1200px */
 	--content-max: 1200px;
 	--gutter: 16px;
+	--header-height: 64px;
 }

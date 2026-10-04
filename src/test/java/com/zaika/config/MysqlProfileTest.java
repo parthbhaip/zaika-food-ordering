@@ -21,6 +21,7 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
  * The mysql profile takes the database, SMTP and seed settings from environment variables. Here the variables
@@ -77,6 +78,15 @@ class MysqlProfileTest {
 		assertThat(env.getProperty("spring.h2.console.enabled", Boolean.class)).isFalse();
 		assertThat(context.getBeansOfType(ServletRegistrationBean.class).values())
 			.noneSatisfy(registration -> assertThat(registration.getUrlMappings()).contains("/h2-console/*"));
+	}
+
+	@Test
+	void devOnlyUiKitIsNotRegistered() {
+		List<String> patterns = context.getBeansOfType(RequestMappingHandlerMapping.class).values().stream()
+			.flatMap(mapping -> mapping.getHandlerMethods().keySet().stream())
+			.flatMap(info -> info.getPatternValues().stream())
+			.toList();
+		assertThat(patterns).isNotEmpty().noneMatch(pattern -> pattern.startsWith("/dev"));
 	}
 
 	@Test

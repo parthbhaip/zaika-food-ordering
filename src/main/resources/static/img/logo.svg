@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 40" width="128" height="40" role="img" aria-labelledby="zaika-logo-title">
+	<title id="zaika-logo-title">Zaika</title>
+	<!-- Mark: a steaming bowl on a rounded tile. Wordmark: hand-drawn geometric strokes (no font needed). -->
+	<rect width="40" height="40" rx="11" fill="#D1440F"/>
+	<path d="M8.5 20.5h23a11.5 11.5 0 0 1-23 0z" fill="#FFFFFF"/>
+	<path d="M8.5 20.5h23" stroke="#F2A516" stroke-width="2.5" stroke-linecap="round"/>
+	<path d="M15 15.5c-1.6-2 1.6-3.5 0-6.5M20 15.5c-1.6-2 1.6-3.5 0-6.5M25 15.5c-1.6-2 1.6-3.5 0-6.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"/>
+	<g fill="none" stroke="#1C1C22" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+		<path d="M50.5 9.5h13l-13 20h13.5"/>
+		<circle cx="75" cy="23.5" r="6"/>
+		<path d="M81 17.5v12M89 18v11.5M96 8.5v21M106 17.5l-8 6.5M100.5 22.5l6 7"/>
+		<circle cx="116" cy="23.5" r="6"/>
+		<path d="M122 17.5v12"/>
+	</g>
+	<circle cx="89" cy="11" r="2.6" fill="#D1440F"/>
+</svg>

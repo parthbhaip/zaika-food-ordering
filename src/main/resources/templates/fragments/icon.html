@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Decorative icon from the sprite: th:replace="~{fragments/icon :: icon('cart')}". Pair it with visible or
+     visually-hidden text; the icon itself is hidden from screen readers. */-->
+<svg th:fragment="icon(name)" class="icon" aria-hidden="true" focusable="false"><use th:href="@{/img/icons.svg} + '#' + ${name}" href="/img/icons.svg#cart"></use></svg>
+</body>
+</html>
