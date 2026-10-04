@@ -8,6 +8,7 @@ import java.time.Duration;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +79,19 @@ class BaseEntityTest {
 		assertThat(first).isNotSameAs(second).isEqualTo(second).hasSameHashCodeAs(second);
 		assertThat(first).isNotEqualTo(other);
 		assertThat(new AuditProbe("Vada pav")).isNotEqualTo(new AuditProbe("Vada pav"));
+	}
+
+	@Test
+	void comparingWithADetachedProxyDoesNotLoadIt() {
+		Long id = persist("Kolhapuri bhel");
+		AuditProbe proxy = tx.execute(status -> em.getReference(AuditProbe.class, id));
+		AuditProbe loaded = load(id);
+		AuditProbe other = load(persist("Sukka mutton"));
+
+		assertThat(Hibernate.isInitialized(proxy)).isFalse();
+		assertThat(loaded.equals(proxy)).isTrue();
+		assertThat(other.equals(proxy)).isFalse();
+		assertThat(Hibernate.isInitialized(proxy)).isFalse();
 	}
 
 	private Long persist(String name) {

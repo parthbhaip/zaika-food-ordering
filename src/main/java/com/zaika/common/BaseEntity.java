@@ -10,7 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Version;
 
-import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -56,13 +56,17 @@ public abstract class BaseEntity {
 		return version;
 	}
 
-	/** Same entity type and same database id. Unsaved entities are only equal to themselves. Proxy-safe. */
+	/**
+	 * Same entity type and same database id. Unsaved entities are only equal to themselves. Comparing against an
+	 * uninitialized proxy (e.g. a detached {@code getReference}) does not load it: the proxy's mapped class and its
+	 * id are both known without a session ({@code Hibernate.getClass} and {@code getClassLazy} both need one).
+	 */
 	@Override
 	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}
-		if (!(other instanceof BaseEntity that) || Hibernate.getClass(this) != Hibernate.getClass(that)) {
+		if (!(other instanceof BaseEntity that) || entityClass(this) != entityClass(that)) {
 			return false;
 		}
 		return getId() != null && getId().equals(that.getId());
@@ -71,7 +75,13 @@ public abstract class BaseEntity {
 	/** Constant per type so the hash does not change when the entity is saved and gets its id. */
 	@Override
 	public int hashCode() {
-		return Hibernate.getClass(this).hashCode();
+		return entityClass(this).hashCode();
+	}
+
+	private static Class<?> entityClass(Object entity) {
+		return entity instanceof HibernateProxy proxy
+				? proxy.getHibernateLazyInitializer().getPersistentClass()
+				: entity.getClass();
 	}
 
 }
