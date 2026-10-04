@@ -49,7 +49,7 @@ How this file works
   - `User` entity + migration: name, email (unique, stored lower-case), phone (10-digit Indian mobile starting 6-9), password hash, role (CUSTOMER, RESTAURANT_OWNER, DELIVERY_PARTNER, ADMIN), enabled, failed login count, locked-until.
   - Repository with case-insensitive email lookup. Tests.
 
-- [ ] T07 Web security configuration
+- [x] T07 Web security configuration
   - Public: home, listings, restaurant pages, search, static assets, uploads, placeholders, login, register, partner-with-us pages, legal pages; in the dev profile only, `/dev/**` (UI kit).
   - Protected: `/account/**`, `/checkout/**`, `/orders/**`, `/pay/**` -> CUSTOMER; `/owner/**` -> RESTAURANT_OWNER; `/partner/**` -> DELIVERY_PARTNER; `/admin/**` -> ADMIN.
   - Custom login page (email, password with show/hide, remember me), POST logout, role-based landing page after login, `UserDetailsService`, disabled users rejected, CSP and security headers from CLAUDE.md.

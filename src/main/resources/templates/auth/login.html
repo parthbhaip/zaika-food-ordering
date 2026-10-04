@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Sign in | Zaika</title></head>
+<body>
+<!--/* Spring Security handles POST /login (fields email, password, remember-me). Query flags: ?error (wrong email or
+     password), ?disabled (right password, account switched off), ?logout. The typed email comes back as the flash
+     attribute "email" after a failed attempt. */-->
+<main id="main" class="auth-page" th:with="failed=${param.error != null or param.disabled != null}">
+	<div class="container auth-layout">
+		<section class="auth-card" aria-labelledby="auth-title">
+			<header class="auth-head">
+				<h1 id="auth-title">Welcome back</h1>
+				<p class="auth-lede">Sign in to order, track your deliveries or run your kitchen.</p>
+			</header>
+
+			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.error != null}">
+				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+				<p><strong>That email and password don't match.</strong> Check both and try again.</p>
+			</div>
+			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.disabled != null}">
+				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+				<p><strong>This account is switched off.</strong> Write to <a href="mailto:support@zaika.test">support@zaika.test</a> and we'll help you get back in.</p>
+			</div>
+			<div class="alert alert-success" role="status" th:if="${param.logout != null and !failed}">
+				<svg th:replace="~{fragments/icon :: icon('check')}"></svg>
+				<p><strong>You're signed out.</strong> See you at dinner time.</p>
+			</div>
+
+			<form class="auth-form" th:action="@{/login}" action="/login" method="post">
+				<div class="field">
+					<label class="field-label" for="email">Email</label>
+					<input class="input" id="email" name="email" type="email" autocomplete="username" maxlength="254" required
+						th:value="${email}" th:aria-invalid="${failed} ? 'true'" th:aria-describedby="${failed} ? 'login-error'">
+				</div>
+				<div class="field">
+					<div class="field-label-row">
+						<label class="field-label" for="password">Password</label>
+						<a class="field-label-link" th:href="@{/forgot-password}" href="/forgot-password">Forgot password?</a>
+					</div>
+					<div class="password-input">
+						<input class="input" id="password" name="password" type="password" autocomplete="current-password" required
+							th:aria-invalid="${failed} ? 'true'">
+						<button type="button" class="password-toggle" data-password-toggle="password" aria-controls="password" hidden><span data-password-toggle-label>Show</span><span class="visually-hidden"> password</span></button>
+					</div>
+				</div>
+				<label class="check auth-remember"><input class="checkbox" type="checkbox" name="remember-me" id="remember-me"><span class="check-text">Keep me signed in <small>For 30 days on this device. Skip it on a shared computer.</small></span></label>
+				<button type="submit" class="btn btn-primary btn-lg btn-block">Sign in</button>
+			</form>
+
+			<p class="auth-switch">New to Zaika? <a th:href="@{/register}" href="/register">Create an account</a></p>
+		</section>
+
+		<aside class="auth-aside" aria-labelledby="auth-aside-title">
+			<h2 id="auth-aside-title">Cook or ride with Zaika</h2>
+			<p>Restaurant owners and delivery partners sign in here too. New to the platform? Tell us about your kitchen or your bike.</p>
+			<a class="btn btn-secondary" th:href="@{/partner-with-us}" href="/partner-with-us"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Partner with us</a>
+		</aside>
+	</div>
+</main>
+</body>
+</html>

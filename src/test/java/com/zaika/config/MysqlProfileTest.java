@@ -1,6 +1,9 @@
 package com.zaika.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.MutablePropertySources;
@@ -21,6 +25,7 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
@@ -31,7 +36,8 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  */
 @SpringBootTest(properties = { "DB_URL=jdbc:h2:mem:mysqlprofile;MODE=MySQL;DATABASE_TO_LOWER=TRUE", "DB_USER=sa",
 		"DB_PASSWORD=", "SMTP_HOST=smtp.zaika.test", "SMTP_PORT=2525", "SMTP_USERNAME=mailer", "SMTP_PASSWORD=",
-		"SMTP_AUTH=false", "SMTP_STARTTLS=false", "SEED_DEMO=false" })
+		"SMTP_AUTH=false", "SMTP_STARTTLS=false", "SEED_DEMO=false", "REMEMBER_ME_KEY=mysql-profile-test-key" })
+@AutoConfigureMockMvc
 @ActiveProfiles("mysql")
 class MysqlProfileTest {
 
@@ -42,6 +48,9 @@ class MysqlProfileTest {
 
 	@Autowired
 	ApplicationContext context;
+
+	@Autowired
+	MockMvc mvc;
 
 	@Test
 	void databaseCredentialsComeFromEnvironmentVariables() {
@@ -87,6 +96,13 @@ class MysqlProfileTest {
 			.flatMap(info -> info.getPatternValues().stream())
 			.toList();
 		assertThat(patterns).isNotEmpty().noneMatch(pattern -> pattern.startsWith("/dev"));
+	}
+
+	@Test
+	void devToolsStayBehindTheLoginInTheMysqlProfile() throws Exception {
+		mvc.perform(get("/dev/ui-kit")).andExpect(status().isFound()).andExpect(redirectedUrl("/login"));
+		mvc.perform(get("/h2-console/")).andExpect(status().isFound()).andExpect(redirectedUrl("/login"));
+		assertThat(env.getProperty("app.remember-me-key")).isEqualTo("mysql-profile-test-key");
 	}
 
 	@Test

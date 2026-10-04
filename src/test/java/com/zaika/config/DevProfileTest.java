@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -21,12 +23,12 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.zaika.notification.LoggingMailSender;
+import com.zaika.security.SecurityConfig;
 
 /**
  * The dev profile boots with its own settings. The datasource is swapped for an in-memory one so the test
@@ -73,7 +75,6 @@ class DevProfileTest {
 	}
 
 	@Test
-	@WithMockUser
 	void uiKitRendersEveryComponentAndIcon() throws Exception {
 		MvcResult result = mvc.perform(get("/dev/ui-kit"))
 			.andExpect(status().isOk())
@@ -109,6 +110,22 @@ class DevProfileTest {
 		assertThat(html).contains("class=\"site-header\"", "class=\"site-footer\"", "id=\"main\"");
 		// CSP-ready: scripts only from files (the layout loads htmx and two small scripts), no inline event handlers
 		assertThat(html).doesNotContainPattern("<script(?![^>]*\\ssrc=)").doesNotContainPattern(" on[a-z]+=");
+	}
+
+	@Test
+	void h2ConsoleIsOpenInDevWithRelaxedFramingOnlyThere() throws Exception {
+		MvcResult console = mvc.perform(get("/h2-console/")).andReturn();
+		assertThat(console.getResponse().getStatus()).as("no login redirect or denial").isNotIn(302, 401, 403);
+		assertThat(console.getResponse().getHeader("X-Frame-Options")).isEqualTo("SAMEORIGIN");
+		assertThat(console.getResponse().getHeader("Content-Security-Policy")).isEqualTo(SecurityConfig.H2_CONSOLE_POLICY);
+		// the console posts its own forms without our CSRF token
+		assertThat(mvc.perform(post("/h2-console/login.do")).andReturn().getResponse().getStatus()).isNotIn(302, 401, 403);
+
+		// every other URL keeps the strict policy, including the dev UI kit
+		mvc.perform(get("/dev/ui-kit"))
+			.andExpect(status().isOk())
+			.andExpect(header().string("X-Frame-Options", "DENY"))
+			.andExpect(header().string("Content-Security-Policy", SecurityConfig.CONTENT_SECURITY_POLICY));
 	}
 
 }
