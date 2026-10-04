@@ -45,7 +45,7 @@ How this file works
 
 ## Phase 1 - Accounts and security
 
-- [ ] T06 User model
+- [x] T06 User model
   - `User` entity + migration: name, email (unique, stored lower-case), phone (10-digit Indian mobile starting 6-9), password hash, role (CUSTOMER, RESTAURANT_OWNER, DELIVERY_PARTNER, ADMIN), enabled, failed login count, locked-until.
   - Repository with case-insensitive email lookup. Tests.
 
