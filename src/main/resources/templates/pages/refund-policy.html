@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Cancellations and refunds | Zaika</title></head>
+<body>
+<main id="main" class="page">
+	<div class="container legal-layout">
+		<nav th:replace="~{fragments/legal-nav :: legalNav('/refund-policy')}"></nav>
+		<article class="prose">
+			<p class="eyebrow">Legal</p>
+			<h1>Cancellations and refunds</h1>
+			<p class="legal-updated">Last updated 1 October 2026</p>
+			<p>Food is cooked fresh for every order, so once a kitchen starts on yours we can't take it back. Here's exactly when you can cancel and how refunds work.</p>
+
+			<h2>Cancelling an order yourself</h2>
+			<ul>
+				<li>You can cancel from the order's tracking page while it says <strong>Placed</strong>, before the restaurant accepts it. Tell us why in a word or two; it helps the restaurant.</li>
+				<li>Once the restaurant accepts, the cancel button disappears because cooking has started. If you really need to stop an order, call us and we'll do what we can with the restaurant.</li>
+			</ul>
+
+			<h2>When the restaurant or Zaika cancels</h2>
+			<p>Sometimes a restaurant has to decline an order (an item has run out, or the kitchen is closing), or we cancel one because no rider is available. In those cases you always get a full refund, including delivery and platform fees.</p>
+
+			<h2>How refunds are paid</h2>
+			<div class="table-wrap">
+				<table class="table">
+					<caption>Refunds by situation</caption>
+					<thead>
+						<tr><th scope="col">Situation</th><th scope="col">Paid online</th><th scope="col">Cash on delivery</th></tr>
+					</thead>
+					<tbody>
+						<tr><th scope="row">You cancel before the restaurant accepts</th><td>Full refund</td><td>Nothing to pay</td></tr>
+						<tr><th scope="row">Restaurant declines or Zaika cancels</th><td>Full refund</td><td>Nothing to pay</td></tr>
+						<tr><th scope="row">Online payment fails or isn't completed in 15 minutes</th><td>Order cancelled, no charge</td><td>Not applicable</td></tr>
+						<tr><th scope="row">Missing, wrong or spilled items</th><td>Refund for the affected items</td><td>Refund for the affected items</td></tr>
+					</tbody>
+				</table>
+			</div>
+			<p>Online refunds go back to the original payment method and usually arrive in 5 to 7 working days, depending on your bank. For cash on delivery orders, item refunds are sent to a UPI ID or bank account you share with our support team.</p>
+
+			<h2>Problems with a delivered order</h2>
+			<p>If something is missing, wrong or damaged, contact us within 24 hours of delivery with your order code (like ZK-26-000123) and, if you can, a photo. We'll check with the restaurant and reply within one working day.</p>
+
+			<h2>Need help?</h2>
+			<p>Call <a href="tel:+919876543210">+91 98765 43210</a> (8:00 AM to 1:00 AM) or email <a href="mailto:support@zaika.test">support@zaika.test</a>.</p>
+		</article>
+	</div>
+</main>
+</body>
+</html>

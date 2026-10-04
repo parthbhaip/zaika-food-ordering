@@ -35,7 +35,7 @@ How this file works
   - Original SVG logo (mark + wordmark) `static/img/logo.svg` and `favicon.svg`.
   - Dev-profile-only page `/dev/ui-kit` showing every component and state. MockMvc test that it renders in dev and is 404 in other profiles.
 
-- [ ] T05 Base layout, fragments and static pages
+- [x] T05 Base layout, fragments and static pages
   - `layouts/base.html`; header (logo, city label, search box, nav, cart button with count, account menu per role, login/sign-up when anonymous); footer (about, partner links, legal links, copyright).
   - Fragments: flash/toast, form field (label/help/error), pagination, empty state, price, rating pill, veg mark, restaurant card.
   - Mobile header with a drawer (native `<dialog>` or `<details>`), skip-to-content link.

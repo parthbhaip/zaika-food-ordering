@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Terms of use | Zaika</title></head>
+<body>
+<main id="main" class="page">
+	<div class="container legal-layout">
+		<nav th:replace="~{fragments/legal-nav :: legalNav('/terms')}"></nav>
+		<article class="prose">
+			<p class="eyebrow">Legal</p>
+			<h1>Terms of use</h1>
+			<p class="legal-updated">Last updated 1 October 2026</p>
+			<p>These terms apply when you use Zaika to order food, run a restaurant or deliver orders. By creating an account or placing an order you agree to them. Please read them along with our <a th:href="@{/privacy}" href="/privacy">privacy policy</a> and <a th:href="@{/refund-policy}" href="/refund-policy">cancellation and refund policy</a>.</p>
+
+			<h2>1. What Zaika is</h2>
+			<p>Zaika is a marketplace. Independent restaurants list their menus, customers order from them, and independent delivery partners carry the orders. The restaurant prepares your food and is responsible for its quality, hygiene, allergens and labelling, including the veg and non-veg marks. Zaika runs the platform, takes payment and handles support.</p>
+
+			<h2>2. Your account</h2>
+			<ul>
+				<li>You need to be at least 18 years old, or use Zaika with a parent's permission.</li>
+				<li>Give us your real name, a working email and a 10-digit Indian mobile number so restaurants and riders can reach you about your order.</li>
+				<li>Keep your password to yourself. You're responsible for orders placed from your account. Tell us straight away if you think someone else has used it.</li>
+			</ul>
+
+			<h2>3. Orders and prices</h2>
+			<ul>
+				<li>Menu prices are set by each restaurant and can change. The price you see at checkout is the price you pay.</li>
+				<li>Your bill shows, line by line: the items, any coupon discount, 5% GST on the food after discount, a ₹5 platform fee and the restaurant's delivery fee (free on orders above ₹499).</li>
+				<li>Restaurants can decline an order, for example when an item has just run out or the kitchen is closing. If that happens you're not charged, or you get a full refund.</li>
+				<li>Coupons have their own conditions (minimum order, validity, usage limits) shown when you apply them. One coupon per order.</li>
+			</ul>
+
+			<h2>4. Payment</h2>
+			<p>You can pay online or choose cash on delivery where available. Online payments are confirmed before the restaurant sees the order; an online order that isn't paid within 15 minutes is cancelled automatically. For cash on delivery, please keep the exact amount ready if you can.</p>
+
+			<h2>5. Delivery</h2>
+			<p>Delivery times are estimates based on the restaurant's preparation time and distance; traffic and weather can change them. When your order arrives, share the 4-digit delivery code from your order page with the rider. Once the code is entered, the order counts as delivered.</p>
+
+			<h2>6. Cancellations and refunds</h2>
+			<p>You can cancel an order until the restaurant accepts it. The full rules are in our <a th:href="@{/refund-policy}" href="/refund-policy">cancellation and refund policy</a>.</p>
+
+			<h2>7. Reviews and conduct</h2>
+			<ul>
+				<li>Reviews should be honest and about your own order. We may remove reviews that are abusive, share personal details or are clearly not genuine.</li>
+				<li>Please treat restaurant staff, riders and our support team with respect. We may suspend accounts that abuse them or misuse refunds and coupons.</li>
+			</ul>
+
+			<h2>8. Restaurant and delivery partners</h2>
+			<p>Restaurants and riders also agree to the partner terms shared during onboarding, including our approval process, payout schedule and the right to pause a listing or rider account that breaks them.</p>
+
+			<h2>9. Liability</h2>
+			<p>We work hard to keep Zaika available and accurate, but we can't promise it will always be uninterrupted. To the extent the law allows, our liability for any order is limited to the amount you paid for it. Nothing in these terms limits your rights under the Consumer Protection Act, 2019.</p>
+
+			<h2>10. Changes and governing law</h2>
+			<p>We may update these terms; the date at the top shows the latest version, and we'll tell you about important changes in the app. These terms are governed by the laws of India, and the courts at Kolhapur, Maharashtra have jurisdiction.</p>
+
+			<h2>11. Contact</h2>
+			<p>Questions about these terms? Email <a href="mailto:support@zaika.test">support@zaika.test</a> or see <a th:href="@{/contact}" href="/contact">Help and support</a>.</p>
+		</article>
+	</div>
+</main>
+</body>
+</html>

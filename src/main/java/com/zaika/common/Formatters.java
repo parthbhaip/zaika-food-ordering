@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
@@ -43,9 +45,33 @@ public class Formatters {
 		return (rounded.signum() < 0 ? "-₹" : "₹") + groupIndian(plain.substring(0, dot)) + plain.substring(dot);
 	}
 
+	/**
+	 * Menu-style price: whole rupees drop the paise ({@code ₹120}, {@code ₹1,240}), anything else keeps two
+	 * decimals ({@code ₹99.50}). Bills and totals use {@link #money}.
+	 */
+	public String price(BigDecimal amount) {
+		String money = money(amount);
+		return money.endsWith(".00") ? money.substring(0, money.length() - 3) : money;
+	}
+
+	/** Average rating with one decimal, rounded half-up: {@code 4.5}. */
+	public String rating(BigDecimal average) {
+		return average == null ? "" : average.setScale(1, RoundingMode.HALF_UP).toPlainString();
+	}
+
 	/** {@code 7:05 PM}. */
 	public String time(LocalDateTime t) {
 		return t == null ? "" : TIME.format(t);
+	}
+
+	/** {@code 6:00 PM}, e.g. a restaurant's opening time. */
+	public String timeOfDay(LocalTime t) {
+		return t == null ? "" : TIME.format(t);
+	}
+
+	/** The current year on the app clock, for the footer copyright. */
+	public int year() {
+		return Year.now(clock).getValue();
 	}
 
 	/** {@code 4 Oct 2026}. */

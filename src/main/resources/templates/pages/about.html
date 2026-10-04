@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>About us | Zaika</title></head>
+<body>
+<main id="main" class="page">
+	<section class="page-hero">
+		<div class="container page-hero-inner">
+			<p class="eyebrow">About Zaika</p>
+			<h1>Kolhapur's kitchens, one tap away</h1>
+			<p class="lede">Zaika started with a simple idea: the city's best misal, tambda rassa and late-night biryani shouldn't need a free evening and a parking spot. We bring them to your door, hot.</p>
+		</div>
+	</section>
+
+	<section class="container page-section" aria-labelledby="how-title">
+		<h2 id="how-title" class="section-title">How Zaika works</h2>
+		<ol class="feature-grid steps">
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('search')}"></svg></span>
+				<h3>Pick a kitchen</h3>
+				<p>Browse restaurants near you by cuisine, rating or delivery time. Every menu shows real prices, veg marks and what's sold out today.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('store')}"></svg></span>
+				<h3>The restaurant cooks</h3>
+				<p>Your order goes straight to the kitchen. You'll see the moment it's accepted, while it's being prepared, and when it's packed.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+				<h3>A rider brings it over</h3>
+				<p>A local delivery partner picks it up and heads your way. Share the 4-digit code at the door and it's yours.</p>
+			</li>
+		</ol>
+	</section>
+
+	<section class="container page-section" aria-labelledby="values-title">
+		<h2 id="values-title" class="section-title">What we care about</h2>
+		<div class="feature-grid">
+			<div class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg></span>
+				<h3>Honest bills</h3>
+				<p>Item prices come from the restaurant. Delivery fee, platform fee and GST are listed line by line before you pay, never added later.</p>
+			</div>
+			<div class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('heart')}"></svg></span>
+				<h3>Local first</h3>
+				<p>Most of our partners are family-run kitchens from Rajarampuri to Rankala. A good review from you helps them more than any ad could.</p>
+			</div>
+			<div class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+				<h3>Fair to riders</h3>
+				<p>Delivery partners choose when they go online and see what each delivery pays before they take it.</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="container page-section">
+		<div class="cta-band">
+			<div>
+				<h2>Hungry already?</h2>
+				<p>See which kitchens are open near you right now.</p>
+			</div>
+			<div class="cta-band-actions">
+				<a class="btn btn-primary btn-lg" th:href="@{/restaurants}" href="/restaurants">Order now</a>
+				<a class="btn btn-secondary btn-lg" th:href="@{/partner-with-us}" href="/partner-with-us">Partner with us</a>
+			</div>
+		</div>
+	</section>
+</main>
+</body>
+</html>

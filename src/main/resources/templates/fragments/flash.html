@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Flash messages as toasts. Controllers set one of these flash attributes before a redirect (Post/Redirect/Get):
+       redirectAttributes.addFlashAttribute("flashSuccess", "Address saved");
+     flashSuccess, flashInfo, flashError. Success and info toasts fade after a few seconds (paused while hovered);
+     error toasts stay until dismissed (every toast has a close button, handled in js/menus.js). An htmx response adds one out of band:
+       <div hx-swap-oob="beforeend:#toasts"><div th:replace="~{fragments/flash :: toast('success', 'Added to cart')}"></div></div>
+     The stack is a polite live region, so screen readers announce toasts added later. */-->
+<div th:fragment="toasts" id="toasts" class="toast-stack" aria-live="polite">
+	<th:block th:if="${flashSuccess != null}"><div th:replace="~{fragments/flash :: toast('success', ${flashSuccess})}"></div></th:block>
+	<th:block th:if="${flashInfo != null}"><div th:replace="~{fragments/flash :: toast('info', ${flashInfo})}"></div></th:block>
+	<th:block th:if="${flashError != null}"><div th:replace="~{fragments/flash :: toast('error', ${flashError})}"></div></th:block>
+</div>
+
+<div th:fragment="toast(kind, message)" class="toast" th:classappend="${kind == 'info'} ? '' : ('toast-' + ${kind})"
+	th:role="${kind == 'error'} ? 'alert'">
+	<svg th:replace="~{fragments/icon :: icon(${kind == 'success' ? 'check' : (kind == 'error' ? 'x' : 'bell')})}"></svg>
+	<div class="toast-body"><span class="toast-title" th:text="${message}">Address saved</span></div>
+	<button th:fragment="close" type="button" class="toast-close" data-toast-close aria-label="Dismiss"><svg th:replace="~{fragments/icon :: icon('x')}"></svg></button>
+</div>
+</body>
+</html>

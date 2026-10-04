@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Side navigation shared by the legal pages; current is the page's path, e.g. '/terms'. */-->
+<nav th:fragment="legalNav(current)" class="legal-nav" aria-label="Policies">
+	<a th:href="@{/terms}" href="/terms" th:aria-current="${current == '/terms'} ? 'page'">Terms of use</a>
+	<a th:href="@{/privacy}" href="/privacy" th:aria-current="${current == '/privacy'} ? 'page'">Privacy policy</a>
+	<a th:href="@{/refund-policy}" href="/refund-policy" th:aria-current="${current == '/refund-policy'} ? 'page'">Cancellations and refunds</a>
+	<a th:href="@{/contact}" href="/contact">Questions? Contact us</a>
+</nav>
+</body>
+</html>

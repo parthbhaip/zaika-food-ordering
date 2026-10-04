@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* One restaurant in a listing grid (.restaurant-grid), from a com.zaika.catalog.RestaurantCard:
+       <th:block th:each="r : ${restaurants}"><article th:replace="~{fragments/restaurant-card :: card(${r})}"></article></th:block>
+     The name link stretches over the whole card. Closed restaurants are greyed out with their next opening time. */-->
+<article th:fragment="card(r)" class="restaurant-card" th:classappend="${r.openNow} ? '' : 'is-closed'">
+	<div class="restaurant-card-media">
+		<img th:src="@{${r.imageUrl ?: '/img/placeholder-food.svg'}}" src="/img/placeholder-food.svg" alt="" width="400" height="250" loading="lazy">
+		<span th:if="${r.openNow and r.offer != null}" class="restaurant-card-offer" th:text="${r.offer}">Free delivery above ₹499</span>
+		<span th:unless="${r.openNow}" class="restaurant-card-closed"
+			th:text="${r.opensAt != null} ? |Closed now · Opens at ${@fmt.timeOfDay(r.opensAt)}| : 'Closed now'">Closed now · Opens at 6:00 PM</span>
+	</div>
+	<div class="restaurant-card-body">
+		<div class="restaurant-card-head">
+			<h3 class="restaurant-card-name"><a class="restaurant-card-link" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/panchganga-misal-house" th:text="${r.name}">Panchganga Misal House</a></h3>
+			<span th:replace="~{fragments/ui :: rating(${r.ratingAverage}, ${r.ratingCount})}"></span>
+		</div>
+		<p class="restaurant-card-cuisines" th:text="${#strings.listJoin(r.cuisines, ', ')}">Maharashtrian, Street food</p>
+		<p class="restaurant-card-facts">
+			<span><svg th:replace="~{fragments/icon :: icon('clock')}"></svg><th:block th:text="|${r.deliveryMinutes}-${r.deliveryMinutes + 5} min|">25-30 min</th:block></span>
+			<span th:text="|${@fmt.price(r.costForTwo)} for two|">₹300 for two</span>
+			<span th:if="${r.pureVeg}" class="badge badge-success"><svg th:replace="~{fragments/icon :: icon('leaf')}"></svg>Pure veg</span>
+		</p>
+	</div>
+</article>
+</body>
+</html>

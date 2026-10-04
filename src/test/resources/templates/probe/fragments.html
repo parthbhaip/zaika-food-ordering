@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!--/* Test-only page: every shared fragment rendered inside the site layout (FragmentsTest). */-->
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Fragments | Zaika</title></head>
+<body>
+<main id="main" class="container">
+	<form id="probe-form" th:object="${form}" th:action="@{/probe/fragments}" method="post">
+		<div th:replace="~{fragments/form :: field('email', 'Email', 'email', 'We send order updates here.', 'email')}"></div>
+		<div th:replace="~{fragments/form :: field('name', 'Full name', 'text', null, 'name')}"></div>
+		<div th:replace="~{fragments/form :: field('password', 'Password', 'password', null, 'current-password')}"></div>
+	</form>
+
+	<div id="pager"><nav th:replace="~{fragments/pagination :: pagination(${page})}"></nav></div>
+	<div id="single-page"><nav th:replace="~{fragments/pagination :: pagination(${singlePage})}"></nav></div>
+
+	<div id="empty"><div th:replace="~{fragments/ui :: emptyState('cart', 'Your cart is empty', 'Good food is a few taps away.', 'Browse restaurants', '/restaurants')}"></div></div>
+	<div id="empty-no-action"><div th:replace="~{fragments/ui :: emptyState('search', 'No matches', 'Try another dish.', null, null)}"></div></div>
+	<p id="price"><span th:replace="~{fragments/ui :: price(${whole})}"></span></p>
+	<p id="price-paise"><span th:replace="~{fragments/ui :: price(${paise})}"></span></p>
+	<p id="discounted"><span th:replace="~{fragments/ui :: discountedPrice(${discounted}, ${was})}"></span></p>
+	<p id="rating"><span th:replace="~{fragments/ui :: rating(${rating}, 120)}"></span></p>
+	<p id="rating-new"><span th:replace="~{fragments/ui :: rating(null, 0)}"></span></p>
+	<p id="veg"><span th:replace="~{fragments/ui :: veg(true)}"></span></p>
+	<p id="non-veg"><span th:replace="~{fragments/ui :: veg(false)}"></span></p>
+
+	<div class="restaurant-grid">
+		<th:block th:each="r : ${restaurants}"><article th:replace="~{fragments/restaurant-card :: card(${r})}"></article></th:block>
+	</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer th:fragment="footer" class="site-footer">
+	<div class="container footer-grid">
+		<div class="footer-brand">
+			<a class="site-logo" th:href="@{/}" href="/"><img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="Zaika home" width="112" height="35" loading="lazy"></a>
+			<p>Your city's best kitchens, delivered.</p>
+			<p class="footer-note">Now delivering across Kolhapur, from Rajarampuri to Rankala.</p>
+		</div>
+		<nav class="footer-col" aria-labelledby="footer-company">
+			<h2 id="footer-company">Zaika</h2>
+			<ul>
+				<li><a th:href="@{/about}" href="/about">About us</a></li>
+				<li><a th:href="@{/restaurants}" href="/restaurants">All restaurants</a></li>
+				<li><a th:href="@{/contact}" href="/contact">Help and support</a></li>
+			</ul>
+		</nav>
+		<nav class="footer-col" aria-labelledby="footer-partners">
+			<h2 id="footer-partners">Partner with us</h2>
+			<ul>
+				<li><a th:href="@{/partner-with-us/restaurant}" href="/partner-with-us/restaurant">List your restaurant</a></li>
+				<li><a th:href="@{/partner-with-us/rider}" href="/partner-with-us/rider">Ride with Zaika</a></li>
+				<li><a th:href="@{/partner-with-us}" href="/partner-with-us">Why partner with us</a></li>
+			</ul>
+		</nav>
+		<nav class="footer-col" aria-labelledby="footer-legal">
+			<h2 id="footer-legal">Legal</h2>
+			<ul>
+				<li><a th:href="@{/terms}" href="/terms">Terms of use</a></li>
+				<li><a th:href="@{/privacy}" href="/privacy">Privacy policy</a></li>
+				<li><a th:href="@{/refund-policy}" href="/refund-policy">Cancellations and refunds</a></li>
+			</ul>
+		</nav>
+	</div>
+	<div class="container footer-bottom">
+		<p>&copy; <span th:text="${@fmt.year()}">2026</span> Zaika. Made with care in Kolhapur.</p>
+	</div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* A labelled input with optional help text and its validation error, bound to the form's th:object:
+       <form th:object="${form}" ...>
+         <div th:replace="~{fragments/form :: field('email', 'Email', 'email', null, 'email')}"></div>
+     Arguments: property name (also the input id), label, input type, help text or null, autocomplete or null.
+     Keeps the user's input after a failed submit, except for passwords. */-->
+<div th:fragment="field(name, label, type, help, autocomplete)" class="field"
+	th:with="invalid=${#fields.hasErrors(name)},
+		describedBy=${(invalid ? name + '-error ' : '') + (help != null ? name + '-help' : '')}"
+	th:classappend="${invalid} ? 'has-error'">
+	<label class="field-label" th:for="${name}" th:text="${label}">Email</label>
+	<input class="input" th:type="${type}" th:id="${name}" th:name="${name}"
+		th:value="${type == 'password'} ? null : *{__${name}__}"
+		th:autocomplete="${autocomplete}"
+		th:aria-invalid="${invalid} ? 'true'"
+		th:aria-describedby="${#strings.isEmpty(#strings.trim(describedBy))} ? null : ${#strings.trim(describedBy)}">
+	<p class="field-help" th:if="${help != null}" th:id="${name + '-help'}" th:text="${help}">We'll send your order updates here.</p>
+	<p class="field-error" th:if="${invalid}" th:id="${name + '-error'}"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors(name), ' ')}">Enter a valid email address.</span></p>
+</div>
+</body>
+</html>

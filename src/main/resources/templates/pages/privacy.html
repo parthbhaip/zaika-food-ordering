@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Privacy policy | Zaika</title></head>
+<body>
+<main id="main" class="page">
+	<div class="container legal-layout">
+		<nav th:replace="~{fragments/legal-nav :: legalNav('/privacy')}"></nav>
+		<article class="prose">
+			<p class="eyebrow">Legal</p>
+			<h1>Privacy policy</h1>
+			<p class="legal-updated">Last updated 1 October 2026</p>
+			<p>We collect only what we need to get your food to you and to keep Zaika working, and we never sell your data. This policy explains what we collect, why, and the choices you have under the Digital Personal Data Protection Act, 2023.</p>
+
+			<h2>What we collect</h2>
+			<ul>
+				<li><strong>Account details:</strong> your name, email, mobile number and password. Passwords are stored only as a one-way hash; nobody at Zaika can read them.</li>
+				<li><strong>Delivery addresses</strong> you save, including landmarks and pincodes.</li>
+				<li><strong>Orders:</strong> what you ordered, from where, when, the bill, and the payment method and status.</li>
+				<li><strong>Reviews and favourites</strong> you choose to leave.</li>
+				<li><strong>Technical data:</strong> the cookies that keep you signed in and protect forms from forgery. We don't use advertising or tracking cookies.</li>
+			</ul>
+			<p>We don't store card numbers, UPI PINs or bank passwords.</p>
+
+			<h2>How we use it</h2>
+			<ul>
+				<li>To place, prepare, deliver and support your orders.</li>
+				<li>To send order updates, password reset links and important account messages.</li>
+				<li>To prevent fraud and misuse of coupons and refunds.</li>
+				<li>To understand, in aggregate, which cuisines and areas need more restaurants and riders.</li>
+			</ul>
+
+			<h2>Who we share it with</h2>
+			<ul>
+				<li><strong>The restaurant</strong> sees your name, your order and any cooking instructions.</li>
+				<li><strong>Your delivery partner</strong> sees your name, delivery address and a contact number for the duration of the delivery.</li>
+				<li><strong>Service providers</strong> that host our systems or send emails for us, under contracts that limit them to that job.</li>
+				<li><strong>Authorities</strong>, only when the law requires it.</li>
+			</ul>
+
+			<h2>How long we keep it</h2>
+			<p>We keep your account details while your account is open. Order and payment records are kept for 8 years because tax law requires it. Everything else is deleted or anonymised within 90 days of you closing your account.</p>
+
+			<h2>Your choices and rights</h2>
+			<ul>
+				<li>You can view and correct your profile and addresses from your account page at any time.</li>
+				<li>You can ask us for a copy of your data, or to close your account and erase what we don't have to keep.</li>
+				<li>If you're unhappy with how we've handled your data, you can raise it with our grievance officer (below) and, after that, with the Data Protection Board of India.</li>
+			</ul>
+
+			<h2>Security</h2>
+			<p>Connections to Zaika are encrypted, passwords are hashed, and staff access to personal data is limited to what their job needs. If we ever learn of a breach that affects you, we'll tell you and the authorities as the law requires.</p>
+
+			<h2>Grievance officer</h2>
+			<p>Grievance Officer, Zaika, 2nd floor, Station Road, Shahupuri, Kolhapur 416001. Email <a href="mailto:privacy@zaika.test">privacy@zaika.test</a>. We acknowledge complaints within 24 hours and resolve them within 15 days.</p>
+		</article>
+	</div>
+</main>
+</body>
+</html>

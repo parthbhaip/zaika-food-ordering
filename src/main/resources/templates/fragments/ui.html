@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Small display fragments. Use with th:replace, e.g. ~{fragments/ui :: price(${item.price})}. */-->
+
+<!--/* Empty state: icon name from the sprite, title, text, and an optional action (label and href, or nulls). */-->
+<div th:fragment="emptyState(icon, title, text, actionLabel, actionHref)" class="empty-state">
+	<span class="empty-state-icon"><svg th:replace="~{fragments/icon :: icon(${icon})}"></svg></span>
+	<h2 class="empty-state-title" th:text="${title}">Your cart is empty</h2>
+	<p class="empty-state-text" th:text="${text}">Good food is a few taps away.</p>
+	<a th:if="${actionLabel != null}" class="btn btn-primary" th:href="@{${actionHref}}" href="/restaurants" th:text="${actionLabel}">Browse restaurants</a>
+</div>
+
+<!--/* Price: ₹120, ₹99.50 (paise only when there are some). */-->
+<span th:fragment="price(amount)" class="price" th:text="${@fmt.price(amount)}">₹120</span>
+
+<!--/* Price with the old price struck through. */-->
+<span th:fragment="discountedPrice(amount, was)" class="price"><span th:text="${@fmt.price(amount)}">₹249</span><span class="visually-hidden">, was </span><s class="price-old" th:text="${@fmt.price(was)}">₹299</s></span>
+
+<!--/* Rating pill: the average out of 5, or "New" while there are no ratings yet. */-->
+<span th:fragment="rating(average, count)" th:remove="tag">
+	<span th:if="${count == null or count == 0}" class="rating-pill is-new">New<span class="visually-hidden">, no ratings yet</span></span>
+	<span th:unless="${count == null or count == 0}" class="rating-pill"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg><th:block th:text="${@fmt.rating(average)}">4.5</th:block><span class="visually-hidden" th:text="| out of 5, ${count} ${count == 1 ? 'rating' : 'ratings'}|"> out of 5, 120 ratings</span></span>
+</span>
+
+<!--/* Veg / non-veg mark with screen-reader text. */-->
+<span th:fragment="veg(isVeg)" class="veg-mark" th:classappend="${isVeg} ? '' : 'non-veg'"><span class="visually-hidden" th:text="${isVeg} ? 'Vegetarian' : 'Non-vegetarian'">Vegetarian</span></span>
+</body>
+</html>

@@ -7,6 +7,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="noindex">
 	<title th:text="${title} + ' | Zaika'">Something went wrong | Zaika</title>
+	<link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
 	<link rel="stylesheet" th:href="@{/css/tokens.css}" href="/css/tokens.css">
 	<link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
 </head>
@@ -14,7 +15,7 @@
 	<a class="skip-link" href="#main">Skip to content</a>
 
 	<header class="error-header">
-		<a class="wordmark" th:href="@{/}" href="/">Zaika<span class="visually-hidden"> home</span></a>
+		<a class="site-logo" th:href="@{/}" href="/"><img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="Zaika home" width="112" height="35"></a>
 	</header>
 
 	<main id="main" class="error-page">

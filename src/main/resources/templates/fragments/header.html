@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Sticky site header. Phones (< 960px): menu drawer, logo, search link, cart. Larger screens: logo, city, search
+     box, nav, cart, account menu. Both menus are <details data-menu> so they work without JavaScript. */-->
+<header th:fragment="header" class="site-header" th:with="count=${cartCount ?: 0}">
+	<div class="container site-header-inner">
+		<details class="nav-drawer" data-menu>
+			<summary class="header-icon-btn"><svg th:replace="~{fragments/icon :: icon('menu')}"></svg><span class="visually-hidden">Menu</span></summary>
+			<div class="drawer-panel">
+				<p class="drawer-city"><svg th:replace="~{fragments/icon :: icon('location')}"></svg>Delivering in <strong>Kolhapur</strong></p>
+				<nav class="drawer-nav" aria-label="Menu">
+					<a th:href="@{/restaurants}" href="/restaurants"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Restaurants</a>
+					<a th:href="@{/search}" href="/search"><svg th:replace="~{fragments/icon :: icon('search')}"></svg>Search</a>
+					<a th:href="@{/contact}" href="/contact"><svg th:replace="~{fragments/icon :: icon('info')}"></svg>Help and support</a>
+					<a th:href="@{/partner-with-us}" href="/partner-with-us"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg>Partner with us</a>
+				</nav>
+				<div class="drawer-account">
+					<div th:replace="~{fragments/header :: accountLinks}"></div>
+				</div>
+			</div>
+		</details>
+
+		<a class="site-logo" th:href="@{/}" href="/"><img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="Zaika home" width="112" height="35"></a>
+
+		<p class="header-city"><svg th:replace="~{fragments/icon :: icon('location')}"></svg><span class="visually-hidden">Delivering in </span>Kolhapur</p>
+
+		<form class="header-search" role="search" th:action="@{/search}" action="/search" method="get">
+			<label class="visually-hidden" for="header-search-q">Search restaurants and dishes</label>
+			<div class="input-group">
+				<svg th:replace="~{fragments/icon :: icon('search')}"></svg>
+				<input class="input" id="header-search-q" name="q" type="search" maxlength="80" autocomplete="off"
+					placeholder="Search for misal, biryani, thalis" th:value="${param.q != null ? param.q[0] : null}">
+			</div>
+		</form>
+
+		<nav class="header-nav" aria-label="Main">
+			<a th:href="@{/restaurants}" href="/restaurants">Restaurants</a>
+			<a th:href="@{/contact}" href="/contact">Help</a>
+		</nav>
+
+		<div class="header-actions">
+			<a class="header-icon-btn header-search-link" th:href="@{/search}" href="/search"><svg th:replace="~{fragments/icon :: icon('search')}"></svg><span class="visually-hidden">Search</span></a>
+
+			<a class="header-cart" th:href="@{/cart}" href="/cart" sec:authorize="!isAuthenticated() or hasRole('CUSTOMER')">
+				<svg th:replace="~{fragments/icon :: icon('cart')}"></svg><span class="header-cart-label">Cart</span>
+				<span id="cart-count" class="cart-count" th:classappend="${count == 0} ? 'is-empty'" aria-live="polite"><span th:text="${count}">0</span><span class="visually-hidden" th:text="${count == 1} ? ' item' : ' items'"> items</span></span>
+			</a>
+
+			<div class="header-auth" sec:authorize="!isAuthenticated()">
+				<a class="btn btn-ghost btn-sm" th:href="@{/login}" href="/login">Sign in</a>
+				<a class="btn btn-primary btn-sm" th:href="@{/register}" href="/register">Sign up</a>
+			</div>
+
+			<details class="account-menu" data-menu sec:authorize="isAuthenticated()">
+				<summary class="account-menu-toggle"><svg th:replace="~{fragments/icon :: icon('user')}"></svg><span>Account</span><svg th:replace="~{fragments/icon :: icon('chevron-down')}"></svg></summary>
+				<div class="account-menu-panel">
+					<div th:replace="~{fragments/header :: accountLinks}"></div>
+				</div>
+			</details>
+		</div>
+	</div>
+</header>
+
+<!--/* Account links for the signed-in role, or Sign in / Sign up. Shared by the drawer and the account menu. */-->
+<div th:fragment="accountLinks" class="account-links">
+	<th:block sec:authorize="!isAuthenticated()">
+		<p class="account-links-intro">Sign in to track orders and save your addresses.</p>
+		<div class="account-links-auth">
+			<a class="btn btn-primary btn-block" th:href="@{/login}" href="/login">Sign in</a>
+			<a class="btn btn-secondary btn-block" th:href="@{/register}" href="/register">Create an account</a>
+		</div>
+	</th:block>
+	<th:block sec:authorize="isAuthenticated()">
+		<p class="account-links-user">Signed in as <strong sec:authentication="name">customer@zaika.test</strong></p>
+		<nav class="account-links-nav" aria-label="Your account">
+			<th:block sec:authorize="hasRole('CUSTOMER')">
+				<a th:href="@{/orders}" href="/orders"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg>Your orders</a>
+				<a th:href="@{/account/favourites}" href="/account/favourites"><svg th:replace="~{fragments/icon :: icon('heart')}"></svg>Favourites</a>
+				<a th:href="@{/account}" href="/account"><svg th:replace="~{fragments/icon :: icon('user')}"></svg>Profile and addresses</a>
+			</th:block>
+			<th:block sec:authorize="hasRole('RESTAURANT_OWNER')">
+				<a th:href="@{/owner}" href="/owner"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Restaurant dashboard</a>
+				<a th:href="@{/owner/orders}" href="/owner/orders"><svg th:replace="~{fragments/icon :: icon('bell')}"></svg>Live orders</a>
+				<a th:href="@{/owner/menu}" href="/owner/menu"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Menu</a>
+			</th:block>
+			<th:block sec:authorize="hasRole('DELIVERY_PARTNER')">
+				<a th:href="@{/partner}" href="/partner"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg>Rider dashboard</a>
+				<a th:href="@{/partner/earnings}" href="/partner/earnings"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg>Earnings</a>
+			</th:block>
+			<th:block sec:authorize="hasRole('ADMIN')">
+				<a th:href="@{/admin}" href="/admin"><svg th:replace="~{fragments/icon :: icon('info')}"></svg>Admin dashboard</a>
+				<a th:href="@{/admin/restaurants}" href="/admin/restaurants"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Restaurants</a>
+				<a th:href="@{/admin/orders}" href="/admin/orders"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg>Orders</a>
+			</th:block>
+		</nav>
+		<form class="account-links-logout" th:action="@{/logout}" action="/logout" method="post">
+			<button type="submit" class="btn btn-secondary btn-block"><svg th:replace="~{fragments/icon :: icon('logout')}"></svg>Log out</button>
+		</form>
+	</th:block>
+</div>
+</body>
+</html>

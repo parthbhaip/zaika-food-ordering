@@ -105,8 +105,10 @@ class DevProfileTest {
 				"edit", "upload", "phone", "info", "leaf")) {
 			assertThat(html).contains("href=\"/img/icons.svg#" + icon + "\"");
 		}
-		// CSP-ready: no inline scripts or inline event handlers
-		assertThat(html).doesNotContain("<script").doesNotContainPattern(" on[a-z]+=");
+		// inside the site layout
+		assertThat(html).contains("class=\"site-header\"", "class=\"site-footer\"", "id=\"main\"");
+		// CSP-ready: scripts only from files (the layout loads htmx and two small scripts), no inline event handlers
+		assertThat(html).doesNotContainPattern("<script(?![^>]*\\ssrc=)").doesNotContainPattern(" on[a-z]+=");
 	}
 
 }

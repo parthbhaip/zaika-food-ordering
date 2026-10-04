@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Help and support | Zaika</title></head>
+<body>
+<main id="main" class="page">
+	<section class="page-hero">
+		<div class="container page-hero-inner">
+			<p class="eyebrow">Help and support</p>
+			<h1>We're here, from breakfast to the last biryani</h1>
+			<p class="lede">Problem with an order? Have it open when you reach us, and keep the order code (it looks like ZK-26-000123) handy.</p>
+		</div>
+	</section>
+
+	<section class="container page-section" aria-labelledby="reach-title">
+		<h2 id="reach-title" class="visually-hidden">Ways to reach us</h2>
+		<div class="contact-grid">
+			<div class="card contact-card">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('phone')}"></svg></span>
+				<h3>Call us</h3>
+				<p><a href="tel:+919876543210">+91 98765 43210</a></p>
+				<p class="muted">Every day, 8:00 AM to 1:00 AM</p>
+			</div>
+			<div class="card contact-card">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('info')}"></svg></span>
+				<h3>Email support</h3>
+				<p><a href="mailto:support@zaika.test">support@zaika.test</a></p>
+				<p class="muted">We reply within 4 hours, usually much sooner</p>
+			</div>
+			<div class="card contact-card">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('store')}"></svg></span>
+				<h3>Restaurant and rider partners</h3>
+				<p><a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+				<p class="muted">Onboarding, payouts and menu changes</p>
+			</div>
+			<div class="card contact-card">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('location')}"></svg></span>
+				<h3>Our office</h3>
+				<address>Zaika, 2nd floor, Station Road,<br>Shahupuri, Kolhapur 416001</address>
+				<p class="muted">Monday to Saturday, 10:00 AM to 6:00 PM</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="container page-section narrow" aria-labelledby="faq-title">
+		<h2 id="faq-title" class="section-title">Frequently asked questions</h2>
+		<div class="faq">
+			<details class="faq-item">
+				<summary>Where is my order?</summary>
+				<p>Open <a th:href="@{/orders}" href="/orders">Your orders</a> and tap the order to see its live status: placed, accepted, preparing, picked up or delivered. The page refreshes by itself, so you can leave it open.</p>
+			</details>
+			<details class="faq-item">
+				<summary>Can I cancel my order?</summary>
+				<p>Yes, until the restaurant accepts it. After that the kitchen has started cooking, so the cancel button disappears. If something goes wrong after that, call or email us and we'll sort it out. See our <a th:href="@{/refund-policy}" href="/refund-policy">cancellation and refund policy</a>.</p>
+			</details>
+			<details class="faq-item">
+				<summary>When will I get my refund?</summary>
+				<p>Refunds for online payments start the moment an order is cancelled or rejected and reach your original payment method in 5 to 7 working days. Cash on delivery orders are never charged if they're cancelled.</p>
+			</details>
+			<details class="faq-item">
+				<summary>Why do I need to share a code with the rider?</summary>
+				<p>Every order has a 4-digit delivery code shown on its tracking page. The rider can only mark the order delivered after you tell them the code, so nobody else can take your food.</p>
+			</details>
+			<details class="faq-item">
+				<summary>How is my bill calculated?</summary>
+				<p>Item prices come from the restaurant. On top of that you pay 5% GST, a ₹5 platform fee and the restaurant's delivery fee, which is free on orders above ₹499. Coupons come off before tax. You'll see every line before you pay.</p>
+			</details>
+			<details class="faq-item">
+				<summary>Something was missing or wrong. What now?</summary>
+				<p>Sorry about that. Contact us within 24 hours of delivery with your order code and, if you can, a photo. We'll check with the restaurant and refund the affected items.</p>
+			</details>
+			<details class="faq-item">
+				<summary>How do I list my restaurant or ride with Zaika?</summary>
+				<p>Head to <a th:href="@{/partner-with-us}" href="/partner-with-us">Partner with us</a>. Restaurants go live after a quick check by our team; riders can start once their vehicle details are approved.</p>
+			</details>
+		</div>
+	</section>
+</main>
+</body>
+</html>

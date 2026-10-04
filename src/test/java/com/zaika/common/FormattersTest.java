@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,36 @@ class FormattersTest {
 			""")
 	void relativeTimeIsMeasuredFromTheAppClock(LocalDateTime t, String expected) {
 		assertThat(fmt.relative(t)).isEqualTo(expected);
+	}
+
+	@ParameterizedTest(name = "{0} -> {1}")
+	@CsvSource(delimiter = '|', textBlock = """
+			120       | ₹120
+			120.00    | ₹120
+			99.5      | ₹99.50
+			1240      | ₹1,240
+			0         | ₹0
+			123456.75 | ₹1,23,456.75
+			249.999   | ₹250
+			""")
+	void priceDropsPaiseOnlyForWholeRupees(String amount, String expected) {
+		assertThat(fmt.price(new BigDecimal(amount))).isEqualTo(expected);
+	}
+
+	@Test
+	void ratingKeepsOneDecimalRoundedHalfUp() {
+		assertThat(fmt.rating(new BigDecimal("4.25"))).isEqualTo("4.3");
+		assertThat(fmt.rating(new BigDecimal("4"))).isEqualTo("4.0");
+		assertThat(fmt.rating(new BigDecimal("3.94"))).isEqualTo("3.9");
+		assertThat(fmt.rating(null)).isEmpty();
+		assertThat(fmt.price(null)).isEmpty();
+	}
+
+	@Test
+	void timeOfDayAndYearUseTheAppClock() {
+		assertThat(fmt.timeOfDay(LocalTime.of(18, 0))).isEqualTo("6:00 PM");
+		assertThat(fmt.timeOfDay(null)).isEmpty();
+		assertThat(fmt.year()).isEqualTo(2026);
 	}
 
 }

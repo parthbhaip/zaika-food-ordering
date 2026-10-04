@@ -1,28 +1,9 @@
 <!DOCTYPE html>
-<!--/* Dev-only living style guide (UiKitController, dev profile). Standalone page: the shared layout arrives in T05. */-->
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="robots" content="noindex">
-	<title>UI kit | Zaika</title>
-	<link rel="icon" type="image/svg+xml" th:href="@{/img/favicon.svg}" href="/img/favicon.svg">
-	<link rel="preload" as="font" type="font/woff2" crossorigin th:href="@{/fonts/plus-jakarta-sans-latin-400-normal.woff2}" href="/fonts/plus-jakarta-sans-latin-400-normal.woff2">
-	<link rel="stylesheet" th:href="@{/css/tokens.css}" href="/css/tokens.css">
-	<link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
-</head>
-<body class="has-cart-bar">
-	<a class="skip-link" href="#main">Skip to content</a>
-
-	<header class="kit-header">
-		<div class="container kit-header-inner">
-			<img th:src="@{/img/logo.svg}" src="/img/logo.svg" alt="Zaika" width="128" height="40">
-			<span class="badge badge-primary">UI kit</span>
-			<span class="badge badge-dot badge-warning">Dev profile only</span>
-		</div>
-	</header>
-
-	<div class="container kit-layout">
+<!--/* Dev-only living style guide (UiKitController, dev profile), shown inside the site layout. */-->
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::#kit})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>UI kit | Zaika</title></head>
+<body>
+	<div id="kit" class="container kit-layout has-cart-bar">
 		<nav class="kit-nav" aria-label="UI kit sections">
 			<ul>
 				<li><a href="#colours">Colours</a></li>
@@ -452,10 +433,10 @@
 						<div class="alert alert-info" role="status"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg><p>Free delivery on orders above ₹499.</p></div>
 					</div>
 					<div class="kit-toasts" aria-live="polite">
-						<div class="toast toast-success"><svg th:replace="~{fragments/icon :: icon('check')}"></svg><div class="toast-body"><span class="toast-title">Added to cart</span><span class="toast-text">Kolhapuri Misal Pav × 1</span></div></div>
-						<div class="toast toast-error"><svg th:replace="~{fragments/icon :: icon('x')}"></svg><div class="toast-body"><span class="toast-title">Payment failed</span><span class="toast-text">No money was taken. Try again or pick cash on delivery.</span></div></div>
-						<div class="toast toast-warning"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><div class="toast-body"><span class="toast-title">Restaurant closes soon</span><span class="toast-text">Last orders at 10:30 PM.</span></div></div>
-						<div class="toast"><svg th:replace="~{fragments/icon :: icon('bell')}"></svg><div class="toast-body"><span class="toast-title">Order accepted</span><span class="toast-text">Panchganga Misal House is preparing your food.</span></div></div>
+						<div class="toast toast-success"><svg th:replace="~{fragments/icon :: icon('check')}"></svg><div class="toast-body"><span class="toast-title">Added to cart</span><span class="toast-text">Kolhapuri Misal Pav × 1</span></div><button th:replace="~{fragments/flash :: close}"></button></div>
+						<div class="toast toast-error"><svg th:replace="~{fragments/icon :: icon('x')}"></svg><div class="toast-body"><span class="toast-title">Payment failed</span><span class="toast-text">No money was taken. Try again or pick cash on delivery.</span></div><button th:replace="~{fragments/flash :: close}"></button></div>
+						<div class="toast toast-warning"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><div class="toast-body"><span class="toast-title">Restaurant closes soon</span><span class="toast-text">Last orders at 10:30 PM.</span></div><button th:replace="~{fragments/flash :: close}"></button></div>
+						<div class="toast"><svg th:replace="~{fragments/icon :: icon('bell')}"></svg><div class="toast-body"><span class="toast-title">Order accepted</span><span class="toast-text">Panchganga Misal House is preparing your food.</span></div><button th:replace="~{fragments/flash :: close}"></button></div>
 					</div>
 				</div>
 			</section>
@@ -516,11 +497,11 @@
 				<p>Pinned to the bottom of the screen on phones whenever the cart has items; hidden from 960px, where the header cart takes over. Resize the window to see it.</p>
 			</section>
 		</main>
+		<a class="cart-bar" href="#cart-bar">
+			<span class="cart-bar-summary"><span>2 items · ₹458</span><small>From Panchganga Misal House</small></span>
+			<span class="cart-bar-cta">View cart<svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></span>
+		</a>
 	</div>
 
-	<a class="cart-bar" href="#cart-bar">
-		<span class="cart-bar-summary"><span>2 items · ₹458</span><small>From Panchganga Misal House</small></span>
-		<span class="cart-bar-cta">View cart<svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></span>
-	</a>
 </body>
 </html>
