@@ -12,11 +12,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
 
 /** Proves the extra T01 dependencies are wired: htmx WebJar via webjars-locator-lite and the Thymeleaf security dialect. */
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureMockMvc
 class StarterDependenciesTest {
 

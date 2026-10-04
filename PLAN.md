@@ -16,7 +16,7 @@ How this file works
   - Add: htmx WebJar, `webjars-locator-lite`, Thymeleaf Spring Security extras matching the generated Spring Security version.
   - `./mvnw -q verify` passes. Record Spring Boot, Spring Security, Hibernate, Thymeleaf and htmx versions in NOTES.md.
 
-- [ ] T02 Configuration and profiles
+- [x] T02 Configuration and profiles
   - `application.properties`: app name, `spring.profiles.default=dev`, `ddl-auto=validate`, `open-in-view=false`, response compression, whitelabel error page off.
   - `application-dev.properties` (H2 file DB `./data/zaika`, MODE=MySQL, H2 console, logging mail sender, `app.seed-demo=true`), `application-test.properties` (H2 in-memory), `application-mysql.properties` (DB_URL / DB_USER / DB_PASSWORD and SMTP settings from env vars, `app.seed-demo` from env var `SEED_DEMO`, default false).
   - Typed `@ConfigurationProperties` `AppProperties` with validation: brand name, zone, upload dir, seed-demo flag, platform fee (₹5), GST rate (5%), free-delivery threshold (₹499), rider base payout.
