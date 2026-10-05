@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
@@ -35,6 +36,9 @@ public class RestaurantBrowseService {
 
 	public static final int PAGE_SIZE = 12;
 
+	/** Cards per home page row. */
+	public static final int HOME_ROW_SIZE = 4;
+
 	/** The "Rating 4.0+" filter. Unrated restaurants never pass it. */
 	public static final BigDecimal TOP_RATING = new BigDecimal("4.00");
 
@@ -63,6 +67,12 @@ public class RestaurantBrowseService {
 		return cuisines.findAllByOrderByNameAsc();
 	}
 
+	/** The cuisines at least one live (APPROVED) restaurant cooks, by name, so no shortcut leads to an empty list. */
+	@Transactional(readOnly = true)
+	public List<Cuisine> liveCuisines() {
+		return cuisines.findServedBy(RestaurantStatus.APPROVED);
+	}
+
 	/**
 	 * One page ({@link RestaurantFilter#getPage()}, {@link #PAGE_SIZE} cards) of the listing. A page past the end
 	 * comes back empty, with the real totals. At most three queries: the page, the count and the page's cuisines.
@@ -76,6 +86,39 @@ public class RestaurantBrowseService {
 			restaurants.findWithCuisinesByIdIn(page.getContent().stream().map(BaseEntity::getId).toList());
 		}
 		return page.map(restaurant -> toCard(restaurant, now));
+	}
+
+	/**
+	 * The home page rows, each the first {@link #HOME_ROW_SIZE} cards of a listing query (no count), plus how many
+	 * restaurants are live and how many are open now. Six queries: three rows, their cuisines and two counts.
+	 */
+	@Transactional(readOnly = true)
+	public Highlights highlights() {
+		LocalTime now = LocalTime.now(clock);
+		RestaurantFilter topRated = new RestaurantFilter();
+		topRated.setTop(true);
+		RestaurantFilter fastest = new RestaurantFilter();
+		fastest.setOpen(true);
+		fastest.setSort(RestaurantSort.FASTEST.getParam());
+		RestaurantFilter pureVeg = new RestaurantFilter();
+		pureVeg.setVeg(true);
+
+		List<List<Restaurant>> rows = Stream.of(topRated, fastest, pureVeg)
+			.map(filter -> restaurants.findBy(matching(filter, now), q -> q.limit(HOME_ROW_SIZE).all()))
+			.toList();
+		List<Long> ids = rows.stream().flatMap(List::stream).map(BaseEntity::getId).distinct().toList();
+		if (!ids.isEmpty()) {
+			restaurants.findWithCuisinesByIdIn(ids);
+		}
+		RestaurantFilter open = new RestaurantFilter();
+		open.setOpen(true);
+		return new Highlights(restaurants.count(matching(new RestaurantFilter(), now)),
+				restaurants.count(matching(open, now)), row(topRated, rows.get(0), now), row(fastest, rows.get(1), now),
+				row(pureVeg, rows.get(2), now));
+	}
+
+	private Row row(RestaurantFilter filter, List<Restaurant> found, LocalTime now) {
+		return new Row(filter.url(), found.stream().map(restaurant -> toCard(restaurant, now)).toList());
 	}
 
 	/** The card for one restaurant at {@code now}. Its cuisines must be loaded. */
@@ -192,6 +235,22 @@ public class RestaurantBrowseService {
 			pattern.append(c);
 		}
 		return pattern.append('%').toString();
+	}
+
+	/** A home page row: its first cards and the listing URL that shows all of them ("See all"). */
+	public record Row(String url, List<RestaurantCard> cards) {
+	}
+
+	/**
+	 * What the home page shows from the catalog.
+	 *
+	 * @param liveCount approved restaurants; 0 means the catalog is empty
+	 * @param openCount approved restaurants open and taking orders now
+	 * @param topRated rated 4.0+, open ones first
+	 * @param fastest open now, shortest delivery estimate first
+	 * @param pureVeg pure veg restaurants, open ones first
+	 */
+	public record Highlights(long liveCount, long openCount, Row topRated, Row fastest, Row pureVeg) {
 	}
 
 }

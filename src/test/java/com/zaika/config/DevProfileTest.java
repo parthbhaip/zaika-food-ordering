@@ -100,6 +100,17 @@ class DevProfileTest {
 	}
 
 	@Test
+	void theHomePageShowsTheSeededKitchens() throws Exception {
+		String html = mvc.perform(get("/")).andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString();
+		// at the test clock (Sunday 19:30) every seeded kitchen but the breakfast-only misal house is open
+		assertThat(html).contains("11 kitchens open now", "Order from 12 local kitchens", "id=\"home-top-title\"",
+				"id=\"home-fast-title\"", "id=\"home-veg-title\"", "href=\"/restaurants?cuisine=kolhapuri\"",
+				"href=\"/r/panchganga-thali-house\"")
+			.doesNotContain("href=\"/r/brew-lab-cafe\"");
+	}
+
+	@Test
 	void devProfileCreatesTheDemoAdminOnStartup() throws Exception {
 		Properties dev = PropertiesLoaderUtils.loadProperties(new ClassPathResource("application-dev.properties"));
 		PropertySourcesPropertyResolver noVariables = new PropertySourcesPropertyResolver(new MutablePropertySources());

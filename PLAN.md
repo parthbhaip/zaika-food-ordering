@@ -104,7 +104,7 @@ How this file works
   - `/search?q=` shows matching restaurants and dishes in two groups; empty and no-result states.
   - Header search suggests the top 5 matches as you type (htmx, debounced, keyboard accessible). Tests.
 
-- [ ] T18 Home page `/`
+- [x] T18 Home page `/`
   - Hero with headline and search, cuisine chips linking to filtered listings, rows: "Top rated", "Fastest delivery", "Pure veg picks", how-it-works (3 steps), partner band (restaurants and riders).
   - Looks finished on phone and desktop. Tests.
 

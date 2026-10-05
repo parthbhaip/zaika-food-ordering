@@ -1950,6 +1950,163 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.dish-hits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* ------------------------------------------------------------------ Home page (/) */
+.home-page { padding-bottom: var(--space-16); }
+.home-hero { overflow: hidden; background: var(--color-primary-tint); border-bottom: 1px solid var(--color-line); }
+.home-hero-inner { display: grid; gap: var(--space-8); align-items: center; padding-block: var(--space-8) var(--space-10); }
+.home-hero-copy { display: grid; gap: var(--space-4); min-width: 0; }
+.home-hero-copy h1 { font-size: var(--text-3xl); font-weight: var(--weight-extrabold); line-height: 1.1; letter-spacing: -0.03em; }
+.home-hero-copy .lede { max-width: 54ch; }
+.home-live .badge { padding: var(--space-1) var(--space-3); font-size: var(--text-sm); }
+.home-search { max-width: 560px; margin-top: var(--space-1); }
+.home-search .input { box-shadow: var(--shadow-md); }
+.home-popular { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.home-popular-title { color: var(--color-text-secondary); font-size: var(--text-sm); font-weight: var(--weight-semibold); }
+.home-popular-list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.home-popular-list .chip { min-height: 32px; padding-inline: var(--space-3); }
+
+/* The thali drawing: decoration only, coloured from the tokens. Shown from 960px. */
+.home-hero-art { position: relative; display: none; justify-self: center; width: 100%; max-width: 440px; }
+.thali { display: block; width: 100%; height: auto; }
+.thali-backdrop { fill: var(--color-accent-tint); }
+.thali-plate { fill: var(--color-surface); stroke: var(--color-line-strong); stroke-width: 2; }
+.thali-rim { fill: none; stroke: var(--color-line); stroke-width: 2; }
+.thali-katori { fill: var(--color-surface-muted); stroke: var(--color-line-strong); stroke-width: 2; }
+.thali-rassa { fill: var(--color-primary); }
+.thali-dal { fill: var(--color-accent); }
+.thali-sabzi { fill: var(--color-success); }
+.thali-pea { fill: var(--color-success-tint); }
+.thali-pandhra { fill: var(--color-surface); stroke: var(--color-line); stroke-width: 2; }
+.thali-salad { fill: var(--color-success-tint); }
+.thali-tomato { fill: var(--color-danger); }
+.thali-onion { fill: var(--color-danger-tint); stroke: var(--color-danger); stroke-width: 1.5; }
+.thali-gloss { fill: var(--color-surface); opacity: 0.4; }
+.thali-roti { fill: var(--color-accent-tint); stroke: var(--color-accent); stroke-width: 3; }
+.thali-char { fill: var(--color-warning); opacity: 0.45; }
+.home-note {
+	position: absolute;
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	max-width: 260px;
+	padding: var(--space-3) var(--space-4);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-md);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-lg);
+	font-size: var(--text-sm);
+}
+.home-note strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-note > span:last-child { display: grid; min-width: 0; color: var(--color-text-secondary); }
+.home-note-icon {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	background: var(--color-accent-tint);
+	color: var(--color-star);
+}
+.home-note-icon .icon { width: 20px; height: 20px; }
+.home-note-top { top: 8%; left: -6%; }
+.home-note-fast { right: -4%; bottom: 6%; }
+.home-note-fast .home-note-icon { background: var(--color-success-tint); color: var(--color-success); }
+
+.home-section { padding-top: var(--space-12); }
+.home-section-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-2) var(--space-4); margin-bottom: var(--space-5); }
+.home-section-head .section-title { margin-bottom: 0; }
+.home-section-text { margin-top: var(--space-1); color: var(--color-text-secondary); }
+.home-see-all { flex: none; }
+
+/* Cuisine shortcuts: one sideways-scrolling line on phones, wrapped from 960px */
+.home-cuisines {
+	display: flex;
+	gap: var(--space-2);
+	margin: 0 calc(-1 * var(--gutter));
+	padding: var(--space-1) var(--gutter);
+	list-style: none;
+	overflow-x: auto;
+	scrollbar-width: none;
+}
+.home-cuisines::-webkit-scrollbar { display: none; }
+.home-cuisines li { flex: none; }
+.home-cuisine { min-height: 44px; padding-left: var(--space-2); font-weight: var(--weight-semibold); }
+.home-cuisine-mark {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: var(--color-primary-tint);
+	color: var(--color-primary-hover);
+	font-size: var(--text-sm);
+	font-weight: var(--weight-extrabold);
+}
+
+/* Restaurant rows: a swipeable rail on phones, then the grid (2 columns, 4 from 960px) */
+.home-row {
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(260px, 82%);
+	grid-template-columns: none;
+	margin-inline: calc(-1 * var(--gutter));
+	padding: var(--space-1) var(--gutter) var(--space-2);
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	scroll-padding-inline: var(--gutter);
+	scrollbar-width: none;
+}
+.home-row::-webkit-scrollbar { display: none; }
+.home-row > .restaurant-card { scroll-snap-align: start; }
+
+.partner-band { display: grid; gap: var(--space-4); }
+.partner-card {
+	display: grid;
+	align-content: start;
+	justify-items: start;
+	gap: var(--space-3);
+	padding: var(--space-8) var(--space-6);
+	border-radius: var(--radius-lg);
+}
+.partner-card h3 { font-size: var(--text-xl); font-weight: var(--weight-extrabold); }
+.partner-card p { max-width: 46ch; }
+.partner-card .btn { margin-top: var(--space-2); }
+.partner-card-icon {
+	display: grid;
+	place-items: center;
+	width: 48px;
+	height: 48px;
+	border-radius: var(--radius-md);
+}
+.partner-card-icon .icon { width: 24px; height: 24px; }
+.partner-card-dark { background: var(--color-ink); color: var(--color-on-primary); }
+.partner-card-dark p { color: var(--color-line); }
+.partner-card-dark .partner-card-icon { background: var(--color-primary); color: var(--color-on-primary); }
+.partner-card-light { border: 1px solid var(--color-line); background: var(--color-primary-tint); }
+.partner-card-light p { color: var(--color-text-secondary); }
+.partner-card-light .partner-card-icon { background: var(--color-surface); color: var(--color-primary); }
+
+@media (min-width: 640px) {
+	.home-hero-copy h1 { font-size: 2.75rem; }
+	.home-row {
+		grid-auto-flow: row;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		margin-inline: 0;
+		padding: 0;
+		overflow: visible;
+	}
+}
+@media (min-width: 960px) {
+	.home-hero-inner { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); padding-block: var(--space-12) var(--space-16); }
+	.home-hero-copy h1 { font-size: 3.25rem; }
+	.home-hero-art { display: block; }
+	.home-section { padding-top: var(--space-16); }
+	.home-cuisines { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; overflow: visible; }
+	.home-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+	.partner-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.partner-card { padding: var(--space-10); }
+}
+
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */
 .error-body {
 	min-height: 100vh;

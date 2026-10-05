@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Food delivery in Kolhapur | Zaika</title></head>
+<body>
+<!--/* The home page. Model: home (RestaurantBrowseService.Highlights: live and open counts, three rows of cards with
+     their "See all" listing URLs), cuisines (those a live restaurant cooks, by name). No JavaScript: every control is a link or a
+     GET form. Empty rows are left out; an empty catalog shows one empty state instead of the rows. */-->
+<main id="main" class="home-page" th:with="live=${home.liveCount}, open=${home.openCount}">
+	<section class="home-hero" aria-labelledby="home-title">
+		<div class="container home-hero-inner">
+			<div class="home-hero-copy">
+				<p th:if="${live > 0}" class="home-live">
+					<span th:if="${open > 0}" class="badge badge-success badge-dot" th:text="|${open} ${open == 1 ? 'kitchen' : 'kitchens'} open now|">11 kitchens open now</span>
+					<span th:if="${open == 0}" class="badge badge-warning badge-dot">Kitchens are closed right now</span>
+				</p>
+				<h1 id="home-title">Your city's best kitchens, delivered.</h1>
+				<p class="lede" th:if="${live > 0}" th:text="|Misal at sunrise, tambda rassa for lunch, biryani after midnight. Order from ${live} local ${live == 1 ? 'kitchen' : 'kitchens'} and follow your food to the door.|">Misal at sunrise, tambda rassa for lunch, biryani after midnight. Order from 12 local kitchens and follow your food to the door.</p>
+				<p class="lede" th:if="${live == 0}">Kolhapur's favourite kitchens are joining Zaika. Search their menus here as soon as they go live.</p>
+
+				<form class="search-form home-search" role="search" aria-label="Search Zaika" th:action="@{/search}" action="/search" method="get">
+					<label class="visually-hidden" for="home-q">Search restaurants and dishes</label>
+					<div class="input-group">
+						<svg th:replace="~{fragments/icon :: icon('search')}"></svg>
+						<input class="input" id="home-q" name="q" type="search" maxlength="80" autocomplete="off" placeholder="Search for a dish or a restaurant">
+					</div>
+					<button type="submit" class="btn btn-primary">Find food</button>
+				</form>
+
+				<div th:if="${live > 0}" class="home-popular">
+					<p id="home-popular-title" class="home-popular-title">Popular right now</p>
+					<ul class="home-popular-list" aria-labelledby="home-popular-title">
+						<li th:each="term : ${ {'Misal', 'Tambda Rassa', 'Thali', 'Biryani', 'Dosa', 'Pizza'} }"><a class="chip" th:href="@{/search(q=${term})}" href="/search?q=Misal" th:text="${term}">Misal</a></li>
+					</ul>
+				</div>
+			</div>
+
+			<!--/* Decoration only: an original thali drawing, plus two notes taken from the rows below. */-->
+			<div class="home-hero-art" aria-hidden="true">
+				<svg class="thali" viewBox="0 0 480 480" width="480" height="480" focusable="false">
+					<circle class="thali-backdrop" cx="240" cy="240" r="236"/>
+					<circle class="thali-plate" cx="240" cy="240" r="200"/>
+					<circle class="thali-rim" cx="240" cy="240" r="174"/>
+					<g class="thali-bowl"><circle class="thali-katori" cx="240" cy="128" r="46"/><circle class="thali-rassa" cx="240" cy="128" r="36"/><ellipse class="thali-gloss" cx="228" cy="116" rx="12" ry="6"/></g>
+					<g class="thali-bowl"><circle class="thali-katori" cx="346.5" cy="205.4" r="46"/><circle class="thali-dal" cx="346.5" cy="205.4" r="36"/><ellipse class="thali-gloss" cx="334.5" cy="193.4" rx="12" ry="6"/></g>
+					<g class="thali-bowl"><circle class="thali-katori" cx="305.8" cy="330.6" r="46"/><circle class="thali-sabzi" cx="305.8" cy="330.6" r="36"/><circle class="thali-pea" cx="296" cy="322" r="5"/><circle class="thali-pea" cx="314" cy="338" r="5"/><circle class="thali-pea" cx="312" cy="318" r="4"/></g>
+					<g class="thali-bowl"><circle class="thali-katori" cx="174.2" cy="330.6" r="46"/><circle class="thali-pandhra" cx="174.2" cy="330.6" r="36"/><ellipse class="thali-gloss" cx="162.2" cy="318.6" rx="12" ry="6"/></g>
+					<g class="thali-bowl"><circle class="thali-katori" cx="133.5" cy="205.4" r="46"/><circle class="thali-salad" cx="133.5" cy="205.4" r="36"/><circle class="thali-tomato" cx="122" cy="196" r="7"/><circle class="thali-tomato" cx="145" cy="214" r="7"/><circle class="thali-onion" cx="140" cy="194" r="6"/><circle class="thali-onion" cx="125" cy="216" r="6"/></g>
+					<circle class="thali-roti" cx="240" cy="242" r="52"/>
+					<circle class="thali-char" cx="224" cy="228" r="6"/><circle class="thali-char" cx="256" cy="236" r="4"/><circle class="thali-char" cx="236" cy="262" r="5"/><circle class="thali-char" cx="260" cy="258" r="3"/>
+				</svg>
+				<p th:if="${!home.topRated.cards.isEmpty()}" th:with="r=${home.topRated.cards[0]}" class="home-note home-note-top">
+					<span class="home-note-icon"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg></span>
+					<span><strong th:text="${r.name}">Rassa Darbar</strong><span th:text="|Top rated · ${@fmt.rating(r.ratingAverage)} out of 5|">Top rated · 4.6 out of 5</span></span>
+				</p>
+				<p th:if="${!home.fastest.cards.isEmpty()}" th:with="r=${home.fastest.cards[0]}" class="home-note home-note-fast">
+					<span class="home-note-icon"><svg th:replace="~{fragments/icon :: icon('clock')}"></svg></span>
+					<span><strong th:text="|${r.deliveryMinutes}-${r.deliveryMinutes + 5} min|">20-25 min</strong><span th:text="|Fastest now · ${r.name}|">Fastest now · Shahupuri Dosa Corner</span></span>
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<section th:if="${live > 0}" class="container home-section" aria-labelledby="home-cuisines-title">
+		<div class="home-section-head">
+			<div>
+				<h2 id="home-cuisines-title" class="section-title">What are you in the mood for?</h2>
+				<p class="home-section-text">Pick a cuisine to see every kitchen that cooks it.</p>
+			</div>
+		</div>
+		<ul class="home-cuisines">
+			<li th:each="c : ${cuisines}"><a class="chip home-cuisine" th:href="@{/restaurants(cuisine=${c.slug})}" href="/restaurants?cuisine=kolhapuri"><span class="home-cuisine-mark" aria-hidden="true" th:text="${#strings.substring(c.name, 0, 1)}">K</span><span th:text="${c.name}">Kolhapuri</span></a></li>
+		</ul>
+	</section>
+
+	<th:block th:if="${live > 0}">
+		<th:block th:unless="${home.topRated.cards.isEmpty()}"><section th:replace="~{home :: row('home-top-title', 'Top rated', 'Favourites across the city, rated 4.0 and up by people who ordered.', ${home.topRated})}"></section></th:block>
+		<th:block th:unless="${home.fastest.cards.isEmpty()}"><section th:replace="~{home :: row('home-fast-title', 'Fastest delivery', 'Open right now and quickest to your door.', ${home.fastest})}"></section></th:block>
+		<th:block th:unless="${home.pureVeg.cards.isEmpty()}"><section th:replace="~{home :: row('home-veg-title', 'Pure veg picks', 'All-vegetarian kitchens. No meat, no eggs, ever.', ${home.pureVeg})}"></section></th:block>
+	</th:block>
+
+	<section th:if="${live == 0}" class="container home-section">
+		<div th:replace="~{fragments/ui :: emptyState('store', 'No kitchens are live yet', 'New restaurants are joining Zaika. Check back soon, or list your own kitchen below.', null, null)}"></div>
+	</section>
+
+	<section class="container home-section" aria-labelledby="home-how-title">
+		<h2 id="home-how-title" class="section-title">How Zaika works</h2>
+		<ol class="feature-grid steps">
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('search')}"></svg></span>
+				<h3>Pick a kitchen</h3>
+				<p>Search a dish or browse by cuisine. Menus show real prices, veg marks and what's sold out today.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg></span>
+				<h3>Pay your way</h3>
+				<p>Cash on delivery or pay online. Delivery fee, platform fee and GST are listed line by line before you order.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+				<h3>Track it to your door</h3>
+				<p>Follow your order from the kitchen to your street. Share the 4-digit code with your rider and it's yours.</p>
+			</li>
+		</ol>
+	</section>
+
+	<section class="container home-section" aria-labelledby="home-partner-title">
+		<p class="eyebrow">Partner with us</p>
+		<h2 id="home-partner-title" class="section-title">Grow with Zaika</h2>
+		<div class="partner-band">
+			<div class="partner-card partner-card-dark">
+				<span class="partner-card-icon"><svg th:replace="~{fragments/icon :: icon('store')}"></svg></span>
+				<h3>List your restaurant</h3>
+				<p>Reach hungry customers across Kolhapur. Run your menu, take orders and see every payout from one simple dashboard.</p>
+				<a class="btn btn-primary" th:href="@{/partner-with-us/restaurant}" href="/partner-with-us/restaurant">Register your restaurant</a>
+			</div>
+			<div class="partner-card partner-card-light">
+				<span class="partner-card-icon"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+				<h3>Ride with Zaika</h3>
+				<p>Go online when it suits you, see what each delivery pays before you take it, and track your earnings day by day.</p>
+				<a class="btn btn-primary" th:href="@{/partner-with-us/rider}" href="/partner-with-us/rider">Become a delivery partner</a>
+			</div>
+		</div>
+	</section>
+</main>
+
+<!--/* One row of restaurant cards with its heading and a "See all" link to the matching listing. */-->
+<section th:fragment="row(titleId, title, text, row)" class="container home-section" th:aria-labelledby="${titleId}">
+	<div class="home-section-head">
+		<div>
+			<h2 th:id="${titleId}" class="section-title" th:text="${title}">Top rated</h2>
+			<p class="home-section-text" th:text="${text}">Kolhapur's favourites.</p>
+		</div>
+		<a class="btn btn-ghost btn-sm home-see-all" th:href="@{${row.url}}" href="/restaurants?top=true">See all<span class="visually-hidden" th:text="|: ${title}|">: Top rated</span><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></a>
+	</div>
+	<div class="restaurant-grid home-row">
+		<th:block th:each="r : ${row.cards}"><article th:replace="~{fragments/restaurant-card :: card(${r})}"></article></th:block>
+	</div>
+</section>
+</body>
+</html>
