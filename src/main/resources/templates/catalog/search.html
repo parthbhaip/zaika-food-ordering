@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${q == null} ? 'Search | Zaika' : 'Results for “' + ${q} + '” | Zaika'">Search | Zaika</title></head>
+<body>
+<!--/* The search page. Model: q (normalized search text or null), results (SearchService.Results, null without q),
+     cuisines (only when there is nothing to show: no q, or no matches). A plain GET form, no JavaScript needed. */-->
+<main id="main" class="search-page">
+	<div class="container">
+		<header class="search-head">
+			<p class="eyebrow">Search Zaika</p>
+			<h1 th:text="${q == null} ? 'What are you craving?' : |Results for “${q}”|">What are you craving?</h1>
+			<form class="search-form" role="search" aria-label="Search Zaika" th:action="@{/search}" action="/search" method="get">
+				<label class="visually-hidden" for="search-q">Search restaurants and dishes</label>
+				<div class="input-group">
+					<svg th:replace="~{fragments/icon :: icon('search')}"></svg>
+					<input th:if="${q == null}" class="input" id="search-q" name="q" type="search" maxlength="80" autocomplete="off"
+						placeholder="Try misal, biryani or a restaurant name" autofocus>
+					<input th:unless="${q == null}" class="input" id="search-q" name="q" type="search" maxlength="80" autocomplete="off"
+						placeholder="Try misal, biryani or a restaurant name" th:value="${q}">
+				</div>
+				<button type="submit" class="btn btn-primary">Search</button>
+			</form>
+		</header>
+
+		<!--/* No search yet: cuisines to start from. */-->
+		<section th:if="${q == null}" class="search-start" aria-labelledby="search-start-title">
+			<h2 id="search-start-title" class="search-group-title">Popular cuisines in Kolhapur</h2>
+			<div th:replace="~{::cuisine-chips}"></div>
+			<p class="search-start-more"><a class="btn btn-secondary" th:href="@{/restaurants}" href="/restaurants"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Browse all restaurants</a></p>
+		</section>
+
+		<!--/* Searched, nothing found. */-->
+		<section th:if="${results != null and results.empty}" class="search-none">
+			<div th:replace="~{fragments/ui :: emptyState('search', |No matches for “${q}”|,
+				'Check the spelling, or search for a dish like thali, misal or biryani.', 'Browse all restaurants', '/restaurants')}"></div>
+			<h2 class="search-group-title">Or pick a cuisine</h2>
+			<div th:replace="~{::cuisine-chips}"></div>
+		</section>
+
+		<th:block th:if="${results != null and !results.empty}" th:with="rc=${results.restaurantCount}, dc=${results.dishCount}">
+			<p class="search-summary">
+				<th:block th:text="|${rc} ${rc == 1 ? 'restaurant' : 'restaurants'} and ${dc} ${dc == 1 ? 'dish' : 'dishes'}|">3 restaurants and 9 dishes</th:block>
+			</p>
+
+			<section class="search-group" aria-labelledby="search-restaurants-title">
+				<div class="search-group-head">
+					<h2 id="search-restaurants-title" class="search-group-title">Restaurants <span class="search-group-count" th:text="${rc}">3</span></h2>
+					<a th:if="${rc > results.restaurants.size()}" class="btn btn-ghost btn-sm" th:href="@{/restaurants(q=${q})}" href="/restaurants?q=thali"
+						th:text="|See all ${rc}|">See all 14</a>
+				</div>
+				<div class="restaurant-grid">
+					<th:block th:each="r : ${results.restaurants}"><article th:replace="~{fragments/restaurant-card :: card(${r})}"></article></th:block>
+				</div>
+			</section>
+
+			<section class="search-group" aria-labelledby="search-dishes-title">
+				<div class="search-group-head">
+					<h2 id="search-dishes-title" class="search-group-title">Dishes <span class="search-group-count" th:text="${dc}">9</span></h2>
+				</div>
+				<p th:if="${dc == 0}" class="search-group-note" th:text="|No dish names match “${q}”. The restaurants above are a match by name or cuisine.|">No dish names match.</p>
+				<ul th:if="${dc > 0}" class="dish-hits">
+					<li th:each="d : ${results.dishes}" class="dish-hit" th:classappend="${d.available} ? '' : 'is-unavailable'">
+						<img th:src="@{${d.imageUrl}}" src="/placeholder/dish/misal-pav.svg" alt="" width="72" height="72" loading="lazy">
+						<div class="dish-hit-body">
+							<div class="dish-hit-tags">
+								<span th:replace="~{fragments/ui :: veg(${d.veg})}"></span>
+								<span th:if="${d.bestseller}" class="badge badge-bestseller"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>Bestseller</span>
+								<span th:unless="${d.available}" class="badge">Sold out today</span>
+							</div>
+							<h3 class="dish-hit-name"><a class="dish-hit-link" th:href="@{${d.url}}" href="/r/jhanjhanit-misal-ghar?q=Misal+Pav#dish-1" th:text="${d.name}">Misal Pav</a></h3>
+							<p class="dish-hit-meta"><span th:replace="~{fragments/ui :: price(${d.price})}"></span><span aria-hidden="true">·</span><span th:text="|${d.restaurantName}, ${d.restaurantArea}|">Jhanjhanit Misal Ghar, Mangalwar Peth</span></p>
+							<p th:unless="${d.restaurantOpen}" class="dish-hit-closed"><svg th:replace="~{fragments/icon :: icon('clock')}"></svg>Restaurant closed now</p>
+						</div>
+						<svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>
+					</li>
+				</ul>
+				<p th:if="${dc > results.dishes.size()}" class="search-group-note"
+					th:text="|Showing the top ${results.dishes.size()} of ${dc} dishes. Add a word to narrow it down.|">Showing the top 24 of 31 dishes.</p>
+			</section>
+		</th:block>
+	</div>
+</main>
+
+<!--/* Cuisine names as search links. */-->
+<ul th:fragment="cuisine-chips" class="chip-row search-cuisines">
+	<li th:each="c : ${cuisines}"><a class="chip" th:href="@{/search(q=${c.name})}" href="/search?q=Biryani" th:text="${c.name}">Biryani</a></li>
+</ul>
+
+<!--/* What /search/suggest returns into the header's #header-suggest listbox: up to five matches and a "See all"
+     option, plus the count for the #header-suggest-status live region. Model: q, suggestions, showAll. */-->
+<th:block th:fragment="suggestions">
+	<a th:each="s, st : ${suggestions}" class="suggest-option" role="option" tabindex="-1" aria-selected="false"
+		th:id="|header-suggest-${st.index}|" th:href="@{${s.url}}" href="/r/rassa-darbar">
+		<img th:src="@{${s.imageUrl}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="40" height="40">
+		<span class="suggest-text">
+			<span class="suggest-label"><th:block th:text="${s.before}">Rassa </th:block><mark th:if="${!s.match.isEmpty()}" th:text="${s.match}">Dar</mark><th:block th:text="${s.after}">bar</th:block></span>
+			<span class="suggest-detail"><th:block th:if="${s.kind.name() == 'DISH'}"><span th:replace="~{fragments/ui :: veg(${s.veg})}"></span></th:block><th:block th:text="${s.detail}">Restaurant · Rajarampuri</th:block></span>
+		</span>
+	</a>
+	<a th:if="${showAll}" class="suggest-option suggest-all" role="option" tabindex="-1" aria-selected="false"
+		th:id="|header-suggest-${suggestions.size()}|" th:href="@{/search(q=${q})}" href="/search?q=dar">
+		<svg th:replace="~{fragments/icon :: icon('search')}"></svg>
+		<span class="suggest-text"><span class="suggest-label" th:text="${suggestions.isEmpty()} ? |Search for “${q}”| : |See all results for “${q}”|">See all results for “dar”</span></span>
+	</a>
+	<p id="header-suggest-status" hx-swap-oob="innerHTML" th:text="${!showAll} ? '' : (${suggestions.isEmpty()} ? 'No quick matches. Press Enter to search.'
+		: |${suggestions.size()} ${suggestions.size() == 1 ? 'suggestion' : 'suggestions'}. Use the up and down arrows to choose one.|)"></p>
+</th:block>
+</body>
+</html>

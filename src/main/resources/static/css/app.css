@@ -1836,6 +1836,120 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.rp-section { scroll-margin-top: 0; }
 }
 
+/* ------------------------------------------------------------------ Search (/search and the header suggestions) */
+.search-page { padding-block: var(--space-6) var(--space-16); }
+.search-head { display: grid; gap: var(--space-2); }
+.search-head h1 { font-size: var(--text-2xl); font-weight: var(--weight-extrabold); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.search-form { display: flex; gap: var(--space-2); max-width: 640px; margin-top: var(--space-3); }
+.search-form .input-group { flex: 1; min-width: 0; }
+.search-form .input { min-height: 48px; border-radius: var(--radius-pill); }
+.search-form .btn { min-height: 48px; border-radius: var(--radius-pill); }
+.search-group-title { font-size: var(--text-lg); font-weight: var(--weight-bold); }
+.search-group-count {
+	margin-left: var(--space-1);
+	padding: 2px var(--space-2);
+	border-radius: var(--radius-pill);
+	background: var(--color-surface-muted);
+	color: var(--color-text-secondary);
+	font-size: var(--text-sm);
+	font-variant-numeric: tabular-nums;
+	vertical-align: middle;
+}
+.search-start,
+.search-none { display: grid; gap: var(--space-4); padding-top: var(--space-8); }
+.search-none .search-group-title { margin-top: var(--space-4); }
+.search-cuisines { margin: 0; padding: 0; list-style: none; }
+.search-summary { margin-top: var(--space-6); color: var(--color-text-secondary); font-weight: var(--weight-semibold); }
+.search-group { display: grid; gap: var(--space-4); padding-top: var(--space-8); }
+.search-group-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.search-group-note { color: var(--color-text-muted); font-size: var(--text-sm); }
+
+/* A matching dish: the name link covers the whole row */
+.dish-hits { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.dish-hit {
+	position: relative;
+	display: grid;
+	grid-template-columns: 72px minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--space-4);
+	padding: var(--space-3);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-md);
+	background: var(--color-surface);
+	transition: box-shadow var(--duration-fast) ease, border-color var(--duration-fast) ease;
+}
+.dish-hit:hover { border-color: var(--color-line-strong); box-shadow: var(--shadow-md); }
+.dish-hit > img {
+	display: block;
+	width: 72px;
+	height: 72px;
+	aspect-ratio: 1 / 1;
+	object-fit: cover;
+	border-radius: var(--radius-sm);
+	background: var(--color-primary-tint);
+}
+.dish-hit > .icon { width: 20px; height: 20px; color: var(--color-text-muted); }
+.dish-hit-body { display: grid; gap: var(--space-1); min-width: 0; }
+.dish-hit-tags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.dish-hit-name { font-size: var(--text-md); font-weight: var(--weight-bold); }
+.dish-hit-link { color: var(--color-ink); text-decoration: none; }
+.dish-hit-link::after { content: ""; position: absolute; inset: 0; border-radius: var(--radius-md); }
+.dish-hit-link:hover { color: var(--color-ink); }
+.dish-hit-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); color: var(--color-text-secondary); font-size: var(--text-sm); }
+.dish-hit-meta .price { color: var(--color-ink); font-weight: var(--weight-semibold); }
+.dish-hit-closed { display: flex; align-items: center; gap: var(--space-1); color: var(--color-warning-ink); font-size: var(--text-xs); font-weight: var(--weight-semibold); }
+.dish-hit-closed .icon { width: 14px; height: 14px; }
+.dish-hit.is-unavailable .dish-hit-name a,
+.dish-hit.is-unavailable .dish-hit-meta .price { color: var(--color-text-muted); }
+.dish-hit.is-unavailable > img { filter: grayscale(1); opacity: 0.6; }
+
+/* Header suggestions: a listbox under the search box (from 960px, where the box shows) */
+.search-suggest {
+	position: absolute;
+	top: calc(100% + var(--space-2));
+	left: 0;
+	right: 0;
+	z-index: 5;
+	display: grid;
+	padding: var(--space-2);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-md);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-lg);
+	animation: toast-in var(--duration-fast) var(--ease-out);
+}
+.search-suggest:empty,
+.search-suggest[hidden] { display: none; }
+.suggest-option {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	min-height: 48px;
+	padding: var(--space-2);
+	border-radius: var(--radius-sm);
+	color: var(--color-ink);
+	text-decoration: none;
+}
+.suggest-option:hover,
+.suggest-option[aria-selected="true"] { background: var(--color-primary-tint); color: var(--color-ink); }
+.suggest-option[aria-selected="true"] { box-shadow: inset 3px 0 0 var(--color-primary); }
+.suggest-option > img { flex: none; width: 40px; height: 40px; object-fit: cover; border-radius: var(--radius-sm); background: var(--color-primary-tint); }
+.suggest-option > .icon { flex: none; width: 40px; height: 20px; color: var(--color-text-muted); }
+.suggest-text { display: grid; min-width: 0; }
+.suggest-label { overflow: hidden; font-weight: var(--weight-medium); text-overflow: ellipsis; white-space: nowrap; }
+.suggest-label mark { background: none; color: inherit; font-weight: var(--weight-extrabold); }
+.suggest-detail { display: flex; align-items: center; gap: var(--space-2); overflow: hidden; color: var(--color-text-muted); font-size: var(--text-xs); white-space: nowrap; }
+.suggest-all { margin-top: var(--space-1); border-top: 1px solid var(--color-line); border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+.suggest-all .suggest-label { color: var(--color-link); font-weight: var(--weight-semibold); }
+
+@media (min-width: 640px) {
+	.search-page { padding-top: var(--space-10); }
+	.search-head h1 { font-size: var(--text-3xl); }
+}
+@media (min-width: 960px) {
+	.dish-hits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */
 .error-body {
 	min-height: 100vh;

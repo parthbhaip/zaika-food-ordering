@@ -90,6 +90,16 @@ class DevProfileTest {
 	}
 
 	@Test
+	void seededDataIsSearchable() throws Exception {
+		String html = mvc.perform(get("/search?q=misal")).andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString();
+		assertThat(html).contains("href=\"/r/jhanjhanit-misal-ghar\"", "class=\"dish-hit-link\"");
+		String suggestions = mvc.perform(get("/search/suggest?q=biryani").header("HX-Request", "true"))
+			.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+		assertThat(suggestions).contains("href=\"/r/noor-biryani-kebabs\"");
+	}
+
+	@Test
 	void devProfileCreatesTheDemoAdminOnStartup() throws Exception {
 		Properties dev = PropertiesLoaderUtils.loadProperties(new ClassPathResource("application-dev.properties"));
 		PropertySourcesPropertyResolver noVariables = new PropertySourcesPropertyResolver(new MutablePropertySources());

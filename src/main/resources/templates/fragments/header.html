@@ -27,11 +27,17 @@
 
 		<form class="header-search" role="search" th:action="@{/search}" action="/search" method="get">
 			<label class="visually-hidden" for="header-search-q">Search restaurants and dishes</label>
-			<div class="input-group">
+			<!--/* Type-ahead (htmx + js/search-suggest.js): suggestions load into #header-suggest after a short pause;
+			     arrows move through them, Enter opens one, Escape closes. Without JavaScript it is a plain GET form. */-->
+			<div class="input-group search-combo" data-suggest>
 				<svg th:replace="~{fragments/icon :: icon('search')}"></svg>
 				<input class="input" id="header-search-q" name="q" type="search" maxlength="80" autocomplete="off"
-					placeholder="Search for misal, biryani, thalis" th:value="${param.q != null ? param.q[0] : null}">
+					role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="header-suggest"
+					th:hx-get="@{/search/suggest}" hx-trigger="input changed delay:250ms, search" hx-target="#header-suggest"
+					hx-sync="this:replace" placeholder="Search for misal, biryani, thalis" th:value="${param.q != null ? param.q[0] : null}">
+				<div id="header-suggest" class="search-suggest" role="listbox" aria-label="Search suggestions"></div>
 			</div>
+			<p id="header-suggest-status" class="visually-hidden" role="status"></p>
 		</form>
 
 		<nav class="header-nav" aria-label="Main">

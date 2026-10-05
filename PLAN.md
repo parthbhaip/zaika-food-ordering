@@ -100,7 +100,7 @@ How this file works
   - Sticky category navigation, menu sections, item rows (veg mark, bestseller tag, spice level, price, description, image, Add button or quantity stepper - wired in T21), "Pure veg only" toggle, search within menu.
   - Sold-out and archived items handled (sold-out shown disabled, archived hidden). Unknown or non-approved slug -> 404. Tests.
 
-- [ ] T17 Search
+- [x] T17 Search
   - `/search?q=` shows matching restaurants and dishes in two groups; empty and no-result states.
   - Header search suggests the top 5 matches as you type (htmx, debounced, keyboard accessible). Tests.
 

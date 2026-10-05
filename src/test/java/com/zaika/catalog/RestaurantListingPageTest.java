@@ -243,6 +243,7 @@ class RestaurantListingPageTest {
 		// the pending restaurant also sells misal pav, but is not listed
 		assertThat(slugsAt("/restaurants?q=misal%20pav")).containsExactly("sunrise-misal");
 		assertThat(slugsAt("/restaurants?q=TAMBDA")).containsExactly("tambda-house");
+		assertThat(slugsAt("/restaurants?q=chinese")).containsExactlyElementsOf(WOKS); // a cuisine name (T17)
 	}
 
 	@Test

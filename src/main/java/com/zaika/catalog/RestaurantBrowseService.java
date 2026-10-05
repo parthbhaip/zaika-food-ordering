@@ -117,7 +117,10 @@ public class RestaurantBrowseService {
 				dish.select(item.get("id"))
 					.where(cb.equal(item.get("restaurant"), root), cb.isFalse(item.get("archived")),
 							cb.like(cb.lower(item.get("name")), pattern, ESCAPE));
-				where.add(cb.or(nameLike(root, cb, pattern), cb.exists(dish)));
+				Subquery<Long> tagged = query.subquery(Long.class);
+				Join<Restaurant, Cuisine> cuisine = tagged.correlate(root).join("cuisines");
+				tagged.select(cuisine.get("id")).where(cb.like(cb.lower(cuisine.get("name")), pattern, ESCAPE));
+				where.add(cb.or(nameLike(root, cb, pattern), cb.exists(tagged), cb.exists(dish)));
 			}
 			if (!Long.class.equals(query.getResultType())) { // the count query needs no order
 				query.orderBy(order(filter.getSortOption(), pattern, root, cb, now));
