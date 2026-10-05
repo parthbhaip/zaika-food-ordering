@@ -79,7 +79,7 @@ How this file works
   - `MenuCategory` (restaurant, name, sort order). `MenuItem` (restaurant, category, name, description, price, veg, bestseller, spice level 0-3, available, archived, image path, sort order).
   - `Restaurant.isOpenNow(Clock)` handles overnight hours (18:00-02:00). Indexes on status, city, slug, foreign keys. Tests.
 
-- [ ] T13 Image storage and placeholders
+- [x] T13 Image storage and placeholders
   - `StorageService`: magic-byte check (jpg/png/webp), 2 MB limit, random names, per-kind folders under `app.upload-dir`, served at `/uploads/**` with cache headers.
   - `PlaceholderController` generating deterministic SVG placeholders `/placeholder/{kind}/{seed}.svg` (colour from a hash of the name, initials or a simple food glyph).
   - Thymeleaf helper picks: uploaded image -> seed image `/img/seed/{slug}.jpg` if the file exists -> placeholder. Tests.

@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<!--/* Test-only template: proves the img bean picks picture URLs from Thymeleaf. */-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+	<img id="cover" th:with="src=${@img.cover(restaurant)}" th:src="@{${src}}" alt="" width="400" height="250">
+	<img id="logo" th:with="src=${@img.logo(restaurant)}" th:src="@{${src}}" alt="" width="64" height="64">
+	<img id="uploaded" th:with="src=${@img.dish(uploadedItem)}" th:src="@{${src}}" alt="" width="136" height="136">
+	<img id="seeded" th:with="src=${@img.dish(seededItem)}" th:src="@{${src}}" alt="" width="136" height="136">
+</body>
+</html>

@@ -15,6 +15,8 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -70,10 +72,13 @@ class ZaikaApplicationTests {
 	}
 
 	@Test
-	void appPropertiesAreBoundWithBusinessDefaults() {
+	void appPropertiesAreBoundWithBusinessDefaults() throws Exception {
 		assertThat(app.brandName()).isEqualTo("Zaika");
 		assertThat(app.zone()).isEqualTo(ZoneId.of("Asia/Kolkata"));
-		assertThat(app.uploadDir()).isEqualTo("./uploads");
+		// the shared default; the test profile keeps uploads written by tests inside the build output
+		assertThat(PropertiesLoaderUtils.loadProperties(new ClassPathResource("application.properties"))
+			.getProperty("app.upload-dir")).isEqualTo("./uploads");
+		assertThat(app.uploadDir()).isEqualTo("./target/test-uploads");
 		assertThat(app.seedDemo()).isFalse();
 		assertThat(app.platformFee()).isEqualTo(new BigDecimal("5.00"));
 		assertThat(app.gstRate()).isEqualByComparingTo("0.05");
