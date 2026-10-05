@@ -23,7 +23,7 @@ import org.springframework.validation.annotation.Validated;
  * @param seedDemo              load demo restaurants, menus and accounts on startup
  * @param platformFee           flat fee per order, INR
  * @param gstRate               GST as a fraction, 0.05 = 5%
- * @param freeDeliveryThreshold food subtotal from which delivery is free, INR
+ * @param freeDeliveryThreshold food subtotal above which delivery is free, INR
  * @param riderBasePayout       rider earning per delivered order before extras, INR
  * @param baseUrl               public address of the site (scheme, host, optional port and path, no trailing slash);
  *                              links in emails start with it

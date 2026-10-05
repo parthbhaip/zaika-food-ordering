@@ -115,7 +115,7 @@ How this file works
   - One restaurant per cart: adding from another restaurant asks "Start a new cart?" (works without JS).
   - Quantity 1-20. Availability and current price re-checked on every cart view. Tests including merge.
 
-- [ ] T20 Pricing service
+- [x] T20 Pricing service
   - `PriceBreakdown` record: item total, coupon discount, delivery fee (restaurant fee, free above the threshold), platform fee, GST on (item total - discount), grand total.
   - BigDecimal HALF_UP 2dp everywhere. Exhaustive unit tests including edge cases (zero, threshold boundary, discount larger than total).
 
