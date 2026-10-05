@@ -137,7 +137,7 @@ class LoginTest {
 	}
 
 	@Test
-	void unknownEmailGetsTheSameAnswerAsAWrongPassword()throws Exception {
+	void unknownEmailGetsTheSameAnswerAsAWrongPassword() throws Exception {
 		mvc.perform(login("nobody@zaika.test", PASSWORD))
 			.andExpect(redirectedUrl("/login?error"))
 			.andExpect(unauthenticated());
@@ -196,7 +196,7 @@ class LoginTest {
 	}
 
 	@Test
-	void signedInVisitorsSkipTheLoginPage()throws Exception {
+	void signedInVisitorsSkipTheLoginPage() throws Exception {
 		mvc.perform(get("/login").with(user("owner@zaika.test").roles("RESTAURANT_OWNER")))
 			.andExpect(redirectedUrl("/owner"));
 		mvc.perform(get("/login").with(user("customer@zaika.test").roles("CUSTOMER")))

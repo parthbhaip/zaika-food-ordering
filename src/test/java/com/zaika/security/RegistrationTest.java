@@ -162,6 +162,14 @@ class RegistrationTest {
 	}
 
 	@Test
+	void anEmptyMobileFieldShowsOnlyTheRequiredMessage() throws Exception {
+		String html = mvc.perform(post("/register").with(csrf()).param("phone", " "))
+			.andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString();
+		assertThat(html).contains("Enter your mobile number.").doesNotContain("Enter a 10-digit mobile number");
+	}
+
+	@Test
 	void passwordRules() throws Exception {
 		assertRejected(register("password", "abc12", "confirmPassword", "abc12"), "password",
 				"Use 8 or more characters with at least one letter and one digit.");

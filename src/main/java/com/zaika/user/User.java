@@ -80,13 +80,17 @@ public class User extends BaseEntity {
 	/**
 	 * A typed mobile number in the stored form: spaces, dashes and brackets removed, and a leading +91, 91 (12
 	 * digits) or 0 (11 digits) dropped. Anything else is returned as typed (minus separators) for validation to
-	 * reject. {@code null} stays {@code null}.
+	 * reject. {@code null} and blank input become {@code null}, so a form shows only its "required" message and not
+	 * the format one as well.
 	 */
 	public static String normalizePhone(String phone) {
 		if (phone == null) {
 			return null;
 		}
 		String digits = phone.replaceAll("[\\s()-]", "");
+		if (digits.isEmpty()) {
+			return null;
+		}
 		if (digits.startsWith("+91")) {
 			return digits.substring(3);
 		}
