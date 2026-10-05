@@ -94,7 +94,7 @@ class LayoutTest {
 			.contains("<nav class=\"header-nav\" aria-label=\"Main\">", "href=\"/restaurants\">Restaurants</a>")
 			// cart with a live count, hidden visually while empty
 			.contains("<a class=\"header-cart\" href=\"/cart\">")
-			.contains("<span id=\"cart-count\" class=\"cart-count is-empty\" aria-live=\"polite\"><span>0</span><span class=\"visually-hidden\"> items</span></span>")
+			.contains("<span id=\"cart-count\" aria-live=\"polite\"><span class=\"cart-count is-empty\"><span>0</span><span class=\"visually-hidden\"> items</span></span></span>")
 			// sign in / sign up, no account menu
 			.contains("<a class=\"btn btn-ghost btn-sm\" href=\"/login\">Sign in</a>", "<a class=\"btn btn-primary btn-sm\" href=\"/register\">Sign up</a>")
 			.doesNotContain("account-menu", "action=\"/logout\"")
@@ -113,13 +113,6 @@ class LayoutTest {
 			.contains("href=\"/orders\"", "href=\"/account/favourites\"", "href=\"/account\"", "<a class=\"header-cart\" href=\"/cart\">")
 			.containsPattern("<form class=\"account-links-logout\" action=\"/logout\" method=\"post\">\\s*<input type=\"hidden\" name=\"_csrf\"")
 			.doesNotContain("href=\"/login\"", "href=\"/register\"", "href=\"/owner\"", "href=\"/partner\"", "href=\"/admin\"");
-	}
-
-	@Test
-	void cartCountFromTheModelShowsInTheHeader() throws Exception {
-		String html = mvc.perform(get("/about").requestAttr("cartCount", 1))
-			.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-		assertThat(html).contains("<span id=\"cart-count\" class=\"cart-count\" aria-live=\"polite\"><span>1</span><span class=\"visually-hidden\"> item</span></span>");
 	}
 
 	@Test

@@ -36,6 +36,9 @@ public class CartService {
 
 	public static final int MAX_QUANTITY = 20;
 
+	/** Longest note for the restaurant, in characters (also the column length). */
+	public static final int MAX_INSTRUCTIONS = 250;
+
 	private final CartRepository carts;
 
 	private final MenuItemRepository items;
@@ -78,7 +81,7 @@ public class CartService {
 			if (!item.isAvailable()) {
 				return new CartChange(Outcome.SOLD_OUT, item, current, false);
 			}
-			if (!takingOrders(item.getRestaurant())) {
+			if (!isTakingOrders(item.getRestaurant())) {
 				return new CartChange(Outcome.CLOSED, item, current, false);
 			}
 			Long cartRestaurant = cart.restaurantId();
@@ -152,9 +155,10 @@ public class CartService {
 		BigDecimal itemTotal = lines.stream().map(CartView.Line::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add)
 			.setScale(2);
 		int count = lines.stream().mapToInt(CartView.Line::quantity).sum();
-		boolean open = takingOrders(restaurant);
+		boolean open = isTakingOrders(restaurant);
 		LocalTime opensAt = open || !restaurant.isAcceptingOrders() ? null : restaurant.getOpensAt();
-		return new CartView(restaurant, open, opensAt, List.copyOf(lines), itemTotal, count, List.copyOf(notices));
+		return new CartView(restaurant, open, opensAt, List.copyOf(lines), itemTotal, count, cart.instructions(),
+				List.copyOf(notices));
 	}
 
 	/** Menu item id to quantity, for the steppers on a restaurant page. No re-check. */
@@ -163,13 +167,53 @@ public class CartService {
 		return load(owner).quantities();
 	}
 
-	/** Dishes in the cart, summing quantities, for the header badge. No re-check. */
+	/**
+	 * Count, total and restaurant for the header badge and the phone cart bar: one query for a customer, none for an
+	 * empty guest cart, one restaurant lookup otherwise. No re-check.
+	 */
 	@Transactional(readOnly = true)
-	public int count(CartOwner owner) {
+	public CartSummary summary(CartOwner owner) {
 		return switch (owner) {
-			case CartOwner.Customer customer -> Math.toIntExact(carts.countItems(customer.userId()));
-			case CartOwner.Guest guest -> guest.cart().quantities().values().stream().mapToInt(Integer::intValue).sum();
+			case CartOwner.Customer customer -> carts.summarize(customer.userId());
+			case CartOwner.Guest guest -> {
+				GuestCart cart = guest.cart();
+				Map<Long, Integer> quantities = cart.quantities();
+				Long restaurantId = cart.restaurantId();
+				if (quantities.isEmpty() || restaurantId == null) {
+					yield CartSummary.EMPTY;
+				}
+				BigDecimal total = quantities.entrySet().stream()
+					.map(e -> cart.seenPrice(e.getKey()).multiply(BigDecimal.valueOf(e.getValue())))
+					.reduce(BigDecimal.ZERO, BigDecimal::add);
+				int count = quantities.values().stream().mapToInt(Integer::intValue).sum();
+				yield new CartSummary(count, total.setScale(2), restaurants.findById(restaurantId)
+					.map(Restaurant::getName).orElse(null));
+			}
 		};
+	}
+
+	/**
+	 * Saves the customer's note for the restaurant (stripped; blank removes it). Returns {@code false}, saving
+	 * nothing, when the cart is empty: a note belongs to an order.
+	 *
+	 * @throws IllegalArgumentException if the note is longer than {@link #MAX_INSTRUCTIONS}
+	 */
+	public boolean saveInstructions(CartOwner owner, String instructions) {
+		String note = instructions == null || instructions.isBlank() ? null : instructions.strip();
+		if (note != null && note.length() > MAX_INSTRUCTIONS) {
+			throw new IllegalArgumentException("Note longer than " + MAX_INSTRUCTIONS);
+		}
+		CartContents cart = loadForUpdate(owner, false);
+		if (cart.quantities().isEmpty()) {
+			return false;
+		}
+		cart.setInstructions(note);
+		return true;
+	}
+
+	/** Whether the restaurant takes orders right now: accepting orders and within its hours. */
+	public boolean isTakingOrders(Restaurant restaurant) {
+		return restaurant.isAcceptingOrders() && restaurant.isOpenNow(clock);
 	}
 
 	/**
@@ -218,6 +262,9 @@ public class CartService {
 				saved.markSeen(id, guest.seenPrice(id)); // a price change since the guest added it still shows
 			}
 		});
+		if (guest.instructions() != null && !saved.quantities().isEmpty()) {
+			saved.setInstructions(guest.instructions());
+		}
 		return notice;
 	}
 
@@ -225,10 +272,6 @@ public class CartService {
 		return items.findWithRestaurantById(itemId)
 			.filter(item -> !item.isArchived() && item.getRestaurant().getStatus() == RestaurantStatus.APPROVED)
 			.orElseThrow(() -> new NotFoundException("Menu item " + itemId));
-	}
-
-	private boolean takingOrders(Restaurant restaurant) {
-		return restaurant.isAcceptingOrders() && restaurant.isOpenNow(clock);
 	}
 
 	private CartContents load(CartOwner owner) {

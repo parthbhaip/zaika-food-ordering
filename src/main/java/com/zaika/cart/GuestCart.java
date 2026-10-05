@@ -26,6 +26,8 @@ public class GuestCart implements CartContents, Serializable {
 
 	private final LinkedHashMap<Long, Line> lines = new LinkedHashMap<>();
 
+	private String instructions;
+
 	/** Removes the guest cart from the session and returns it, or {@code null} if there is none. */
 	public static GuestCart takeFrom(HttpSession session) {
 		if (session == null) {
@@ -70,10 +72,20 @@ public class GuestCart implements CartContents, Serializable {
 	}
 
 	@Override
+	public synchronized String instructions() {
+		return instructions;
+	}
+
+	@Override
+	public synchronized void setInstructions(String instructions) {
+		this.instructions = instructions;
+	}
+
+	@Override
 	public synchronized void remove(long itemId) {
 		lines.remove(itemId);
 		if (lines.isEmpty()) {
-			restaurantId = null;
+			clear();
 		}
 	}
 
@@ -81,6 +93,7 @@ public class GuestCart implements CartContents, Serializable {
 	public synchronized void clear() {
 		lines.clear();
 		restaurantId = null;
+		instructions = null;
 	}
 
 	record Line(int quantity, BigDecimal price) implements Serializable {

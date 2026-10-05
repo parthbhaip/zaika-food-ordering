@@ -155,7 +155,7 @@ class PricingServiceTest {
 		kitchen.setDeliveryFee(inr("35.00"));
 		MenuItem misal = new MenuItem(new MenuCategory(kitchen, "Misal", 1), "Kolhapuri Misal", inr("120.00"), true);
 		CartView cart = new CartView(kitchen, true, null, List.of(new CartView.Line(misal, 2, inr("240.00"))),
-				inr("240.00"), 2, List.of());
+				inr("240.00"), 2, null, List.of());
 
 		assertBill(pricing.price(cart, inr("0")), "240.00", "0.00", "35.00", "5.00", "12.00", "292.00");
 		assertBill(pricing.price(cart, inr("40.00")), "240.00", "40.00", "35.00", "5.00", "10.00", "250.00");
@@ -165,6 +165,42 @@ class PricingServiceTest {
 	void anEmptyCartCostsNothing() {
 		assertBill(pricing.price(CartView.empty(List.of()), inr("50.00")), "0.00", "0.00", "0.00", "0.00", "0.00",
 				"0.00");
+	}
+
+	private static CartView cartFrom(String fee, String itemTotal, String minimum) {
+		Restaurant kitchen = new Restaurant(new User("Owner", "owner@pricing.zaika.test", "9876543210", "x",
+				Role.RESTAURANT_OWNER), "misal-house", "Misal House");
+		kitchen.setDeliveryFee(inr(fee));
+		kitchen.setMinimumOrder(inr(minimum));
+		MenuItem misal = new MenuItem(new MenuCategory(kitchen, "Misal", 1), "Kolhapuri Misal", inr(itemTotal), true);
+		return new CartView(kitchen, true, null, List.of(new CartView.Line(misal, 1, inr(itemTotal))), inr(itemTotal),
+				1, null, List.of());
+	}
+
+	@Test
+	void freeDeliveryGapIsTheWholeRupeesThatTakeTheCartStrictlyAboveTheThreshold() {
+		assertThat(pricing.freeDeliveryGap(cartFrom("30.00", "458.00", "0"))).isEqualByComparingTo("42.00");
+		assertThat(pricing.freeDeliveryGap(cartFrom("30.00", "458.40", "0"))).isEqualByComparingTo("41.00");
+		assertThat(pricing.freeDeliveryGap(cartFrom("30.00", "499.00", "0"))).as("₹499 still pays")
+			.isEqualByComparingTo("1.00");
+		assertThat(pricing.freeDeliveryGap(cartFrom("30.00", "498.99", "0"))).isEqualByComparingTo("1.00");
+		assertThat(pricing.freeDeliveryGap(cartFrom("30.00", "499.01", "0"))).isNull();
+		assertThat(pricing.freeDeliveryGap(cartFrom("0.00", "100.00", "0"))).as("kitchen delivers free").isNull();
+		assertThat(pricing.freeDeliveryGap(CartView.empty(List.of()))).isNull();
+		assertThat(pricing.gstPercent()).isEqualTo("5");
+		assertThat(service("5.00", "0.125", "499.00").gstPercent()).isEqualTo("12.5");
+	}
+
+	@Test
+	void theMinimumOrderDecidesWhetherTheCartCanCheckOut() {
+		CartView short80 = cartFrom("30.00", "120.00", "200.00");
+		assertThat(short80.minimumOrderShortfall()).isEqualByComparingTo("80.00");
+		assertThat(short80.canCheckout()).isFalse();
+		CartView exact = cartFrom("30.00", "200.00", "200.00");
+		assertThat(exact.minimumOrderShortfall()).isEqualByComparingTo("0.00");
+		assertThat(exact.canCheckout()).isTrue();
+		assertThat(CartView.empty(List.of()).minimumOrderShortfall()).isEqualByComparingTo("0.00");
+		assertThat(CartView.empty(List.of()).canCheckout()).isFalse();
 	}
 
 }

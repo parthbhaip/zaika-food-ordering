@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* The phone "View cart" bar (hidden from 960px, where the header cart shows). Reads cartSummary (cart.CartSummary,
+     from cart.CartModelInterceptor) and hideCartBar (set by pages that have their own checkout button, like /cart). The slot is
+     always there so an htmx answer can fill or empty it out of band: slot(true). */-->
+<div th:fragment="slot(oob)" id="cart-bar-slot" th:hx-swap-oob="${oob} ? 'true'">
+	<a th:if="${cartSummary != null and cartSummary.count > 0 and hideCartBar == null}" class="cart-bar" th:href="@{/cart}" href="/cart">
+		<span class="cart-bar-summary">
+			<span th:text="|${cartSummary.count} ${cartSummary.count == 1 ? 'item' : 'items'} · ${@fmt.price(cartSummary.itemTotal)}|">2 items · ₹458</span>
+			<small th:if="${cartSummary.restaurantName != null}" th:text="|From ${cartSummary.restaurantName}|">From Rassa Darbar</small>
+		</span>
+		<span class="cart-bar-cta">View cart<svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></span>
+	</a>
+</div>
+</body>
+</html>

@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -33,6 +34,9 @@ public class Cart extends BaseEntity implements CartContents {
 	@OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
 	@OrderBy("id")
 	private List<CartItem> items = new ArrayList<>();
+
+	@Column(length = CartService.MAX_INSTRUCTIONS)
+	private String instructions;
 
 	protected Cart() {
 	}
@@ -84,13 +88,27 @@ public class Cart extends BaseEntity implements CartContents {
 	}
 
 	@Override
+	public String instructions() {
+		return instructions;
+	}
+
+	@Override
+	public void setInstructions(String instructions) {
+		this.instructions = instructions;
+	}
+
+	@Override
 	public void remove(long itemId) {
 		items.removeIf(line -> line.getMenuItem().getId() == itemId);
+		if (items.isEmpty()) {
+			instructions = null;
+		}
 	}
 
 	@Override
 	public void clear() {
 		items.clear();
+		instructions = null;
 	}
 
 	private Optional<CartItem> find(long itemId) {

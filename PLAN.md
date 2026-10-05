@@ -119,7 +119,7 @@ How this file works
   - `PriceBreakdown` record: item total, coupon discount, delivery fee (restaurant fee, free above the threshold), platform fee, GST on (item total - discount), grand total.
   - BigDecimal HALF_UP 2dp everywhere. Exhaustive unit tests including edge cases (zero, threshold boundary, discount larger than total).
 
-- [ ] T21 Cart UI
+- [x] T21 Cart UI
   - Add / increase / decrease / remove via htmx with full-page fallback; header count updates with `hx-swap-oob`.
   - Cart page: items, instructions for the restaurant, bill breakdown, minimum-order progress ("Add ₹80 more"), checkout button; mobile sticky "View cart" bar.
   - Restaurant page steppers wired to the cart. Tests.

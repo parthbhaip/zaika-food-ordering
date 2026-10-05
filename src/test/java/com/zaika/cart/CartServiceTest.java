@@ -119,7 +119,7 @@ class CartServiceTest {
 		assertThat(change.outcome()).isEqualTo(Outcome.ADDED);
 		assertThat(change.quantity()).isEqualTo(1);
 		assertThat(carts.quantities(owner)).containsExactly(entry(thali.getId(), 1));
-		assertThat(carts.count(owner)).isEqualTo(1);
+		assertThat(carts.summary(owner).count()).isEqualTo(1);
 		CartView view = carts.view(owner);
 		assertThat(view.restaurant().getId()).isEqualTo(rassa.getId());
 		assertThat(view.takingOrders()).isTrue();
@@ -254,7 +254,7 @@ class CartServiceTest {
 
 		assertThat(carts.setQuantity(guest, thali.getId(), 30, false).quantity()).isEqualTo(20);
 		assertThat(carts.setQuantity(guest, misal.getId(), 1, false).outcome()).isEqualTo(Outcome.OTHER_RESTAURANT);
-		assertThat(carts.count(guest)).isEqualTo(20);
+		assertThat(carts.summary(guest).count()).isEqualTo(20);
 		assertThat(carts.setQuantity(guest, misal.getId(), 1, true).outcome()).isEqualTo(Outcome.ADDED);
 		assertThat(guestCart.restaurantId()).isEqualTo(sunrise.getId());
 		assertThat(carts.setQuantity(guest, misal.getId(), 0, false).outcome()).isEqualTo(Outcome.REMOVED);
@@ -269,8 +269,8 @@ class CartServiceTest {
 		carts.setQuantity(riya, dish(rassa, "Sukka Mutton", "340").getId(), 2, false);
 
 		assertThat(carts.view(aarav).isEmpty()).isTrue();
-		assertThat(carts.count(aarav)).isZero();
-		assertThat(carts.count(riya)).isEqualTo(2);
+		assertThat(carts.summary(aarav).count()).isZero();
+		assertThat(carts.summary(riya).count()).isEqualTo(2);
 	}
 
 	// ---------------------------------------------------------------- every view re-checks the menu
@@ -320,7 +320,7 @@ class CartServiceTest {
 		assertThat(view.isEmpty()).isTrue();
 		assertThat(view.notices())
 			.containsExactly("Leaving Soon is not taking orders on Zaika right now, so we emptied your cart.");
-		assertThat(carts.count(owner)).isZero();
+		assertThat(carts.summary(owner).count()).isZero();
 	}
 
 	// ---------------------------------------------------------------- guest cart merged on sign-in
@@ -374,6 +374,65 @@ class CartServiceTest {
 		carts.setQuantity(owner, dish(rassa, "Anda Curry", "180").getId(), 2, false);
 		carts.clear(owner);
 		assertThat(carts.view(owner).isEmpty()).isTrue();
+	}
+
+	// ---------------------------------------------------------------- note for the restaurant and the cart summary
+
+	@Test
+	void theNoteIsStrippedKeptWithTheCartAndGoesWithTheLastDish() {
+		CartOwner owner = customer();
+		MenuItem thali = dish(rassa, "Kombdi Vade", "280");
+		assertThat(carts.saveInstructions(owner, "No onion")).as("empty cart: nothing to attach a note to").isFalse();
+
+		carts.setQuantity(owner, thali.getId(), 1, false);
+		assertThat(carts.saveInstructions(owner, "  Less spicy, please  ")).isTrue();
+		assertThat(carts.view(owner).instructions()).isEqualTo("Less spicy, please");
+		carts.setQuantity(owner, thali.getId(), 3, false);
+		assertThat(carts.view(owner).instructions()).as("kept while the cart changes").isEqualTo("Less spicy, please");
+
+		assertThat(carts.saveInstructions(owner, "   ")).isTrue();
+		assertThat(carts.view(owner).instructions()).as("blank removes it").isNull();
+		carts.saveInstructions(owner, "Ring the bell");
+		carts.setQuantity(owner, thali.getId(), 0, false);
+		carts.setQuantity(owner, thali.getId(), 1, false);
+		assertThat(carts.view(owner).instructions()).as("emptying the cart drops the note").isNull();
+
+		assertThat(carts.saveInstructions(owner, "x".repeat(250))).isTrue();
+		assertThatThrownBy(() -> carts.saveInstructions(owner, "x".repeat(251)))
+			.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void aGuestNoteMovesIntoTheAccountOnSignIn() {
+		CartOwner.Customer owner = customer();
+		MenuItem misal = dish(sunrise, "Kat Misal", "105");
+		GuestCart guest = new GuestCart();
+		CartOwner.Guest asGuest = new CartOwner.Guest(guest);
+		carts.setQuantity(asGuest, misal.getId(), 1, false);
+		assertThat(carts.saveInstructions(asGuest, "Extra farsan")).isTrue();
+		carts.setQuantity(asGuest, misal.getId(), 0, false);
+		assertThat(guest.instructions()).as("a guest's note also goes with the last dish").isNull();
+		carts.setQuantity(asGuest, misal.getId(), 2, false);
+		carts.saveInstructions(asGuest, "Extra farsan");
+
+		carts.merge(guest, owner.userId());
+
+		assertThat(carts.view(owner).instructions()).isEqualTo("Extra farsan");
+	}
+
+	@Test
+	void theSummaryCountsDishesAndTotalsThemForTheCartBar() {
+		CartOwner.Customer owner = customer();
+		assertThat(carts.summary(owner)).isEqualTo(new CartSummary(0, new BigDecimal("0.00"), null));
+		carts.setQuantity(owner, dish(rassa, "Tambda Rassa", "150").getId(), 2, false);
+		carts.setQuantity(owner, dish(rassa, "Bhakri", "25.50").getId(), 1, false);
+		assertThat(carts.summary(owner)).isEqualTo(new CartSummary(3, new BigDecimal("325.50"), "Rassa House"));
+
+		GuestCart guest = new GuestCart();
+		CartOwner.Guest asGuest = new CartOwner.Guest(guest);
+		assertThat(carts.summary(asGuest)).isEqualTo(new CartSummary(0, new BigDecimal("0.00"), null));
+		carts.setQuantity(asGuest, dish(sunrise, "Sabudana Khichdi", "80").getId(), 4, false);
+		assertThat(carts.summary(asGuest)).isEqualTo(new CartSummary(4, new BigDecimal("320.00"), "Sunrise Misal"));
 	}
 
 }

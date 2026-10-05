@@ -2,8 +2,8 @@
 <!--/* The site layout. A page uses it from its <html> tag and hands over its <title> and its content (normally
      its <main id="main">, which the skip link targets):
        <html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}">
-     Header and footer read: cartCount (header cart badge, default 0) and the flash attributes listed in
-     fragments/flash. No inline scripts or on* handlers anywhere (CSP script-src 'self'). */-->
+     Header and footer read: cartCount (header cart badge, default 0), cartSummary and hideCartBar (phone cart bar,
+     fragments/cart-bar) and the flash attributes listed in fragments/flash. No inline scripts or on* handlers anywhere (CSP script-src 'self'). */-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)">
 <head>
 	<meta charset="utf-8">
@@ -29,6 +29,8 @@
 	<header th:replace="~{fragments/header :: header}"></header>
 
 	<main id="main" th:replace="${content}"></main>
+
+	<div th:replace="~{fragments/cart-bar :: slot(false)}"></div>
 
 	<div th:replace="~{fragments/flash :: toasts}"></div>
 

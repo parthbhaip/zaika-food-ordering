@@ -71,6 +71,7 @@ public class CatalogFixtures {
 		r.setPincode("416008");
 		r.setCostForTwo(BigDecimal.valueOf(b.costForTwo));
 		r.setDeliveryFee(BigDecimal.valueOf(b.deliveryFee));
+		r.setMinimumOrder(BigDecimal.valueOf(b.minimumOrder));
 		r.setAvgPrepMinutes(b.prepMinutes);
 		r.setHours(LocalTime.parse(b.opensAt), LocalTime.parse(b.closesAt));
 		r.setPureVeg(b.pureVeg);
@@ -114,6 +115,8 @@ public class CatalogFixtures {
 
 		private int deliveryFee = 30;
 
+		private int minimumOrder;
+
 		private String opensAt = "11:00";
 
 		private String closesAt = "23:00";
@@ -155,6 +158,11 @@ public class CatalogFixtures {
 
 		public Builder deliveryFee(int rupees) {
 			deliveryFee = rupees;
+			return this;
+		}
+
+		public Builder minimumOrder(int rupees) {
+			minimumOrder = rupees;
 			return this;
 		}
 

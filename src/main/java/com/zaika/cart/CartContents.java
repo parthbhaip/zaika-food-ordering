@@ -26,8 +26,15 @@ interface CartContents {
 	/** Remembers {@code price} as the one the customer has now seen. */
 	void markSeen(long itemId, BigDecimal price);
 
+	/** The customer's note for the restaurant, or {@code null}. */
+	String instructions();
+
+	void setInstructions(String instructions);
+
+	/** Takes the dish out; the note goes too once the cart is empty, being meant for that order. */
 	void remove(long itemId);
 
+	/** Empties the cart, note included. */
 	void clear();
 
 }

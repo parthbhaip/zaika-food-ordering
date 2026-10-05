@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* What cart.CartController answers to htmx requests. The main part replaces the element the form targets; the rest
+     is out of band: the header count (always), the phone cart bar (restaurant page only; the cart page hides it) and
+     the toasts. Model: toasts (List<cart.Toast>), cartCount, cartSummary, plus what each fragment names. */-->
+
+<!--/* Nothing to swap: the answer carries HX-Redirect. */-->
+<th:block th:fragment="nothing"></th:block>
+
+<!--/* A dish on the restaurant page. Model: item, canOrder, quantity, focusAdd. */-->
+<th:block th:fragment="dish">
+	<article th:replace="~{catalog/restaurant :: menu-item(${item}, ${canOrder}, ${quantity})}"></article>
+	<th:block th:replace="~{cart/htmx :: count}"></th:block>
+	<div th:replace="~{fragments/cart-bar :: slot(true)}"></div>
+	<th:block th:replace="~{cart/htmx :: toasts}"></th:block>
+</th:block>
+
+<!--/* The cart page after a stepper: the dishes (main target #cart-items) and the bill (out of band). */-->
+<th:block th:fragment="cart-update">
+	<div th:replace="~{cart/cart :: items}"></div>
+	<div th:replace="~{cart/cart :: side(true)}"></div>
+	<th:block th:replace="~{cart/htmx :: count}"></th:block>
+	<th:block th:replace="~{cart/htmx :: toasts}"></th:block>
+</th:block>
+
+<!--/* The cart page once the last dish is gone: the whole body (HX-Retarget #cart-body). */-->
+<th:block th:fragment="cart-body">
+	<div th:replace="~{cart/cart :: cart-body}"></div>
+	<th:block th:replace="~{cart/htmx :: count}"></th:block>
+	<th:block th:replace="~{cart/htmx :: toasts}"></th:block>
+</th:block>
+
+<!--/* The note form after saving (or with its error). */-->
+<th:block th:fragment="note">
+	<form th:replace="~{cart/cart :: note}"></form>
+	<th:block th:replace="~{cart/htmx :: toasts}"></th:block>
+</th:block>
+
+<th:block th:fragment="count"><span id="cart-count" hx-swap-oob="innerHTML"><span th:replace="~{fragments/header :: cartBadge(${cartCount})}"></span></span></th:block>
+
+<th:block th:fragment="toasts"><div th:unless="${toasts.isEmpty()}" hx-swap-oob="beforeend:#toasts"><th:block th:each="t : ${toasts}"><div th:replace="~{fragments/flash :: toast(${t.kind}, ${t.message})}"></div></th:block></div></th:block>
+</body>
+</html>

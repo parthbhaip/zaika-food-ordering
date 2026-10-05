@@ -261,10 +261,12 @@ class RestaurantPageTest {
 			.contains("<span class=\"price\">₹420</span>")
 			.contains("<p class=\"menu-item-desc\">Sukka mutton, both rassas and two bhakris.</p>")
 			.contains("src=\"/placeholder/dish/mutton-thali.svg\" alt=\"Mutton Thali\" width=\"136\" height=\"136\" loading=\"lazy\"")
-			.containsPattern("<form action=\"/cart/items/" + muttonThali.getId() + "\" method=\"post\">"
+			.containsPattern("<form action=\"/cart/items/" + muttonThali.getId() + "\" method=\"post\" hx-post=\"/cart/items/"
+					+ muttonThali.getId() + "\" hx-target=\"#dish-" + muttonThali.getId() + "\" hx-swap=\"outerHTML\">"
 					+ "<input type=\"hidden\" name=\"_csrf\" value=\"[^\"]+\"/?>")
 			.contains("<input type=\"hidden\" name=\"quantity\" value=\"1\">")
-			.contains("<button type=\"submit\" class=\"btn btn-add\">ADD<span class=\"visually-hidden\"> Mutton Thali to cart</span>");
+			.contains("<button type=\"submit\" class=\"btn btn-add\" id=\"dish-" + muttonThali.getId()
+					+ "-more\">ADD<span class=\"visually-hidden\"> Mutton Thali to cart</span>");
 		assertThat(row(html, "Veg Kolhapuri Thali")).contains("class=\"veg-mark\"", "Vegetarian",
 				"<span class=\"badge badge-warning\">Spicy</span>").doesNotContain("Bestseller");
 		assertThat(row(html, "Pandhra Rassa")).contains("<span class=\"badge badge-warning\">Mild spice</span>",
@@ -375,9 +377,10 @@ class RestaurantPageTest {
 		assertThat(row(html, "Mutton Thali"))
 			.contains("class=\"qty\" role=\"group\" aria-label=\"Quantity of Mutton Thali\"")
 			.contains("action=\"/cart/items/" + muttonThali.getId() + "\" method=\"post\"")
-			.contains("name=\"quantity\" value=\"1\" aria-label=\"Remove one Mutton Thali\"")
+			.contains("hx-post=\"/cart/items/" + muttonThali.getId() + "\" hx-target=\"#dish-" + muttonThali.getId() + "\"")
+			.contains("name=\"quantity\" value=\"1\" id=\"dish-" + muttonThali.getId() + "-less\" aria-label=\"Remove one Mutton Thali\"")
 			.contains("<span class=\"qty-value\">2</span>")
-			.contains("name=\"quantity\" value=\"3\" aria-label=\"Add one more Mutton Thali\"")
+			.contains("name=\"quantity\" value=\"3\" id=\"dish-" + muttonThali.getId() + "-more\" aria-label=\"Add one more Mutton Thali\"")
 			.doesNotContain("btn-add");
 		assertThat(row(html, "Solkadhi")).contains("btn btn-add").doesNotContain("class=\"qty\"");
 	}

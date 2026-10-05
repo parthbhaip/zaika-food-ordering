@@ -115,7 +115,9 @@
 <th:block th:fragment="count-text"><th:block th:if="${filter.filtered}" th:text="|${menu.shownCount} of |">3 of </th:block><th:block th:text="|${menu.dishCount} ${menu.dishCount == 1 ? 'dish' : 'dishes'}|">14 dishes</th:block><th:block th:if="${filter.q != null}" th:text="| match “${filter.q}”|"></th:block><th:block th:if="${filter.veg}" th:text="${filter.q != null} ? ', veg only' : ' · veg only'"></th:block></th:block>
 
 <!--/* One dish. canOrder: the restaurant is open and taking orders. qty: how many are in the cart (0 shows ADD).
-     The ADD and stepper forms post to /cart/items/{id} with the new quantity (handled from T19/T21). */-->
+     The ADD and stepper forms post to /cart/items/{id} with the new quantity (cart.CartController). With htmx the
+     answer (cart/htmx :: dish) replaces just this article. ADD and "+" share an id, so focus stays on "+" after the
+     first ADD; when "-" takes the dish out, the answer sets focusAdd and htmx focuses ADD (autofocus). */-->
 <article th:fragment="menu-item(item, canOrder, qty)" class="menu-item" th:classappend="${item.available} ? '' : 'is-unavailable'" th:id="|dish-${item.id}|">
 	<div class="menu-item-info">
 		<div class="menu-item-tags">
@@ -134,15 +136,17 @@
 		<div class="menu-item-action">
 			<button th:unless="${item.available}" type="button" class="btn btn-add" disabled>ADD<span class="visually-hidden" th:text="| ${item.name}, sold out|">, sold out</span></button>
 			<button th:if="${item.available and !canOrder}" type="button" class="btn btn-add" disabled>ADD<span class="visually-hidden" th:text="| ${item.name}, ordering is closed|">, ordering is closed</span></button>
-			<form th:if="${item.available and canOrder and qty == 0}" th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post">
+			<form th:if="${item.available and canOrder and qty == 0}" th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post"
+				th:hx-post="@{/cart/items/{id}(id=${item.id})}" th:hx-target="|#dish-${item.id}|" hx-swap="outerHTML">
 				<input type="hidden" name="quantity" value="1">
-				<button type="submit" class="btn btn-add">ADD<span class="visually-hidden" th:text="| ${item.name} to cart|"> Mutton Thali to cart</span></button>
+				<button type="submit" class="btn btn-add" th:id="|dish-${item.id}-more|" th:autofocus="${focusAdd}">ADD<span class="visually-hidden" th:text="| ${item.name} to cart|"> Mutton Thali to cart</span></button>
 			</form>
 			<form th:if="${item.available and canOrder and qty > 0}" class="qty" role="group" th:aria-label="|Quantity of ${item.name}|"
-				th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post">
-				<button type="submit" class="qty-btn" name="quantity" th:value="${qty - 1}" value="1" th:aria-label="|Remove one ${item.name}|"><svg th:replace="~{fragments/icon :: icon('minus')}"></svg></button>
+				th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post"
+				th:hx-post="@{/cart/items/{id}(id=${item.id})}" th:hx-target="|#dish-${item.id}|" hx-swap="outerHTML">
+				<button type="submit" class="qty-btn" name="quantity" th:value="${qty - 1}" value="1" th:id="|dish-${item.id}-less|" th:aria-label="|Remove one ${item.name}|"><svg th:replace="~{fragments/icon :: icon('minus')}"></svg></button>
 				<span class="qty-value" th:text="${qty}">2</span>
-				<button type="submit" class="qty-btn" name="quantity" th:value="${qty + 1}" value="3" th:aria-label="|Add one more ${item.name}|"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg></button>
+				<button type="submit" class="qty-btn" name="quantity" th:value="${qty + 1}" value="3" th:id="|dish-${item.id}-more|" th:disabled="${qty >= T(com.zaika.cart.CartService).MAX_QUANTITY}" th:aria-label="|Add one more ${item.name}|"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg></button>
 			</form>
 		</div>
 	</div>

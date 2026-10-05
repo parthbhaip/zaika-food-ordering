@@ -1,63 +1,135 @@
 <!DOCTYPE html>
-<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head><title>Your cart | Zaika</title></head>
 <body>
-<!--/* /cart: the dishes in the visitor's cart, re-checked against the menu on every view. Model: cart (cart.CartView).
-     Steppers post to /cart/items/{id} with from=cart, so the page comes back here. */-->
+<!--/* /cart: the dishes in the visitor's cart, re-checked against the menu on every view, the note for the restaurant,
+     the bill and the checkout button. Model: cart (cart.CartView), bill (cart.PriceBreakdown), freeDeliveryGap
+     (BigDecimal or null), gstPercent, instructionsForm. Every form works without JavaScript (PRG back to /cart);
+     with htmx the steppers swap #cart-items and, out of band, #cart-side (cart/htmx :: cart-update), or the whole
+     #cart-body once the cart is empty. Phones: the checkout box sticks to the bottom of the screen. */-->
 <main id="main" class="cart-page">
-	<div class="container cart-container">
-		<h1 class="cart-title">Your cart</h1>
-
-		<div th:unless="${cart.notices.isEmpty()}" class="alert alert-warning cart-notices" role="status">
-			<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
-			<ul><li th:each="n : ${cart.notices}" th:text="${n}">Mutton Thali now costs ₹440 (was ₹420).</li></ul>
-		</div>
-
-		<div th:if="${cart.empty}" class="card">
-			<div th:replace="~{fragments/ui :: emptyState('cart', 'Your cart is empty', 'Good food is a few taps away. Pick a kitchen near you and add a dish or two.', 'Browse restaurants', '/restaurants')}"></div>
-		</div>
-
-		<section th:unless="${cart.empty}" th:with="r=${cart.restaurant}" class="card cart-card" aria-labelledby="cart-restaurant">
-			<header class="cart-restaurant">
-				<img class="cart-restaurant-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="56" height="56">
-				<div>
-					<h2 class="cart-restaurant-name" id="cart-restaurant"><a th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar" th:text="${r.name}">Rassa Darbar</a></h2>
-					<p class="muted" th:text="|${r.area} · Delivery in about ${r.deliveryMinutes} min|">Rajarampuri · Delivery in about 35 min</p>
-				</div>
-			</header>
-
-			<p th:unless="${cart.takingOrders}" class="alert alert-warning cart-closed">
-				<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
-				<span th:if="${cart.opensAt != null}" th:text="|${r.name} is closed now and opens at ${@fmt.timeOfDay(cart.opensAt)}. Your cart will be here.|">Rassa Darbar is closed now and opens at 11:00 AM.</span>
-				<span th:if="${cart.opensAt == null}" th:text="|${r.name} is not taking orders right now. Your cart will be here when they are back.|">Rassa Darbar is not taking orders right now.</span>
-			</p>
-
-			<ul class="cart-lines">
-				<li th:each="line : ${cart.lines}" th:with="item=${line.item}" class="cart-line">
-					<span th:replace="~{fragments/ui :: veg(${item.veg})}"></span>
-					<div class="cart-line-info">
-						<p class="cart-line-name" th:text="${item.name}">Mutton Thali</p>
-						<p class="cart-line-unit muted"><span th:replace="~{fragments/ui :: price(${item.price})}"></span> each</p>
-					</div>
-					<form class="qty" role="group" th:aria-label="|Quantity of ${item.name}|" th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post">
-						<input type="hidden" name="from" value="cart">
-						<button type="submit" class="qty-btn" name="quantity" th:value="${line.quantity - 1}" value="1"
-							th:aria-label="${line.quantity == 1} ? |Remove ${item.name}| : |Remove one ${item.name}|"><svg th:replace="~{fragments/icon :: icon(${line.quantity == 1 ? 'trash' : 'minus'})}"></svg></button>
-						<span class="qty-value" th:text="${line.quantity}">2</span>
-						<button type="submit" class="qty-btn" name="quantity" th:value="${line.quantity + 1}" value="3" th:disabled="${line.atMax() or !cart.takingOrders}"
-							th:aria-label="|Add one more ${item.name}|"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg></button>
-					</form>
-					<span class="cart-line-total price" th:text="${@fmt.money(line.lineTotal)}">₹840.00</span>
-				</li>
-			</ul>
-
-			<div class="cart-total">
-				<span th:text="|Item total (${cart.itemCount} ${cart.itemCount == 1 ? 'item' : 'items'})|">Item total (3 items)</span>
-				<strong class="price" th:text="${@fmt.money(cart.itemTotal)}">₹1,020.00</strong>
-			</div>
-			<p class="cart-more"><a th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg><span th:text="|Add more from ${r.name}|">Add more from Rassa Darbar</span></a></p>
-		</section>
+	<div class="container">
+		<div th:replace="~{cart/cart :: cart-body}"></div>
 	</div>
 </main>
+
+<!--/* Everything under the page header. focusCart (htmx answers only): a dish was taken out, so its buttons are gone;
+     focus moves to the restaurant name, or to the page title once the cart is empty. */-->
+<div th:fragment="cart-body" id="cart-body" class="cart-body" th:classappend="${cart.empty} ? 'is-empty'">
+	<h1 class="cart-title" id="cart-title" tabindex="-1" th:autofocus="${focusCart == true and cart.empty}">Your cart</h1>
+
+	<th:block th:if="${cart.empty}">
+		<div th:replace="~{cart/cart :: notices}"></div>
+		<div class="card cart-empty">
+			<div th:replace="~{fragments/ui :: emptyState('cart', 'Your cart is empty', 'Good food is a few taps away. Pick a kitchen near you and add a dish or two.', 'Browse restaurants', '/restaurants')}"></div>
+		</div>
+	</th:block>
+
+	<th:block th:unless="${cart.empty}">
+		<div th:replace="~{cart/cart :: items}"></div>
+		<form th:replace="~{cart/cart :: note}"></form>
+		<div th:replace="~{cart/cart :: side(false)}"></div>
+	</th:block>
+</div>
+
+<div th:fragment="notices" th:unless="${cart.notices.isEmpty()}" class="alert alert-warning cart-notices" role="status">
+	<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+	<ul><li th:each="n : ${cart.notices}" th:text="${n}">Mutton Thali now costs ₹440 (was ₹420).</li></ul>
+</div>
+
+<!--/* The restaurant and its dishes. Steppers post the new quantity; with htmx the answer replaces this block. */-->
+<div th:fragment="items" id="cart-items" class="cart-items" th:with="r=${cart.restaurant}">
+	<div th:replace="~{cart/cart :: notices}"></div>
+	<section class="card cart-card" aria-labelledby="cart-restaurant">
+		<header class="cart-restaurant">
+			<img class="cart-restaurant-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="56" height="56">
+			<div>
+				<h2 class="cart-restaurant-name" id="cart-restaurant" tabindex="-1" th:autofocus="${focusCart == true}"><a th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar" th:text="${r.name}">Rassa Darbar</a></h2>
+				<p class="muted" th:text="|${r.area} · Delivery in about ${r.deliveryMinutes} min|">Rajarampuri · Delivery in about 35 min</p>
+			</div>
+		</header>
+
+		<p th:unless="${cart.takingOrders}" class="alert alert-warning cart-closed">
+			<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+			<span th:if="${cart.opensAt != null}" th:text="|${r.name} is closed now and opens at ${@fmt.timeOfDay(cart.opensAt)}. Your cart will be here.|">Rassa Darbar is closed now and opens at 11:00 AM.</span>
+			<span th:if="${cart.opensAt == null}" th:text="|${r.name} is not taking orders right now. Your cart will be here when they are back.|">Rassa Darbar is not taking orders right now.</span>
+		</p>
+
+		<ul class="cart-lines">
+			<li th:each="line : ${cart.lines}" th:with="item=${line.item}" class="cart-line">
+				<span th:replace="~{fragments/ui :: veg(${item.veg})}"></span>
+				<div class="cart-line-info">
+					<p class="cart-line-name" th:text="${item.name}">Mutton Thali</p>
+					<p class="cart-line-unit muted"><span th:replace="~{fragments/ui :: price(${item.price})}"></span> each</p>
+				</div>
+				<form class="qty" role="group" th:aria-label="|Quantity of ${item.name}|" th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post"
+					th:hx-post="@{/cart/items/{id}(id=${item.id})}" hx-target="#cart-items" hx-swap="outerHTML">
+					<input type="hidden" name="from" value="cart">
+					<button type="submit" class="qty-btn" name="quantity" th:value="${line.quantity - 1}" value="1"
+						th:aria-label="${line.quantity == 1} ? |Remove ${item.name}| : |Remove one ${item.name}|" th:id="|line-${item.id}-less|"><svg th:replace="~{fragments/icon :: icon(${line.quantity == 1 ? 'trash' : 'minus'})}"></svg></button>
+					<span class="qty-value" th:text="${line.quantity}">2</span>
+					<button type="submit" class="qty-btn" name="quantity" th:value="${line.quantity + 1}" value="3" th:disabled="${line.atMax() or !cart.takingOrders}"
+						th:aria-label="|Add one more ${item.name}|" th:id="|line-${item.id}-more|"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg></button>
+				</form>
+				<span class="cart-line-total price" th:text="${@fmt.money(line.lineTotal)}">₹840.00</span>
+			</li>
+		</ul>
+
+		<div class="cart-total">
+			<span th:text="|Item total (${cart.itemCount} ${cart.itemCount == 1 ? 'item' : 'items'})|">Item total (3 items)</span>
+			<strong class="price" th:text="${@fmt.money(cart.itemTotal)}">₹1,020.00</strong>
+		</div>
+		<p class="cart-more"><a th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg><span th:text="|Add more from ${r.name}|">Add more from Rassa Darbar</span></a></p>
+	</section>
+</div>
+
+<!--/* The note for the restaurant. Saved with the cart; checkout copies it onto the order. */-->
+<form th:fragment="note" id="cart-note" class="card cart-note" th:object="${instructionsForm}" th:action="@{/cart/instructions}" action="/cart/instructions" method="post"
+	th:hx-post="@{/cart/instructions}" hx-target="this" hx-swap="outerHTML" novalidate>
+	<div class="field" th:with="invalid=${#fields.hasErrors('instructions')}" th:classappend="${invalid} ? 'has-error'">
+		<label class="field-label" for="instructions">Note for the restaurant</label>
+		<textarea class="textarea" id="instructions" name="instructions" rows="3" maxlength="250" th:text="*{instructions}"
+			placeholder="Less spicy, no onion, extra green chutney" th:aria-invalid="${invalid} ? 'true'"
+			th:aria-describedby="${invalid} ? 'instructions-error instructions-help' : 'instructions-help'"></textarea>
+		<p class="field-help" id="instructions-help">The kitchen sees this with your order. Up to 250 characters.</p>
+		<p class="field-error" th:if="${invalid}" id="instructions-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:errors="*{instructions}">Keep the note to 250 characters or fewer.</span></p>
+	</div>
+	<button type="submit" id="cart-note-save" class="btn btn-secondary btn-sm">Save note</button>
+</form>
+
+<!--/* The bill and the checkout box. oob: part of an htmx answer, swapped out of band. */-->
+<div th:fragment="side(oob)" id="cart-side" class="cart-side" th:hx-swap-oob="${oob} ? 'true'"
+	th:with="r=${cart.restaurant}, shortfall=${cart.minimumOrderShortfall()}">
+	<section class="card cart-bill" aria-labelledby="cart-bill-title">
+		<h2 class="cart-bill-title" id="cart-bill-title">Bill details</h2>
+		<dl class="bill">
+			<div class="bill-row"><dt>Item total</dt><dd th:text="${@fmt.money(bill.itemTotal)}">₹458.00</dd></div>
+			<div th:if="${bill.discount.signum() > 0}" class="bill-row bill-discount"><dt>Coupon discount</dt><dd th:text="|−${@fmt.money(bill.discount)}|">−₹50.00</dd></div>
+			<div class="bill-row">
+				<dt>Delivery fee</dt>
+				<dd th:if="${bill.deliveryFee.signum() > 0}" th:text="${@fmt.money(bill.deliveryFee)}">₹35.00</dd>
+				<dd th:if="${bill.deliveryFee.signum() == 0}"><s th:if="${r.deliveryFee.signum() > 0}" class="muted" th:text="${@fmt.money(r.deliveryFee)}">₹35.00</s> <span class="bill-free">FREE</span></dd>
+			</div>
+			<div class="bill-row"><dt>Platform fee</dt><dd th:text="${@fmt.money(bill.platformFee)}">₹5.00</dd></div>
+			<div class="bill-row"><dt th:text="|GST (${gstPercent}% on food)|">GST (5% on food)</dt><dd th:text="${@fmt.money(bill.gst)}">₹22.90</dd></div>
+			<div class="bill-row bill-total"><dt>To pay</dt><dd th:text="${@fmt.money(bill.grandTotal)}">₹520.90</dd></div>
+		</dl>
+		<p th:if="${freeDeliveryGap != null}" class="bill-hint"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg><span th:text="|Add ${@fmt.price(freeDeliveryGap)} more for free delivery|">Add ₹42 more for free delivery</span></p>
+	</section>
+
+	<div class="cart-checkout">
+		<div th:if="${shortfall.signum() > 0}" class="cart-minimum">
+			<p><strong th:text="|Add ${@fmt.price(shortfall)} more|">Add ₹80 more</strong> <span th:text="|to place this order. ${r.name} takes orders from ${@fmt.price(r.minimumOrder)}.|">to place this order. Rassa Darbar takes orders from ₹200.</span></p>
+			<progress class="progress" th:max="${r.minimumOrder}" th:value="${cart.itemTotal}" max="200" value="120" aria-label="Progress to the minimum order"
+				th:text="|${@fmt.price(cart.itemTotal)} of ${@fmt.price(r.minimumOrder)}|">₹120 of ₹200</progress>
+		</div>
+		<a th:if="${cart.canCheckout()}" class="btn btn-primary btn-lg btn-block cart-checkout-btn" th:href="@{/checkout}" href="/checkout">
+			<span sec:authorize="isAuthenticated()">Proceed to checkout</span><span sec:authorize="!isAuthenticated()">Sign in to check out</span>
+			<span class="cart-checkout-total" th:text="${@fmt.money(bill.grandTotal)}">₹520.90</span>
+		</a>
+		<button th:unless="${cart.canCheckout()}" type="button" class="btn btn-primary btn-lg btn-block" disabled
+			th:text="${cart.takingOrders} ? |Add ${@fmt.price(shortfall)} more to check out| : (${cart.opensAt != null} ? |Opens at ${@fmt.timeOfDay(cart.opensAt)}| : 'Not taking orders right now')">Add ₹80 more to check out</button>
+	</div>
+</div>
 </body>
 </html>

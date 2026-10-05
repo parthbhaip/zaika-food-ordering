@@ -53,6 +53,27 @@ public class PricingService {
 		return new PriceBreakdown(items, off, delivery, platform, gst, grand);
 	}
 
+	/**
+	 * The smallest whole-rupee amount that, added to the cart, makes delivery free ("Add ₹42 more for free
+	 * delivery"); {@code null} when delivery is already free, the restaurant charges no fee, or the cart is empty.
+	 */
+	public BigDecimal freeDeliveryGap(CartView cart) {
+		if (cart.isEmpty() || cart.restaurant().getDeliveryFee().signum() == 0) {
+			return null;
+		}
+		BigDecimal gap = app.freeDeliveryThreshold().subtract(cart.itemTotal());
+		if (gap.signum() < 0) {
+			return null;
+		}
+		// free only strictly above the threshold, so ₹458 needs ₹42 more (₹500), not ₹41 (₹499)
+		return gap.setScale(0, RoundingMode.FLOOR).add(BigDecimal.ONE).setScale(2);
+	}
+
+	/** The GST rate as a percentage for labels: "5". */
+	public String gstPercent() {
+		return app.gstRate().movePointRight(2).stripTrailingZeros().toPlainString();
+	}
+
 	private static BigDecimal money(BigDecimal amount, String name) {
 		Objects.requireNonNull(amount, name);
 		if (amount.signum() < 0) {

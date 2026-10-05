@@ -50,7 +50,7 @@
 
 			<a class="header-cart" th:href="@{/cart}" href="/cart" sec:authorize="!isAuthenticated() or hasRole('CUSTOMER')">
 				<svg th:replace="~{fragments/icon :: icon('cart')}"></svg><span class="header-cart-label">Cart</span>
-				<span id="cart-count" class="cart-count" th:classappend="${count == 0} ? 'is-empty'" aria-live="polite"><span th:text="${count}">0</span><span class="visually-hidden" th:text="${count == 1} ? ' item' : ' items'"> items</span></span>
+				<span id="cart-count" aria-live="polite"><span th:replace="~{fragments/header :: cartBadge(${count})}"></span></span>
 			</a>
 
 			<div class="header-auth" sec:authorize="!isAuthenticated()">
@@ -67,6 +67,10 @@
 		</div>
 	</div>
 </header>
+
+<!--/* The header cart badge. #cart-count around it is the live region; htmx answers replace its content out of band:
+       <span id="cart-count" hx-swap-oob="innerHTML"><span th:replace="~{fragments/header :: cartBadge(${cartCount})}"></span></span> */-->
+<span th:fragment="cartBadge(count)" class="cart-count" th:classappend="${count == 0} ? 'is-empty'"><span th:text="${count}">0</span><span class="visually-hidden" th:text="${count == 1} ? ' item' : ' items'"> items</span></span>
 
 <!--/* Account links for the signed-in role, or Sign in / Sign up. Shared by the drawer and the account menu. */-->
 <div th:fragment="accountLinks" class="account-links">

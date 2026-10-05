@@ -26,3 +26,11 @@ document.addEventListener('click', function (event) {
     close.closest('.toast').remove();
   }
 });
+
+// A faded toast (the toast-out animation in app.css) leaves the stack, so htmx toasts added later do not queue
+// behind invisible rows.
+document.addEventListener('animationend', function (event) {
+  if (event.animationName === 'toast-out' && event.target.classList.contains('toast')) {
+    event.target.remove();
+  }
+});
