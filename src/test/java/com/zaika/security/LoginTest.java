@@ -125,7 +125,19 @@ class LoginTest {
 	}
 
 	@Test
-	void unknownEmailGetsTheSameAnswerAsAWrongPassword() throws Exception {
+	void onlyOneErrorAlertRendersAndBothFieldsPointAtIt() throws Exception {
+		String html = mvc.perform(get("/login?error&locked&disabled"))
+			.andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString();
+		assertThat(html.split("id=\"login-error\"", -1)).as("one element with the id").hasSize(2);
+		assertThat(html).contains("Too many wrong passwords.")
+			.doesNotContain("That email and password don't match.", "This account is switched off.")
+			.containsPattern("id=\"email\"[^>]*aria-describedby=\"login-error\"")
+			.containsPattern("id=\"password\"[^>]*aria-invalid=\"true\" aria-describedby=\"login-error\"");
+	}
+
+	@Test
+	void unknownEmailGetsTheSameAnswerAsAWrongPassword()throws Exception {
 		mvc.perform(login("nobody@zaika.test", PASSWORD))
 			.andExpect(redirectedUrl("/login?error"))
 			.andExpect(unauthenticated());
@@ -171,7 +183,20 @@ class LoginTest {
 	}
 
 	@Test
-	void signedInVisitorsSkipTheLoginPage() throws Exception {
+	void htmxFragmentsAndWellKnownPathsAreNotSavedAsTheSignInTarget() throws Exception {
+		User customer = account(Role.CUSTOMER);
+		for (MockHttpServletRequestBuilder denied : List.of(get("/account/addresses").header("HX-Request", "true"),
+				get("/.well-known/change-password"))) {
+			MockHttpSession session = (MockHttpSession) mvc.perform(denied)
+				.andExpect(redirectedUrl("/login"))
+				.andReturn().getRequest().getSession();
+			mvc.perform(login(customer.getEmail(), PASSWORD).session(session))
+				.andExpect(redirectedUrl("/"));
+		}
+	}
+
+	@Test
+	void signedInVisitorsSkipTheLoginPage()throws Exception {
 		mvc.perform(get("/login").with(user("owner@zaika.test").roles("RESTAURANT_OWNER")))
 			.andExpect(redirectedUrl("/owner"));
 		mvc.perform(get("/login").with(user("customer@zaika.test").roles("CUSTOMER")))

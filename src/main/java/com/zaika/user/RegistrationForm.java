@@ -54,7 +54,7 @@ public class RegistrationForm {
 	public static void checkNewPassword(Errors errors, String passwordField, String password, String confirmField,
 			String confirm) {
 		if (password.getBytes(StandardCharsets.UTF_8).length > PASSWORD_MAX_BYTES) {
-			errors.rejectValue(passwordField, "tooLong", "Keep it to 72 characters or fewer.");
+			errors.rejectValue(passwordField, "tooLong", "That password is too long.");
 		}
 		if (confirm.isEmpty()) {
 			errors.rejectValue(confirmField, "required", "Type your password again.");

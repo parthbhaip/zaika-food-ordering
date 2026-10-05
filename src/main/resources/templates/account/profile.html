@@ -36,7 +36,7 @@
 			<section class="card account-card" id="password" aria-labelledby="password-title">
 				<div class="card-body">
 					<h2 class="card-title" id="password-title">Change password</h2>
-					<p class="card-subtitle">You'll stay signed in here. "Remember me" on other devices will ask you to sign in again.</p>
+					<p class="card-subtitle">You'll stay signed in for now. Devices that kept you signed in, this one included, will ask for your new password next time.</p>
 
 					<form class="account-form" th:action="@{/account/password#password}" action="/account/password#password" method="post" th:object="${passwordForm}" novalidate>
 						<div class="alert alert-error" role="alert" th:if="${#fields.hasErrors('*')}">

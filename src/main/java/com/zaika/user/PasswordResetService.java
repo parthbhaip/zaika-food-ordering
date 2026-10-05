@@ -93,7 +93,7 @@ public class PasswordResetService {
 				your password stays the same.
 
 				Team %s
-				""".formatted(user.getName().split("\s+")[0], app.brandName(), link, LINK_LIFETIME.toMinutes(),
+				""".formatted(user.getName().split("\\s+")[0], app.brandName(), link, LINK_LIFETIME.toMinutes(),
 				app.brandName());
 	}
 

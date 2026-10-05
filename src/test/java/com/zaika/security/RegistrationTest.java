@@ -171,7 +171,7 @@ class RegistrationTest {
 				"Use 8 or more characters with at least one letter and one digit.");
 		String tooLong = "a1".repeat(37);
 		assertRejected(register("password", tooLong, "confirmPassword", tooLong), "password",
-				"Keep it to 72 characters or fewer.");
+				"That password is too long.");
 		assertRejected(register("confirmPassword", "Masala2027"), "confirmPassword", "The passwords don&#39;t match.");
 		// the smallest valid password goes through
 		mvc.perform(register("password", "abcdefg1", "confirmPassword", "abcdefg1"))

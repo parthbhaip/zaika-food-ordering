@@ -3,6 +3,7 @@ package com.zaika.user;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -51,8 +52,17 @@ public class UserService {
 			return users.saveAndFlush(user);
 		}
 		catch (DataIntegrityViolationException ex) {
-			throw new EmailTakenException();
+			if (isEmailTaken(ex)) {
+				throw new EmailTakenException();
+			}
+			throw ex;
 		}
+	}
+
+	/** H2 and MySQL both name the violated index in the message ("UK_USERS_EMAIL_INDEX_4", "users.uk_users_email"). */
+	private static boolean isEmailTaken(DataIntegrityViolationException ex) {
+		String message = ex.getMostSpecificCause().getMessage();
+		return message != null && message.toLowerCase(Locale.ROOT).contains("uk_users_email");
 	}
 
 	/** @throws NotFoundException if there is no such account */

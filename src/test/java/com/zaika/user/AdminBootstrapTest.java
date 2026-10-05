@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 
+import jakarta.validation.Validator;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,6 +42,9 @@ class AdminBootstrapTest {
 	AdminBootstrap bootstrap;
 
 	@Autowired
+	Validator validator;
+
+	@Autowired
 	MockMvc mvc;
 
 	@Test
@@ -59,7 +64,7 @@ class AdminBootstrapTest {
 	@Test
 	void restartingDoesNotCreateASecondAdminOrTouchThePassword() throws Exception {
 		String hash = users.findByEmail("boss@zaika.test").orElseThrow().getPasswordHash();
-		new AdminBootstrap(users, passwordEncoder, "boss@zaika.test", "Different@99").run(null);
+		bootstrap("boss@zaika.test", "Different@99").run(null);
 		bootstrap.run(null);
 
 		assertThat(admins()).hasSize(1);
@@ -82,8 +87,8 @@ class AdminBootstrapTest {
 	void withoutSettingsNoAdminIsCreatedAndStartupGoesOn() throws Exception {
 		users.deleteAll(admins());
 
-		new AdminBootstrap(users, passwordEncoder, "", "").run(null);
-		new AdminBootstrap(users, passwordEncoder, "admin@zaika.test", " ").run(null);
+		bootstrap("", "").run(null);
+		bootstrap("admin@zaika.test", " ").run(null);
 
 		assertThat(admins()).isEmpty();
 	}
@@ -93,11 +98,11 @@ class AdminBootstrapTest {
 	void aWeakPasswordStopsStartupWithAClearMessage() {
 		users.deleteAll(admins());
 
-		assertThatThrownBy(() -> new AdminBootstrap(users, passwordEncoder, "admin@zaika.test", "letmeinnow").run(null))
+		assertThatThrownBy(() -> bootstrap("admin@zaika.test", "letmeinnow").run(null))
 			.isInstanceOf(IllegalStateException.class)
 			.hasMessageContaining("ADMIN_PASSWORD is too weak")
 			.hasMessageNotContaining("letmeinnow");
-		assertThatThrownBy(() -> new AdminBootstrap(users, passwordEncoder, "admin@zaika.test", "a1" + "x".repeat(71)).run(null))
+		assertThatThrownBy(() -> bootstrap("admin@zaika.test", "a1" + "x".repeat(71)).run(null))
 			.isInstanceOf(IllegalStateException.class);
 		assertThat(admins()).isEmpty();
 	}
@@ -108,11 +113,28 @@ class AdminBootstrapTest {
 		users.deleteAll(admins());
 		users.save(new User("Asha Patil", "asha@zaika.test", "9876543211", "$2a$10$hash", Role.CUSTOMER));
 
-		assertThatThrownBy(() -> new AdminBootstrap(users, passwordEncoder, "ASHA@zaika.test", "Kolhapur@2026").run(null))
+		assertThatThrownBy(() -> bootstrap("ASHA@zaika.test", "Kolhapur@2026").run(null))
 			.isInstanceOf(IllegalStateException.class)
 			.hasMessageContaining("asha@zaika.test already belongs to a non-admin account");
 		assertThat(users.findByEmail("asha@zaika.test").orElseThrow().getRole()).isEqualTo(Role.CUSTOMER);
 		assertThat(admins()).isEmpty();
+	}
+
+	@Test
+	@Transactional
+	void aMalformedOrOverlongEmailStopsStartupWithAClearMessage() {
+		users.deleteAll(admins());
+
+		for (String email : List.of("admin.zaika.test", "admin@" + ("abcdefghij".repeat(4) + ".").repeat(6) + "test")) {
+			assertThatThrownBy(() -> bootstrap(email, "Kolhapur@2026").run(null))
+				.isInstanceOf(IllegalStateException.class)
+				.hasMessageContaining("ADMIN_EMAIL is not a valid email address");
+		}
+		assertThat(admins()).isEmpty();
+	}
+
+	private AdminBootstrap bootstrap(String email, String password) {
+		return new AdminBootstrap(users, passwordEncoder, validator, email, password);
 	}
 
 	private List<User> admins() {

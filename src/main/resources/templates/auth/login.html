@@ -4,7 +4,8 @@
 <body>
 <!--/* Spring Security handles POST /login (fields email, password, remember-me). Query flags: ?error (wrong email or
      password), ?locked (too many wrong passwords; flash attribute "lockedUntil" holds the unlock time), ?disabled
-     (right password, account switched off), ?logout. The typed email comes back as the flash attribute "email" after
+     (right password, account switched off), ?logout. At most one error alert renders (locked, then disabled, then
+     error), so the id "login-error" stays unique. The typed email comes back as the flash attribute "email" after
      a failed attempt. */-->
 <main id="main" class="auth-page" th:with="failed=${param.error != null or param.locked != null or param.disabled != null}">
 	<div class="container auth-layout">
@@ -14,7 +15,7 @@
 				<p class="auth-lede">Sign in to order, track your deliveries or run your kitchen.</p>
 			</header>
 
-			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.error != null}">
+			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.error != null and param.locked == null and param.disabled == null}">
 				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
 				<p><strong>That email and password don't match.</strong> Check both and try again.</p>
 			</div>
@@ -22,7 +23,7 @@
 				<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
 				<p><strong>Too many wrong passwords.</strong> To keep your account safe, sign-in is paused <span th:text="${lockedUntil != null} ? |until ${@fmt.time(lockedUntil)}| : 'for a few minutes'">for a few minutes</span>. <a th:href="@{/forgot-password}" href="/forgot-password">Reset your password</a> to get back in right away.</p>
 			</div>
-			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.disabled != null}">
+			<div class="alert alert-error" role="alert" id="login-error" th:if="${param.disabled != null and param.locked == null}">
 				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
 				<p><strong>This account is switched off.</strong> Write to <a href="mailto:support@zaika.test">support@zaika.test</a> and we'll help you get back in.</p>
 			</div>
@@ -44,7 +45,7 @@
 					</div>
 					<div class="password-input">
 						<input class="input" id="password" name="password" type="password" autocomplete="current-password" required
-							th:aria-invalid="${failed} ? 'true'">
+							th:aria-invalid="${failed} ? 'true'" th:aria-describedby="${failed} ? 'login-error'">
 						<button type="button" class="password-toggle" data-password-toggle="password" aria-controls="password" hidden><span data-password-toggle-label>Show</span><span class="visually-hidden"> password</span></button>
 					</div>
 				</div>

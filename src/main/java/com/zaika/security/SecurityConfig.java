@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.servlet.DispatcherType;
 
@@ -16,6 +17,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.ProviderManager;
@@ -26,6 +29,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 
 import com.zaika.user.Role;
 import com.zaika.user.UserService;
@@ -137,6 +147,7 @@ public class SecurityConfig {
 				.usernameParameter("email")
 				.successHandler(new LoginSuccessHandler())
 				.failureHandler(new LoginFailureHandler(userService)))
+			.requestCache(cache -> cache.requestCache(requestCache()))
 			.rememberMe(remember -> remember
 				.key(key)
 				.userDetailsService(users)
@@ -148,6 +159,24 @@ public class SecurityConfig {
 				.contentSecurityPolicy(csp -> csp.policyDirectives(CONTENT_SECURITY_POLICY))
 				.referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)));
 		return http.build();
+	}
+
+	/**
+	 * Which denied requests become the page to return to after sign-in. Spring's defaults (GET only; no favicon,
+	 * XHR, JSON, upload or event-stream requests) plus: no htmx fragment requests (header HX-Request) and nothing
+	 * under /.well-known/, so a customer never lands on a bare fragment or a probe URL.
+	 */
+	private static HttpSessionRequestCache requestCache() {
+		PathPatternRequestMatcher.Builder paths = PathPatternRequestMatcher.withDefaults();
+		MediaTypeRequestMatcher nonPages = new MediaTypeRequestMatcher(MediaType.APPLICATION_JSON,
+				MediaType.MULTIPART_FORM_DATA, MediaType.TEXT_EVENT_STREAM);
+		nonPages.setIgnoredMediaTypes(Set.of(MediaType.ALL));
+		HttpSessionRequestCache cache = new HttpSessionRequestCache();
+		cache.setRequestMatcher(new AndRequestMatcher(paths.matcher(HttpMethod.GET, "/**"),
+				new NegatedRequestMatcher(new OrRequestMatcher(paths.matcher("/favicon.*"),
+						paths.matcher("/.well-known/**"), new RequestHeaderRequestMatcher("X-Requested-With", "XMLHttpRequest"),
+						new RequestHeaderRequestMatcher("HX-Request"), nonPages))));
+		return cache;
 	}
 
 	/** Without REMEMBER_ME_KEY the key is random, so remember-me cookies stop working after a restart. */
