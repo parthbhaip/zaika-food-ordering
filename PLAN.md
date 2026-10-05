@@ -74,7 +74,7 @@ How this file works
 
 ## Phase 2 - Catalog: restaurants and menus
 
-- [ ] T12 Catalog schema and entities
+- [x] T12 Catalog schema and entities
   - `Cuisine` (name, slug). `Restaurant`: owner (1:1), slug, name, tagline, description, cuisines (M:N), phone, address, area, city, pincode, logo and cover paths, cost for two, minimum order, delivery fee, average prep minutes, opens-at / closes-at, accepting-orders toggle, pure-veg flag, status (PENDING, APPROVED, REJECTED, SUSPENDED) + reason, rating average and count.
   - `MenuCategory` (restaurant, name, sort order). `MenuItem` (restaurant, category, name, description, price, veg, bestseller, spice level 0-3, available, archived, image path, sort order).
   - `Restaurant.isOpenNow(Clock)` handles overnight hours (18:00-02:00). Indexes on status, city, slug, foreign keys. Tests.
