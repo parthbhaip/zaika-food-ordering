@@ -88,6 +88,12 @@ class ZaikaApplicationTests {
 	}
 
 	@Test
+	void demoDataIsNotLoadedWhenSeedingIsOff() {
+		// app.seed-demo=false here (and by default in mysql): the seeder bean does not even exist
+		assertThat(context.containsBean("demoDataSeeder")).isFalse();
+	}
+
+	@Test
 	void mailIsOnlyLoggedInTests(CapturedOutput output) {
 		assertThat(context.getBeansOfType(MailService.class).values()).singleElement().isInstanceOf(LoggingMailService.class);
 		assertThat(context.getBeansOfType(JavaMailSender.class)).as("no SMTP sender outside the mysql profile").isEmpty();

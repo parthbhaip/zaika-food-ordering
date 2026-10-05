@@ -29,6 +29,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import com.zaika.catalog.RestaurantRepository;
 import com.zaika.notification.LoggingMailService;
 import com.zaika.notification.MailService;
 import com.zaika.security.SecurityConfig;
@@ -66,11 +67,17 @@ class DevProfileTest {
 	@Autowired
 	PasswordEncoder passwordEncoder;
 
+	@Autowired
+	RestaurantRepository restaurants;
+
 	@Test
 	void devProfileSeedsDemoDataAndOnlyLogsMail() {
 		assertThat(env.getActiveProfiles()).containsExactly("dev");
 		assertThat(app.seedDemo()).isTrue();
 		assertThat(mail).isInstanceOf(LoggingMailService.class);
+		// DemoDataSeeder ran on startup: 12 approved restaurants and one pending, owner1's among them
+		assertThat(restaurants.count()).isEqualTo(13);
+		assertThat(restaurants.findByOwnerId(users.findByEmail("owner1@zaika.test").orElseThrow().getId())).isPresent();
 	}
 
 	@Test

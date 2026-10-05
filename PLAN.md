@@ -84,7 +84,7 @@ How this file works
   - `PlaceholderController` generating deterministic SVG placeholders `/placeholder/{kind}/{seed}.svg` (colour from a hash of the name, initials or a simple food glyph).
   - Thymeleaf helper picks: uploaded image -> seed image `/img/seed/{slug}.jpg` if the file exists -> placeholder. Tests.
 
-- [ ] T14 Demo data seeder
+- [x] T14 Demo data seeder
   - Runs when `app.seed-demo=true`, idempotent (restart does not duplicate). Test proves running it twice changes nothing.
   - 10 cuisines. 12 APPROVED fictional restaurants spread across real neighbourhoods of the demo city, distinct cuisines including local specialities, a mix of pure-veg and non-veg, varied hours (one closed at typical demo times, one open overnight).
   - Each restaurant: 3-5 categories, 8-15 items with realistic INR prices and appetising one-line descriptions, some bestsellers, one sold-out item.
