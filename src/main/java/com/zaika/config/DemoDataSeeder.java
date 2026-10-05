@@ -1,5 +1,9 @@
 package com.zaika.config;
 
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +28,12 @@ import com.zaika.catalog.MenuItemRepository;
 import com.zaika.catalog.Restaurant;
 import com.zaika.catalog.RestaurantRepository;
 import com.zaika.config.DemoData.Account;
+import com.zaika.config.DemoData.Deal;
 import com.zaika.config.DemoData.Dish;
 import com.zaika.config.DemoData.Place;
 import com.zaika.config.DemoData.Section;
+import com.zaika.coupon.Coupon;
+import com.zaika.coupon.CouponRepository;
 import com.zaika.user.AddressForm;
 import com.zaika.user.AddressLabel;
 import com.zaika.user.AddressService;
@@ -36,7 +43,7 @@ import com.zaika.user.UserRepository;
 
 /**
  * Loads {@link DemoData} on startup when {@code app.seed-demo=true} (dev; SEED_DEMO in mysql). Idempotent: cuisines,
- * accounts and restaurants are looked up by slug or email and only created when missing, and a restaurant's menu is
+ * accounts, restaurants and coupons are looked up by slug, email or code and only created when missing, and a restaurant's menu is
  * only written together with the restaurant, so a restart changes nothing. An existing account with a demo email is
  * reused, never changed. Runs after {@code AdminBootstrap}, so a configured ADMIN_EMAIL wins over the demo admin.
  */
@@ -62,18 +69,24 @@ class DemoDataSeeder implements ApplicationRunner {
 
 	private final MenuItemRepository items;
 
+	private final CouponRepository coupons;
+
 	private final PasswordEncoder passwordEncoder;
+
+	private final Clock clock;
 
 	DemoDataSeeder(UserRepository users, AddressService addresses, CuisineRepository cuisines,
 			RestaurantRepository restaurants, MenuCategoryRepository categories, MenuItemRepository items,
-			PasswordEncoder passwordEncoder) {
+			CouponRepository coupons, PasswordEncoder passwordEncoder, Clock clock) {
 		this.users = users;
 		this.addresses = addresses;
 		this.cuisines = cuisines;
 		this.restaurants = restaurants;
 		this.categories = categories;
 		this.items = items;
+		this.coupons = coupons;
 		this.passwordEncoder = passwordEncoder;
+		this.clock = clock;
 	}
 
 	@Override
@@ -113,9 +126,43 @@ class DemoDataSeeder implements ApplicationRunner {
 				createdRestaurants++;
 			}
 		}
-		if (createdAccounts + createdRestaurants > 0) {
-			log.info("Demo data: added {} accounts and {} restaurants", createdAccounts, createdRestaurants);
+		int createdCoupons = createCoupons();
+		if (createdAccounts + createdRestaurants + createdCoupons > 0) {
+			log.info("Demo data: added {} accounts, {} restaurants and {} coupons", createdAccounts,
+					createdRestaurants, createdCoupons);
 		}
+	}
+
+	/** The demo coupons missing by code; a restaurant coupon whose restaurant was skipped is skipped too. */
+	private int createCoupons() {
+		LocalDateTime start = LocalDate.now(clock).withDayOfMonth(1).atStartOfDay();
+		int created = 0;
+		for (Deal deal : DemoData.COUPONS) {
+			if (coupons.findByCode(deal.code()).isPresent()) {
+				continue;
+			}
+			Restaurant restaurant = deal.restaurantSlug() == null ? null
+					: restaurants.findBySlug(deal.restaurantSlug()).orElse(null);
+			if (deal.restaurantSlug() != null && restaurant == null) {
+				log.warn("Demo data: skipped coupon {} because restaurant {} does not exist", deal.code(),
+						deal.restaurantSlug());
+				continue;
+			}
+			Coupon coupon = new Coupon(deal.code(), deal.description(), deal.type(), BigDecimal.valueOf(deal.value()),
+					start);
+			coupon.setMaxDiscount(deal.maxDiscount() == null ? null : BigDecimal.valueOf(deal.maxDiscount()));
+			coupon.setMinOrder(BigDecimal.valueOf(deal.minOrder()));
+			coupon.setPerUserLimit(deal.perUserLimit());
+			coupon.setTotalLimit(deal.totalLimit());
+			coupon.setFirstOrderOnly(deal.firstOrderOnly());
+			coupon.setRestaurant(restaurant);
+			if (deal.months() != null) {
+				coupon.setValidity(start, start.plusMonths(deal.months()));
+			}
+			coupons.save(coupon);
+			created++;
+		}
+		return created;
 	}
 
 	/** The place's owner account, created if missing; empty (with a warning) if the email belongs to someone else. */

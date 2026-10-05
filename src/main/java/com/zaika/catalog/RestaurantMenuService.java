@@ -13,11 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.zaika.common.Formatters;
 import com.zaika.common.NotFoundException;
 import com.zaika.config.AppProperties;
+import com.zaika.coupon.CouponService;
 
 /**
  * The restaurant page ({@code /r/{slug}}) as customers see it: only {@link RestaurantStatus#APPROVED} restaurants,
- * archived dishes hidden, sold-out ones kept (shown disabled). Three queries: restaurant with cuisines, categories,
- * items. The menu is filtered in memory; one restaurant's menu is a few dozen rows.
+ * archived dishes hidden, sold-out ones kept (shown disabled). Four queries: restaurant with cuisines, categories,
+ * items, coupon offers. The menu is filtered in memory; one restaurant's menu is a few dozen rows.
  */
 @Service
 public class RestaurantMenuService {
@@ -32,17 +33,21 @@ public class RestaurantMenuService {
 
 	private final AppProperties app;
 
+	private final CouponService coupons;
+
 	private final Formatters fmt;
 
 	private final Clock clock;
 
 	public RestaurantMenuService(RestaurantRepository restaurants, MenuCategoryRepository categories,
-			MenuItemRepository items, RestaurantBrowseService browse, AppProperties app, Formatters fmt, Clock clock) {
+			MenuItemRepository items, RestaurantBrowseService browse, AppProperties app, CouponService coupons,
+			Formatters fmt, Clock clock) {
 		this.restaurants = restaurants;
 		this.categories = categories;
 		this.items = items;
 		this.browse = browse;
 		this.app = app;
+		this.coupons = coupons;
 		this.fmt = fmt;
 		this.clock = clock;
 	}
@@ -77,11 +82,17 @@ public class RestaurantMenuService {
 	}
 
 	private List<RestaurantMenu.Offer> offers(Restaurant restaurant) {
+		List<RestaurantMenu.Offer> offers = new ArrayList<>();
 		if (restaurant.getDeliveryFee().signum() == 0) {
-			return List.of(new RestaurantMenu.Offer("Free delivery", "On every order from this kitchen"));
+			offers.add(new RestaurantMenu.Offer("bike", "Free delivery", "On every order from this kitchen"));
 		}
-		return List.of(new RestaurantMenu.Offer("Free delivery above " + fmt.price(app.freeDeliveryThreshold()),
-				fmt.price(restaurant.getDeliveryFee()) + " delivery fee below that"));
+		else {
+			offers.add(new RestaurantMenu.Offer("bike", "Free delivery above " + fmt.price(app.freeDeliveryThreshold()),
+					fmt.price(restaurant.getDeliveryFee()) + " delivery fee below that"));
+		}
+		coupons.offers(restaurant.getId()).forEach(coupon -> offers.add(new RestaurantMenu.Offer("tag",
+				coupon.headline(), "Use " + coupon.code() + (coupon.terms().isEmpty() ? "" : " · " + coupon.terms()))));
+		return List.copyOf(offers);
 	}
 
 }

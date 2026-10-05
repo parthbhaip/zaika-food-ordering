@@ -13,6 +13,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
@@ -20,6 +21,7 @@ import jakarta.persistence.Table;
 
 import com.zaika.catalog.MenuItem;
 import com.zaika.common.BaseEntity;
+import com.zaika.coupon.Coupon;
 import com.zaika.user.User;
 
 /** A signed-in customer's saved cart (one per customer). Load it through {@link CartRepository#findByUserId}. */
@@ -37,6 +39,11 @@ public class Cart extends BaseEntity implements CartContents {
 
 	@Column(length = CartService.MAX_INSTRUCTIONS)
 	private String instructions;
+
+	/** The coupon the customer applied; {@code CouponService} re-checks it on every look at the cart. */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "coupon_id")
+	private Coupon coupon;
 
 	protected Cart() {
 	}
@@ -97,11 +104,21 @@ public class Cart extends BaseEntity implements CartContents {
 		this.instructions = instructions;
 	}
 
+	public Coupon getCoupon() {
+		return coupon;
+	}
+
+	public void setCoupon(Coupon coupon) {
+		this.coupon = coupon;
+	}
+
+	/** The note and the coupon go with the last dish: both belong to this order. */
 	@Override
 	public void remove(long itemId) {
 		items.removeIf(line -> line.getMenuItem().getId() == itemId);
 		if (items.isEmpty()) {
 			instructions = null;
+			coupon = null;
 		}
 	}
 
@@ -109,6 +126,7 @@ public class Cart extends BaseEntity implements CartContents {
 	public void clear() {
 		items.clear();
 		instructions = null;
+		coupon = null;
 	}
 
 	private Optional<CartItem> find(long itemId) {

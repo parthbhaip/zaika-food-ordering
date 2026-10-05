@@ -135,6 +135,8 @@ public class SecurityConfig {
 				// error pages render for everyone, so anonymous 404s and crashes show the branded page
 				auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 					.requestMatchers(STATIC_ASSETS).permitAll()
+					// inside the public /cart/**: the cart page's "Sign in to apply a coupon" link, back to the cart
+					.requestMatchers("/cart/sign-in").authenticated()
 					.requestMatchers(PUBLIC_PAGES).permitAll();
 				if (dev) {
 					auth.requestMatchers("/dev/**").permitAll();

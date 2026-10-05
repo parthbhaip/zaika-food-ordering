@@ -24,6 +24,12 @@
 	<th:block th:replace="~{cart/htmx :: toasts}"></th:block>
 </th:block>
 
+<!--/* The cart page after a coupon was applied or removed: the coupon box and bill (main target #cart-side). */-->
+<th:block th:fragment="side-update">
+	<div th:replace="~{cart/cart :: side(false)}"></div>
+	<th:block th:replace="~{cart/htmx :: toasts}"></th:block>
+</th:block>
+
 <!--/* The cart page once the last dish is gone: the whole body (HX-Retarget #cart-body). */-->
 <th:block th:fragment="cart-body">
 	<div th:replace="~{cart/cart :: cart-body}"></div>

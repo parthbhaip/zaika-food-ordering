@@ -3,8 +3,9 @@
 <head><title>Your cart | Zaika</title></head>
 <body>
 <!--/* /cart: the dishes in the visitor's cart, re-checked against the menu on every view, the note for the restaurant,
-     the bill and the checkout button. Model: cart (cart.CartView), bill (cart.PriceBreakdown), freeDeliveryGap
-     (BigDecimal or null), gstPercent, instructionsForm. Every form works without JavaScript (PRG back to /cart);
+     the coupon box, the bill and the checkout button. Model: cart (cart.CartView), coupon
+     (coupon.CouponService.CartCoupon), bill (cart.PriceBreakdown, priced with the coupon's discount), freeDeliveryGap
+     (BigDecimal or null), gstPercent, instructionsForm; couponError / couponCode after a coupon that did not work. Every form works without JavaScript (PRG back to /cart);
      with htmx the steppers swap #cart-items and, out of band, #cart-side (cart/htmx :: cart-update), or the whole
      #cart-body once the cart is empty. Phones: the checkout box sticks to the bottom of the screen. */-->
 <main id="main" class="cart-page">
@@ -97,14 +98,62 @@
 	<button type="submit" id="cart-note-save" class="btn btn-secondary btn-sm">Save note</button>
 </form>
 
-<!--/* The bill and the checkout box. oob: part of an htmx answer, swapped out of band. */-->
+<!--/* The coupon box, the bill and the checkout box. oob: part of an htmx answer, swapped out of band. Coupon forms
+     target this whole block (cart/htmx :: side-update), so the bill follows the coupon. couponFocus (htmx answers):
+     'code' focuses the code field, 'remove' the Remove button. */-->
 <div th:fragment="side(oob)" id="cart-side" class="cart-side" th:hx-swap-oob="${oob} ? 'true'"
 	th:with="r=${cart.restaurant}, shortfall=${cart.minimumOrderShortfall()}">
+	<section class="card cart-coupon" aria-labelledby="cart-coupon-title">
+		<h2 class="cart-coupon-title" id="cart-coupon-title"><svg th:replace="~{fragments/icon :: icon('tag')}"></svg>Offers and coupons</h2>
+		<p th:if="${coupon.notice != null}" class="alert alert-warning coupon-notice" role="status"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${coupon.notice}">We removed WELCOME50. Add ₹40 more to use WELCOME50.</span></p>
+
+		<div th:if="${coupon.applied != null}" class="coupon-applied">
+			<svg th:replace="~{fragments/icon :: icon('check')}"></svg>
+			<p><strong th:text="|${coupon.applied.code} applied|">WELCOME50 applied</strong><span th:text="|You save ${@fmt.money(coupon.applied.discount)} with ${coupon.applied.headline}|">You save ₹100.00 with 50% off up to ₹100</span></p>
+			<form th:action="@{/cart/coupon/remove}" action="/cart/coupon/remove" method="post"
+				th:hx-post="@{/cart/coupon/remove}" hx-target="#cart-side" hx-swap="outerHTML">
+				<button type="submit" id="coupon-remove" class="btn btn-ghost btn-sm" th:aria-label="|Remove coupon ${coupon.applied.code}|"
+					th:autofocus="${couponFocus == 'remove'}">Remove</button>
+			</form>
+		</div>
+
+		<form th:if="${coupon.signedIn and coupon.applied == null}" class="coupon-form" th:action="@{/cart/coupon}" action="/cart/coupon" method="post"
+			th:hx-post="@{/cart/coupon}" hx-target="#cart-side" hx-swap="outerHTML" novalidate>
+			<div class="field" th:with="invalid=${couponError != null}" th:classappend="${invalid} ? 'has-error'">
+				<label class="field-label" for="coupon-code">Coupon code</label>
+				<div class="coupon-entry">
+					<input class="input coupon-input" id="coupon-code" name="code" type="text" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false"
+						th:value="${couponCode}" placeholder="Enter code" th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? 'coupon-error'"
+						th:autofocus="${couponFocus == 'code'}">
+					<button type="submit" class="btn btn-secondary">Apply</button>
+				</div>
+				<p class="field-error" th:if="${invalid}" id="coupon-error" role="alert"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${couponError}">We could not find a coupon called WELCOME5. Check the code and try again.</span></p>
+			</div>
+		</form>
+		<p th:unless="${coupon.signedIn}" class="coupon-guest"><a th:href="@{/cart/sign-in}" href="/cart/sign-in">Sign in to apply a coupon</a>. Your cart comes with you.</p>
+
+		<ul th:unless="${coupon.offers.isEmpty()}" class="coupon-offers" aria-label="Offers you can use here">
+			<li th:each="o : ${coupon.offers}" class="coupon-offer" th:with="isApplied=${coupon.applied != null and coupon.applied.code == o.code}">
+				<div class="coupon-offer-info">
+					<p class="coupon-offer-head"><span class="coupon-code" th:text="${o.code}">WELCOME50</span> <strong th:text="${o.headline}">50% off up to ₹100</strong></p>
+					<p class="coupon-offer-desc" th:text="${o.description}">Half off your first order on Zaika.</p>
+					<p th:unless="${o.terms.isEmpty()}" class="coupon-offer-terms" th:text="${o.terms}">Min. order ₹149 · First order only</p>
+				</div>
+				<span th:if="${isApplied}" class="badge badge-success">Applied</span>
+				<form th:if="${coupon.signedIn and !isApplied}" th:action="@{/cart/coupon}" action="/cart/coupon" method="post"
+					th:hx-post="@{/cart/coupon}" hx-target="#cart-side" hx-swap="outerHTML">
+					<input type="hidden" name="code" th:value="${o.code}" value="WELCOME50">
+					<button type="submit" class="btn btn-ghost btn-sm" th:aria-label="|Apply ${o.code}|">Apply</button>
+				</form>
+			</li>
+		</ul>
+	</section>
+
 	<section class="card cart-bill" aria-labelledby="cart-bill-title">
 		<h2 class="cart-bill-title" id="cart-bill-title">Bill details</h2>
 		<dl class="bill">
 			<div class="bill-row"><dt>Item total</dt><dd th:text="${@fmt.money(bill.itemTotal)}">₹458.00</dd></div>
-			<div th:if="${bill.discount.signum() > 0}" class="bill-row bill-discount"><dt>Coupon discount</dt><dd th:text="|−${@fmt.money(bill.discount)}|">−₹50.00</dd></div>
+			<div th:if="${bill.discount.signum() > 0}" class="bill-row bill-discount"><dt th:text="|Coupon ${coupon.applied.code}|">Coupon WELCOME50</dt><dd th:text="|−${@fmt.money(bill.discount)}|">−₹50.00</dd></div>
 			<div class="bill-row">
 				<dt>Delivery fee</dt>
 				<dd th:if="${bill.deliveryFee.signum() > 0}" th:text="${@fmt.money(bill.deliveryFee)}">₹35.00</dd>

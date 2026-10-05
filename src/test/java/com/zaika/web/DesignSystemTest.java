@@ -40,7 +40,7 @@ class DesignSystemTest {
 
 	static final List<String> REQUIRED_ICONS = List.of("search", "cart", "user", "location", "clock", "star", "heart",
 			"plus", "minus", "trash", "chevron-down", "chevron-right", "check", "x", "menu", "bell", "filter", "bike",
-			"store", "receipt", "logout", "edit", "upload", "phone", "info", "leaf");
+			"store", "receipt", "logout", "edit", "upload", "phone", "info", "leaf", "tag");
 
 	static final List<Integer> FONT_WEIGHTS = List.of(400, 500, 600, 700, 800);
 

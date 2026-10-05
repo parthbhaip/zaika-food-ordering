@@ -7,10 +7,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.zaika.catalog.RestaurantStatus;
+import com.zaika.coupon.CouponType;
 import com.zaika.user.Role;
 
 /**
- * The demo catalogue for Kolhapur: cuisines, demo accounts, 12 approved restaurants and one awaiting approval. Every
+ * The demo catalogue for Kolhapur: cuisines, demo accounts, 12 approved restaurants, one awaiting approval and three
+ * coupons. Every
  * restaurant and person is fictional; the neighbourhoods are real. Loaded by {@link DemoDataSeeder}.
  */
 final class DemoData {
@@ -186,6 +188,23 @@ final class DemoData {
 			new Account("customer@zaika.test", "Riya Shinde", "9890011230", Role.CUSTOMER));
 
 	static final String CUSTOMER_EMAIL = "customer@zaika.test";
+
+	/**
+	 * A demo coupon, valid from the first day of the month the seeder first runs, for {@code months} months
+	 * ({@code null}: no end). Rupee amounts are whole; {@code null} limits are unlimited; {@code restaurantSlug}
+	 * {@code null} means every restaurant.
+	 */
+	record Deal(String code, String description, CouponType type, int value, Integer maxDiscount, int minOrder,
+			Integer perUserLimit, Integer totalLimit, boolean firstOrderOnly, String restaurantSlug, Integer months) {
+	}
+
+	static final List<Deal> COUPONS = List.of(
+			new Deal("WELCOME50", "Half off your first order on Zaika.", CouponType.PERCENT, 50, 100, 149, 1, null, true,
+					null, null),
+			new Deal("FEAST75", "Ordering for the family? Take ₹75 off a big order.", CouponType.FLAT, 75, null, 499, 3,
+					2000, false, null, 6),
+			new Deal("RASSA20", "20% off the whole menu at Rassa Darbar.", CouponType.PERCENT, 20, 120, 299, null, null,
+					false, "rassa-darbar", null));
 
 	static final List<Place> RESTAURANTS = places(
 			new PlaceBuilder("rassa-darbar", "Rassa Darbar", "Tambda-pandhra rassa, the Kolhapur way",

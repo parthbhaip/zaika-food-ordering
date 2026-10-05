@@ -388,13 +388,13 @@ class RestaurantPageTest {
 	// ---------------------------------------------------------------- queries
 
 	@Test
-	void aPageLoadRunsThreeQueries() throws Exception {
+	void aPageLoadRunsFourQueries() throws Exception {
 		Statistics stats = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
 		html("/r/rassa-house"); // warm up
 		stats.clear();
 		html("/r/rassa-house");
-		// restaurant with cuisines, categories, items: nothing per section or per dish
-		assertThat(stats.getPrepareStatementCount()).isEqualTo(3);
+		// restaurant with cuisines, categories, items, coupon offers (T22): nothing per section, dish or coupon
+		assertThat(stats.getPrepareStatementCount()).isEqualTo(4);
 	}
 
 	@Controller

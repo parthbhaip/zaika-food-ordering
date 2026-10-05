@@ -124,7 +124,7 @@ How this file works
   - Cart page: items, instructions for the restaurant, bill breakdown, minimum-order progress ("Add ₹80 more"), checkout button; mobile sticky "View cart" bar.
   - Restaurant page steppers wired to the cart. Tests.
 
-- [ ] T22 Coupons
+- [x] T22 Coupons
   - `Coupon` entity + migration: code, description, type (PERCENT, FLAT), value, max discount, min order, valid from/until, total limit, per-user limit, first-order-only, optional restaurant, active.
   - Apply/remove in the cart with a specific message for each failure reason. Seeder adds 3 demo coupons. Tests for every rule.
 

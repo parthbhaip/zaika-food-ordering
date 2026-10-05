@@ -51,7 +51,7 @@
 					<a th:href="@{/restaurants(open=true)}" href="/restaurants?open=true">See what's open</a></p></div>
 
 			<ul class="rp-offers" aria-label="Offers">
-				<li th:each="offer : ${menu.offers}" class="rp-offer"><span class="rp-offer-icon"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+				<li th:each="offer : ${menu.offers}" class="rp-offer"><span class="rp-offer-icon"><svg th:replace="~{fragments/icon :: icon(${offer.icon})}"></svg></span>
 					<span><strong th:text="${offer.title}">Free delivery above ₹499</strong><small th:text="${offer.detail}">₹35 delivery fee below that</small></span></li>
 			</ul>
 		</div>

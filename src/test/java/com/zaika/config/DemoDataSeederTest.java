@@ -33,6 +33,9 @@ import com.zaika.catalog.MenuItemRepository;
 import com.zaika.catalog.Restaurant;
 import com.zaika.catalog.RestaurantRepository;
 import com.zaika.catalog.RestaurantStatus;
+import com.zaika.coupon.Coupon;
+import com.zaika.coupon.CouponRepository;
+import com.zaika.coupon.CouponType;
 import com.zaika.user.Address;
 import com.zaika.user.AddressRepository;
 import com.zaika.user.Role;
@@ -51,7 +54,7 @@ import com.zaika.user.UserRepository;
 class DemoDataSeederTest {
 
 	static final List<String> TABLES = List.of("users", "addresses", "cuisines", "restaurants", "restaurant_cuisines",
-			"menu_categories", "menu_items");
+			"menu_categories", "menu_items", "coupons");
 
 	/** Typical demo hours: a college demo or a recruiter's visit happens somewhere between 10 AM and 9 PM. */
 	static final List<LocalTime> DEMO_TIMES = IntStream.rangeClosed(10, 21).mapToObj(h -> LocalTime.of(h, 0)).toList();
@@ -76,6 +79,9 @@ class DemoDataSeederTest {
 
 	@Autowired
 	MenuCategoryRepository categories;
+
+	@Autowired
+	CouponRepository coupons;
 
 	@Autowired
 	MenuItemRepository items;
@@ -186,6 +192,35 @@ class DemoDataSeederTest {
 			}
 		}
 		assertThat(items.findAll()).extracting(MenuItem::getSpiceLevel).contains(0, 1, 2, 3);
+	}
+
+	@Test
+	@Transactional
+	void threeDemoCouponsStartThisMonth() {
+		var all = coupons.findAll();
+		assertThat(all).extracting(Coupon::getCode).containsExactlyInAnyOrder("WELCOME50", "FEAST75", "RASSA20");
+		java.time.LocalDateTime firstOfMonth = java.time.LocalDateTime.of(2026, 10, 1, 0, 0);
+		assertThat(all).allSatisfy(c -> {
+			assertThat(c.isActive()).isTrue();
+			assertThat(c.getValidFrom()).isEqualTo(firstOfMonth);
+		});
+
+		Coupon welcome = coupons.findByCode("WELCOME50").orElseThrow();
+		assertThat(welcome.getType()).isEqualTo(CouponType.PERCENT);
+		assertThat(welcome.isFirstOrderOnly()).isTrue();
+		assertThat(welcome.getPerUserLimit()).isEqualTo(1);
+		assertThat(welcome.getRestaurant()).isNull();
+		assertThat(welcome.getValidUntil()).isNull();
+
+		Coupon feast = coupons.findByCode("FEAST75").orElseThrow();
+		assertThat(feast.getType()).isEqualTo(CouponType.FLAT);
+		assertThat(feast.getMinOrder()).isEqualByComparingTo("499");
+		assertThat(feast.getTotalLimit()).isEqualTo(2000);
+		assertThat(feast.getValidUntil()).isEqualTo(firstOfMonth.plusMonths(6));
+
+		Coupon rassa = coupons.findByCode("RASSA20").orElseThrow();
+		assertThat(rassa.getRestaurant().getSlug()).isEqualTo("rassa-darbar");
+		assertThat(rassa.getMaxDiscount()).isEqualByComparingTo("120");
 	}
 
 	@Test
