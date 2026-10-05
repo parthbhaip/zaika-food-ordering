@@ -47,7 +47,7 @@ class WebSecurityTest {
 			"/admin", Role.ADMIN,
 			"/admin/restaurants", Role.ADMIN);
 
-	static final List<String> PUBLIC_URLS = List.of("/", "/restaurants", "/restaurants?cuisine=misal", "/r/misal-house",
+	static final List<String> PUBLIC_URLS = List.of("/", "/restaurants", "/restaurants?veg=true", "/r/misal-house",
 			"/search?q=misal", "/cart", "/login", "/register", "/forgot-password", "/reset-password?token=abc",
 			"/partner-with-us", "/partner-with-us/restaurant", "/partner-with-us/rider", "/about", "/contact", "/terms",
 			"/privacy", "/refund-policy", "/css/app.css", "/js/menus.js", "/img/logo.svg", "/fonts/OFL.txt",

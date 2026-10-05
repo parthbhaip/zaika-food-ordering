@@ -44,6 +44,9 @@ import com.zaika.user.User;
 @Table(name = "restaurants")
 public class Restaurant extends BaseEntity {
 
+	/** Flat ride time added to the preparation time for the delivery estimate. */
+	public static final int RIDE_MINUTES = 10;
+
 	@OneToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "owner_id", nullable = false, updatable = false, unique = true)
 	private User owner;
@@ -187,6 +190,14 @@ public class Restaurant extends BaseEntity {
 	/** Open right now (IST, from the app clock) by the daily hours. Says nothing about the accepting-orders toggle. */
 	public boolean isOpenNow(Clock clock) {
 		return isOpenAt(LocalTime.now(clock));
+	}
+
+	/**
+	 * Lower end of the delivery estimate shown to customers ("35-40 min"): the usual preparation time plus
+	 * {@link #RIDE_MINUTES}. Every restaurant is in the one demo city, so the ride is a flat estimate.
+	 */
+	public int getDeliveryMinutes() {
+		return avgPrepMinutes + RIDE_MINUTES;
 	}
 
 	/** Moves to {@code status}; REJECTED and SUSPENDED need a reason, the other states clear it. */

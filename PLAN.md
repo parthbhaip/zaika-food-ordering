@@ -90,7 +90,7 @@ How this file works
   - Each restaurant: 3-5 categories, 8-15 items with realistic INR prices and appetising one-line descriptions, some bestsellers, one sold-out item.
   - 1 PENDING restaurant, plus the demo users from CLAUDE.md (owner1 and owner2 each own a restaurant; rider profiles are added in T34).
 
-- [ ] T15 Restaurant listing `/restaurants`
+- [x] T15 Restaurant listing `/restaurants`
   - Card grid: image, name, cuisines, rating pill, delivery time, cost for two, pure-veg badge, "Closed now" overlay with next opening time.
   - Filters: cuisine, pure veg, rating 4.0+, open now. Sort: relevance, rating, fastest, cost low-high, cost high-low. Search by restaurant or dish name. Pagination.
   - Works with plain links/forms; htmx swaps the results and pushes the URL. Only APPROVED restaurants appear. Tests.

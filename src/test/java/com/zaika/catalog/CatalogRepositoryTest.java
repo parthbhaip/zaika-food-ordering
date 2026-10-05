@@ -267,6 +267,16 @@ class CatalogRepositoryTest {
 		assertThat(leadingIndexColumns("cuisines")).contains("slug", "name");
 	}
 
+	@Test
+	void listingFiltersAndSortsAreIndexedBehindTheStatus() {
+		List<String> indexes = jdbc.queryForList("""
+				SELECT LISTAGG(LOWER(column_name), ',') WITHIN GROUP (ORDER BY ordinal_position)
+				FROM information_schema.index_columns WHERE LOWER(table_name) = 'restaurants'
+				GROUP BY index_name""", String.class);
+		assertThat(indexes).contains("status,rating_average", "status,avg_prep_minutes", "status,cost_for_two",
+				"status,pure_veg", "status,accepting_orders,opens_at,closes_at");
+	}
+
 	/** Columns that are the first column of some index on {@code table}, i.e. lookups by them use an index. */
 	private List<String> leadingIndexColumns(String table) {
 		return jdbc.queryForList("""
