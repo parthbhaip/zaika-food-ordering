@@ -37,11 +37,15 @@ class RegistrationController {
 
 	private final ZaikaUserDetailsService userDetails;
 
+	private final LoginSuccessHandler afterSignIn;
+
 	private final SecurityContextRepository contextRepository = new HttpSessionSecurityContextRepository();
 
-	RegistrationController(UserService userService, ZaikaUserDetailsService userDetails) {
+	RegistrationController(UserService userService, ZaikaUserDetailsService userDetails,
+			LoginSuccessHandler afterSignIn) {
 		this.userService = userService;
 		this.userDetails = userDetails;
+		this.afterSignIn = afterSignIn;
 	}
 
 	@GetMapping("/register")
@@ -72,10 +76,14 @@ class RegistrationController {
 			result.rejectValue("email", "taken", "This email already has a Zaika account. Sign in instead.");
 			return "auth/register";
 		}
-		String target = signIn(user, request, response);
+		Authentication signedIn = signIn(user, request, response);
+		String cartNotice = afterSignIn.mergeGuestCart(request, signedIn);
 		redirect.addFlashAttribute("flashSuccess",
 				"Welcome to Zaika, " + user.getName().split("\\s+")[0] + "! Your account is ready.");
-		return "redirect:" + target;
+		if (cartNotice != null) {
+			redirect.addFlashAttribute("flashInfo", cartNotice);
+		}
+		return "redirect:" + afterSignIn.targetUrl(request, response, Role.CUSTOMER);
 	}
 
 	private static boolean signedIn(Authentication authentication) {
@@ -83,20 +91,21 @@ class RegistrationController {
 	}
 
 	/**
-	 * Signs the new account in as the login form would: new session id (no fixation), fresh CSRF token, context
-	 * saved in the session, then the page that sent the visitor here or the landing page.
+	 * Signs the new account in as the login form would: new session id (no fixation, session attributes such as a
+	 * guest cart kept), fresh CSRF token, context saved in the session.
 	 */
-	private String signIn(User user, HttpServletRequest request, HttpServletResponse response) {
+	private Authentication signIn(User user, HttpServletRequest request, HttpServletResponse response) {
 		UserDetails details = userDetails.loadUserByUsername(user.getEmail());
 		request.getSession();
 		request.changeSessionId();
 		new HttpSessionCsrfTokenRepository().saveToken(null, request, response);
+		Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(details, null,
+				details.getAuthorities());
 		SecurityContext context = SecurityContextHolder.createEmptyContext();
-		context.setAuthentication(
-				UsernamePasswordAuthenticationToken.authenticated(details, null, details.getAuthorities()));
+		context.setAuthentication(authentication);
 		SecurityContextHolder.setContext(context);
 		contextRepository.saveContext(context, request, response);
-		return new LoginSuccessHandler().targetUrl(request, response, Role.CUSTOMER);
+		return authentication;
 	}
 
 }

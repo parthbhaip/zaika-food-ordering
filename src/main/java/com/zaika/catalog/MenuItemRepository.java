@@ -1,13 +1,24 @@
 package com.zaika.catalog;
 
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Limit;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
+
+	/** The dish with its restaurant. */
+	@EntityGraph(attributePaths = "restaurant")
+	Optional<MenuItem> findWithRestaurantById(Long id);
+
+	/** These dishes with their restaurants; ids that do not exist are simply absent. */
+	@EntityGraph(attributePaths = "restaurant")
+	List<MenuItem> findWithRestaurantByIdIn(Collection<Long> ids);
 
 	/** Every item a customer may see (archived ones hidden, sold-out ones included), in menu order. */
 	List<MenuItem> findByRestaurantIdAndArchivedFalseOrderBySortOrderAscIdAsc(Long restaurantId);

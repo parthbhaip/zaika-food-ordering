@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Your cart | Zaika</title></head>
+<body>
+<!--/* /cart: the dishes in the visitor's cart, re-checked against the menu on every view. Model: cart (cart.CartView).
+     Steppers post to /cart/items/{id} with from=cart, so the page comes back here. */-->
+<main id="main" class="cart-page">
+	<div class="container cart-container">
+		<h1 class="cart-title">Your cart</h1>
+
+		<div th:unless="${cart.notices.isEmpty()}" class="alert alert-warning cart-notices" role="status">
+			<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+			<ul><li th:each="n : ${cart.notices}" th:text="${n}">Mutton Thali now costs ₹440 (was ₹420).</li></ul>
+		</div>
+
+		<div th:if="${cart.empty}" class="card">
+			<div th:replace="~{fragments/ui :: emptyState('cart', 'Your cart is empty', 'Good food is a few taps away. Pick a kitchen near you and add a dish or two.', 'Browse restaurants', '/restaurants')}"></div>
+		</div>
+
+		<section th:unless="${cart.empty}" th:with="r=${cart.restaurant}" class="card cart-card" aria-labelledby="cart-restaurant">
+			<header class="cart-restaurant">
+				<img class="cart-restaurant-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="56" height="56">
+				<div>
+					<h2 class="cart-restaurant-name" id="cart-restaurant"><a th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar" th:text="${r.name}">Rassa Darbar</a></h2>
+					<p class="muted" th:text="|${r.area} · Delivery in about ${r.deliveryMinutes} min|">Rajarampuri · Delivery in about 35 min</p>
+				</div>
+			</header>
+
+			<p th:unless="${cart.takingOrders}" class="alert alert-warning cart-closed">
+				<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+				<span th:if="${cart.opensAt != null}" th:text="|${r.name} is closed now and opens at ${@fmt.timeOfDay(cart.opensAt)}. Your cart will be here.|">Rassa Darbar is closed now and opens at 11:00 AM.</span>
+				<span th:if="${cart.opensAt == null}" th:text="|${r.name} is not taking orders right now. Your cart will be here when they are back.|">Rassa Darbar is not taking orders right now.</span>
+			</p>
+
+			<ul class="cart-lines">
+				<li th:each="line : ${cart.lines}" th:with="item=${line.item}" class="cart-line">
+					<span th:replace="~{fragments/ui :: veg(${item.veg})}"></span>
+					<div class="cart-line-info">
+						<p class="cart-line-name" th:text="${item.name}">Mutton Thali</p>
+						<p class="cart-line-unit muted"><span th:replace="~{fragments/ui :: price(${item.price})}"></span> each</p>
+					</div>
+					<form class="qty" role="group" th:aria-label="|Quantity of ${item.name}|" th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post">
+						<input type="hidden" name="from" value="cart">
+						<button type="submit" class="qty-btn" name="quantity" th:value="${line.quantity - 1}" value="1"
+							th:aria-label="${line.quantity == 1} ? |Remove ${item.name}| : |Remove one ${item.name}|"><svg th:replace="~{fragments/icon :: icon(${line.quantity == 1 ? 'trash' : 'minus'})}"></svg></button>
+						<span class="qty-value" th:text="${line.quantity}">2</span>
+						<button type="submit" class="qty-btn" name="quantity" th:value="${line.quantity + 1}" value="3" th:disabled="${line.atMax() or !cart.takingOrders}"
+							th:aria-label="|Add one more ${item.name}|"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg></button>
+					</form>
+					<span class="cart-line-total price" th:text="${@fmt.money(line.lineTotal)}">₹840.00</span>
+				</li>
+			</ul>
+
+			<div class="cart-total">
+				<span th:text="|Item total (${cart.itemCount} ${cart.itemCount == 1 ? 'item' : 'items'})|">Item total (3 items)</span>
+				<strong class="price" th:text="${@fmt.money(cart.itemTotal)}">₹1,020.00</strong>
+			</div>
+			<p class="cart-more"><a th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg><span th:text="|Add more from ${r.name}|">Add more from Rassa Darbar</span></a></p>
+		</section>
+	</div>
+</main>
+</body>
+</html>

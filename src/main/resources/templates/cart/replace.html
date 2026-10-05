@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Start a new cart? | Zaika</title></head>
+<body>
+<!--/* /cart/replace/{itemId}: the cart holds another restaurant's dishes. Model: prompt (CartService.ReplacePrompt),
+     quantity. Works without JavaScript: the confirm button posts the add again with startNew=true. */-->
+<main id="main" class="cart-page" th:with="item=${prompt.item}, r=${prompt.item.restaurant}">
+	<div class="container cart-replace">
+		<section class="auth-card" aria-labelledby="replace-title">
+			<div class="auth-head">
+				<h1 id="replace-title">Start a new cart?</h1>
+				<p class="auth-lede">Your cart has dishes from <strong th:text="${prompt.currentRestaurant}">Rassa Darbar</strong>.
+					Adding <strong th:text="${item.name}">Misal Pav</strong> from <strong th:text="${r.name}">Sunrise Misal</strong> will clear them, since an order comes from one kitchen.</p>
+			</div>
+			<div class="cart-replace-actions">
+				<form th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post">
+					<input type="hidden" name="quantity" th:value="${quantity}" value="1">
+					<input type="hidden" name="startNew" value="true">
+					<button type="submit" class="btn btn-primary btn-block">Start a new cart</button>
+				</form>
+				<a class="btn btn-secondary btn-block" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/sunrise-misal">Keep current cart</a>
+			</div>
+			<p class="auth-switch"><a th:href="@{/cart}" href="/cart">View your cart</a></p>
+		</section>
+	</div>
+</main>
+</body>
+</html>

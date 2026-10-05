@@ -15,19 +15,33 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.FlashMap;
+import org.springframework.web.servlet.support.SessionFlashMapManager;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.zaika.cart.CartService;
+import com.zaika.cart.GuestCart;
 import com.zaika.user.Role;
 
 /**
- * After sign-in: back to the page that asked for it (unless it belongs to another role's area), otherwise to the
- * role's landing page.
+ * After sign-in: a guest cart moves into the customer's saved cart, then back to the page that asked for sign-in
+ * (unless it belongs to another role's area), otherwise to the role's landing page.
  */
+@Component
 class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
 	private final RequestCache requestCache = new HttpSessionRequestCache();
 
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+
+	private final SessionFlashMapManager flashMapManager = new SessionFlashMapManager();
+
+	private final CartService carts;
+
+	LoginSuccessHandler(CartService carts) {
+		this.carts = carts;
+	}
 
 	static String landingPage(Role role) {
 		return switch (role) {
@@ -50,12 +64,31 @@ class LoginSuccessHandler implements AuthenticationSuccessHandler {
 	@Override
 	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
 			Authentication authentication) throws IOException {
+		String notice = mergeGuestCart(request, authentication);
 		String target = targetUrl(request, response, roleOf(authentication));
 		HttpSession session = request.getSession(false);
 		if (session != null) {
 			session.removeAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
 		}
+		if (notice != null) {
+			FlashMap flash = new FlashMap();
+			flash.put("flashInfo", notice);
+			flashMapManager.saveOutputFlashMap(flash, request, response);
+		}
 		redirectStrategy.sendRedirect(request, response, target);
+	}
+
+	/**
+	 * Moves the dishes a guest picked before signing in into the customer's saved cart (staff accounts have no cart,
+	 * so theirs is dropped). Shared with sign-up's auto-login. Returns a notice to show, or {@code null}.
+	 */
+	String mergeGuestCart(HttpServletRequest request, Authentication authentication) {
+		GuestCart guest = GuestCart.takeFrom(request.getSession(false));
+		if (guest == null || roleOf(authentication) != Role.CUSTOMER
+				|| !(authentication.getPrincipal() instanceof CurrentUser customer)) {
+			return null;
+		}
+		return carts.merge(guest, customer.getId());
 	}
 
 	/** Where a freshly signed-in user goes; consumes the saved request. Shared with sign-up's auto-login. */

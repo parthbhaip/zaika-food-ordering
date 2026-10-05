@@ -105,7 +105,7 @@ public class SecurityConfig {
 	@Bean
 	@Order(2)
 	SecurityFilterChain webSecurity(HttpSecurity http, ZaikaUserDetailsService users, PasswordEncoder passwordEncoder,
-			UserService userService, Clock clock, Environment env,
+			UserService userService, LoginSuccessHandler successHandler, Clock clock, Environment env,
 			@Value("${app.remember-me-key:}") String rememberMeKey) throws Exception {
 		boolean dev = env.acceptsProfiles(Profiles.of("dev"));
 		String key = rememberMeKey.isBlank() ? randomKey() : rememberMeKey;
@@ -145,7 +145,7 @@ public class SecurityConfig {
 			.formLogin(form -> form
 				.loginPage("/login")
 				.usernameParameter("email")
-				.successHandler(new LoginSuccessHandler())
+				.successHandler(successHandler)
 				.failureHandler(new LoginFailureHandler(userService)))
 			.requestCache(cache -> cache.requestCache(requestCache()))
 			.rememberMe(remember -> remember

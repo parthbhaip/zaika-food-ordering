@@ -10,18 +10,25 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import com.zaika.cart.CartOwner;
+import com.zaika.cart.CartService;
+
 /**
  * {@code /r/{slug}}: a restaurant's header and menu. The menu search and the "Pure veg only" toggle are a plain GET
  * form; with htmx the same form swaps only the menu ({@code HX-Request} gets the {@code htmx-menu} fragment and an
  * {@code HX-Push-Url} with the canonical URL). Full-page requests for a non-canonical URL are redirected to it.
+ * Dishes already in the visitor's cart show a quantity stepper instead of ADD.
  */
 @Controller
 class RestaurantPageController {
 
 	private final RestaurantMenuService menus;
 
-	RestaurantPageController(RestaurantMenuService menus) {
+	private final CartService carts;
+
+	RestaurantPageController(RestaurantMenuService menus, CartService carts) {
 		this.menus = menus;
+		this.carts = carts;
 	}
 
 	@GetMapping("/r/{slug}")
@@ -39,6 +46,10 @@ class RestaurantPageController {
 			return "redirect:" + canonical;
 		}
 		model.addAttribute("menu", menu);
+		CartOwner cartOwner = CartOwner.of(request, false);
+		if (cartOwner != null) {
+			model.addAttribute("cartQuantities", carts.quantities(cartOwner));
+		}
 		return htmx ? "catalog/restaurant :: htmx-menu" : "catalog/restaurant";
 	}
 

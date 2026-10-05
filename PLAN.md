@@ -110,7 +110,7 @@ How this file works
 
 ## Phase 3 - Cart, checkout and orders
 
-- [ ] T19 Cart domain
+- [x] T19 Cart domain
   - `Cart` / `CartItem` tables for logged-in users; session cart for guests merged on login (success handler).
   - One restaurant per cart: adding from another restaurant asks "Start a new cart?" (works without JS).
   - Quantity 1-20. Availability and current price re-checked on every cart view. Tests including merge.
