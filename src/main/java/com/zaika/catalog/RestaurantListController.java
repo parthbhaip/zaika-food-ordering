@@ -49,19 +49,13 @@ class RestaurantListController {
 		if (htmx) {
 			response.setHeader("HX-Push-Url", canonical);
 		}
-		else if (!canonical.equals(currentUrl(request))) {
+		else if (!canonical.equals(CatalogRequests.currentUrl(request))) {
 			return "redirect:" + canonical;
 		}
 		model.addAttribute("page", page);
 		model.addAttribute("cuisines", cuisines);
 		model.addAttribute("sorts", RestaurantSort.values());
 		return htmx ? "catalog/restaurants :: htmx-results" : "catalog/restaurants";
-	}
-
-	/** The requested URL. {@code %20} and {@code +} both mean a space in a query, so they compare equal. */
-	static String currentUrl(HttpServletRequest request) {
-		String query = request.getQueryString();
-		return request.getRequestURI() + (query == null ? "" : "?" + query.replace("%20", "+"));
 	}
 
 }

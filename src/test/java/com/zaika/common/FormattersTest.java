@@ -115,6 +115,16 @@ class FormattersTest {
 	}
 
 	@Test
+	void countsUseIndianDigitGrouping() {
+		assertThat(fmt.count(0)).isEqualTo("0");
+		assertThat(fmt.count(999)).isEqualTo("999");
+		assertThat(fmt.count(2140)).isEqualTo("2,140");
+		assertThat(fmt.count(123456)).isEqualTo("1,23,456");
+		assertThat(fmt.count(12345678)).isEqualTo("1,23,45,678");
+		assertThat(fmt.count(-123456)).isEqualTo("-1,23,456");
+	}
+
+	@Test
 	void ratingKeepsOneDecimalRoundedHalfUp() {
 		assertThat(fmt.rating(new BigDecimal("4.25"))).isEqualTo("4.3");
 		assertThat(fmt.rating(new BigDecimal("4"))).isEqualTo("4.0");

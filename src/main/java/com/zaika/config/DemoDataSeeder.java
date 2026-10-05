@@ -104,7 +104,7 @@ class DemoDataSeeder implements ApplicationRunner {
 
 		int createdRestaurants = 0;
 		for (Place place : DemoData.RESTAURANTS) {
-			if (restaurants.findBySlug(place.slug).isPresent()) {
+			if (restaurants.findBySlug(place.slug()).isPresent()) {
 				continue;
 			}
 			Optional<User> owner = ownerFor(place, passwordHash);
@@ -120,13 +120,13 @@ class DemoDataSeeder implements ApplicationRunner {
 
 	/** The place's owner account, created if missing; empty (with a warning) if the email belongs to someone else. */
 	private Optional<User> ownerFor(Place place, String passwordHash) {
-		Optional<User> existing = users.findByEmailIgnoreCase(place.owner.email());
+		Optional<User> existing = users.findByEmailIgnoreCase(place.owner().email());
 		if (existing.isEmpty()) {
-			return Optional.of(createUser(place.owner, passwordHash));
+			return Optional.of(createUser(place.owner(), passwordHash));
 		}
 		User user = existing.get();
 		if (user.getRole() != Role.RESTAURANT_OWNER || restaurants.findByOwnerId(user.getId()).isPresent()) {
-			log.warn("Demo data: skipped restaurant {} because {} is not a free restaurant owner account", place.slug,
+			log.warn("Demo data: skipped restaurant {} because {} is not a free restaurant owner account", place.slug(),
 					user.getEmail());
 			return Optional.empty();
 		}
@@ -138,27 +138,27 @@ class DemoDataSeeder implements ApplicationRunner {
 	}
 
 	private void createRestaurant(Place place, User owner, Map<String, Cuisine> cuisinesByName) {
-		Restaurant restaurant = new Restaurant(owner, place.slug, place.name);
-		restaurant.setTagline(place.tagline);
-		restaurant.setDescription(place.description);
-		restaurant.setCuisines(place.cuisines.stream().map(cuisinesByName::get).toList());
-		restaurant.setPhone(place.phone);
-		restaurant.setAddress(place.address);
-		restaurant.setArea(place.area);
+		Restaurant restaurant = new Restaurant(owner, place.slug(), place.name());
+		restaurant.setTagline(place.tagline());
+		restaurant.setDescription(place.description());
+		restaurant.setCuisines(place.cuisines().stream().map(cuisinesByName::get).toList());
+		restaurant.setPhone(place.phone());
+		restaurant.setAddress(place.address());
+		restaurant.setArea(place.area());
 		restaurant.setCity(DemoData.CITY);
-		restaurant.setPincode(place.pincode);
-		restaurant.setCostForTwo(place.costForTwo);
-		restaurant.setMinimumOrder(place.minimumOrder);
-		restaurant.setDeliveryFee(place.deliveryFee);
-		restaurant.setAvgPrepMinutes(place.prepMinutes);
-		restaurant.setHours(place.opensAt, place.closesAt);
-		restaurant.setPureVeg(place.pureVeg);
-		restaurant.changeStatus(place.status, null);
-		restaurant.setRating(place.rating, place.ratingCount);
+		restaurant.setPincode(place.pincode());
+		restaurant.setCostForTwo(place.costForTwo());
+		restaurant.setMinimumOrder(place.minimumOrder());
+		restaurant.setDeliveryFee(place.deliveryFee());
+		restaurant.setAvgPrepMinutes(place.prepMinutes());
+		restaurant.setHours(place.opensAt(), place.closesAt());
+		restaurant.setPureVeg(place.pureVeg());
+		restaurant.changeStatus(place.status(), null);
+		restaurant.setRating(place.rating(), place.ratingCount());
 		restaurants.save(restaurant);
 
-		for (int s = 0; s < place.menu.size(); s++) {
-			Section section = place.menu.get(s);
+		for (int s = 0; s < place.menu().size(); s++) {
+			Section section = place.menu().get(s);
 			MenuCategory category = categories.save(new MenuCategory(restaurant, section.name(), s));
 			List<Dish> dishes = section.dishes();
 			for (int d = 0; d < dishes.size(); d++) {

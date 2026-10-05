@@ -23,9 +23,7 @@ public class MenuFilter {
 	}
 
 	public void setQ(String q) {
-		String stripped = q == null ? "" : q.strip();
-		this.q = stripped.isEmpty() ? null
-				: stripped.substring(0, Math.min(stripped.length(), MAX_QUERY_LENGTH)).strip();
+		this.q = CatalogRequests.searchText(q, MAX_QUERY_LENGTH);
 	}
 
 	/** Vegetarian dishes only. */

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.http.CacheControl;
@@ -24,7 +25,8 @@ import com.zaika.common.NotFoundException;
  * <ul>
  * <li>{@code restaurant}: 16:10 cover with the name's initials</li>
  * <li>{@code logo}: square badge with the initials</li>
- * <li>{@code dish}: square with a simple food line drawing (bowl, plate or glass)</li>
+ * <li>{@code dish}: square with a simple food line drawing: a glass for drinks, a plate for thalis and meals, a
+ * bowl otherwise</li>
  * </ul>
  */
 @RestController
@@ -43,16 +45,24 @@ public class PlaceholderController {
 			new String[] { "#E6F4F4", "#1F6464" },
 			new String[] { "#F5EFE6", "#6B4E2E" });
 
-	static final List<String> DISH_GLYPHS = List.of(
-			// bowl with steam
-			"<path d=\"M128 208h144M136 208c4 44 30 72 64 72s60-28 64-72M176 296h48\"/>"
-					+ "<path d=\"M168 172c-8-12 8-20 0-32M200 164c-8-12 8-20 0-32M232 172c-8-12 8-20 0-32\" opacity=\"0.6\"/>",
-			// plate with fork and knife
-			"<circle cx=\"200\" cy=\"200\" r=\"76\"/><circle cx=\"200\" cy=\"200\" r=\"48\" opacity=\"0.6\"/>"
-					+ "<path d=\"M92 130v28a12 12 0 0 0 24 0v-28M104 130v142M308 130c-14 10-16 40-14 62h14M308 130v142\"/>",
-			// glass with a straw
-			"<path d=\"M150 140h100l-12 140a12 12 0 0 1-12 11h-52a12 12 0 0 1-12-11z\"/>"
-					+ "<path d=\"M214 140l22-42M156 196h88\" opacity=\"0.6\"/>");
+	/** A bowl with steam. */
+	static final String BOWL = "<path d=\"M128 208h144M136 208c4 44 30 72 64 72s60-28 64-72M176 296h48\"/>"
+			+ "<path d=\"M168 172c-8-12 8-20 0-32M200 164c-8-12 8-20 0-32M232 172c-8-12 8-20 0-32\" opacity=\"0.6\"/>";
+
+	/** A plate with fork and knife. */
+	static final String PLATE = "<circle cx=\"200\" cy=\"200\" r=\"76\"/><circle cx=\"200\" cy=\"200\" r=\"48\" opacity=\"0.6\"/>"
+			+ "<path d=\"M92 130v28a12 12 0 0 0 24 0v-28M104 130v142M308 130c-14 10-16 40-14 62h14M308 130v142\"/>";
+
+	/** A glass with a straw. */
+	static final String GLASS = "<path d=\"M150 140h100l-12 140a12 12 0 0 1-12 11h-52a12 12 0 0 1-12-11z\"/>"
+			+ "<path d=\"M214 140l22-42M156 196h88\" opacity=\"0.6\"/>";
+
+	/** Whole words of a slugified dish name (an optional plural "s" allowed) that mean a plate or a drink. */
+	private static final Pattern PLATE_WORDS = Pattern.compile("(^|-)(thali|platter|meal|combo|plate)s?(-|$)");
+
+	private static final Pattern DRINK_WORDS = Pattern.compile("(^|-)(lassi|chai|tea|coffee|juice|shake|milkshake|soda"
+			+ "|sharbat|taak|chaas|buttermilk|sol-kadhi|solkadhi|mojito|cooler|falooda|latte|cappuccino|espresso|cold-brew"
+			+ "|mastani)s?(-|$)");
 
 	private static final Set<String> SKIPPED_WORDS = Set.of("the", "and", "of", "n");
 
@@ -90,9 +100,16 @@ public class PlaceholderController {
 
 	static String dish(String seed) {
 		String[] c = colours(seed);
-		String glyph = DISH_GLYPHS.get(Math.floorMod(seed.hashCode() >>> 8, DISH_GLYPHS.size()));
 		return open(400, 400, c[0]) + "<g fill=\"none\" stroke=\"" + c[1]
-				+ "\" stroke-width=\"10\" stroke-linecap=\"round\" stroke-linejoin=\"round\">" + glyph + "</g></svg>";
+				+ "\" stroke-width=\"10\" stroke-linecap=\"round\" stroke-linejoin=\"round\">" + dishGlyph(seed) + "</g></svg>";
+	}
+
+	/** The drawing follows the dish name: a glass for drinks, a plate for thalis and meals, a bowl for the rest. */
+	static String dishGlyph(String seed) {
+		if (PLATE_WORDS.matcher(seed).find()) {
+			return PLATE;
+		}
+		return DRINK_WORDS.matcher(seed).find() ? GLASS : BOWL;
 	}
 
 	/** Up to two letters from the first words of the slug, skipping filler words: "the-kolhapur-kitchen" -> "KK". */

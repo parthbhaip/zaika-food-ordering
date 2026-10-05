@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -18,6 +19,7 @@ import jakarta.persistence.EntityManagerFactory;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -29,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import com.zaika.support.CatalogFixtures;
+import com.zaika.support.MutableClock;
 
 /**
  * {@code /search} and the header suggestions ({@code /search/suggest}) on their own database. The test clock says
@@ -57,6 +60,9 @@ class SearchPageTest {
 
 	@Autowired
 	EntityManagerFactory entityManagerFactory;
+
+	@Autowired
+	MutableClock clock;
 
 	Long chickenBiryaniId;
 
@@ -97,6 +103,11 @@ class SearchPageTest {
 				items.save(item);
 			}
 		}
+	}
+
+	@AfterEach
+	void resetClock() {
+		clock.reset();
 	}
 
 	static MockHttpServletRequestBuilder at(String url) {
@@ -171,10 +182,19 @@ class SearchPageTest {
 
 		// A name or cuisine match, and a restaurant that serves a matching dish. Never pending, suspended or archived.
 		assertThat(RestaurantListingPageTest.slugs(restaurants)).containsExactly("midnight-biryani", "sunrise-misal");
-		assertThat(groups(DISH_LINK, dishes, 2)).containsExactly("Kanda Biryani", "Chicken Dum Biryani",
-				"Veg Biryani");
+		// Dishes from kitchens taking orders now come first: Sunrise Misal's bestseller waits until it opens
+		assertThat(groups(DISH_LINK, dishes, 2)).containsExactly("Chicken Dum Biryani", "Veg Biryani",
+				"Kanda Biryani");
 		assertThat(dishes).doesNotContain("Secret Biryani").doesNotContain("Biryani Special")
 			.doesNotContain("Closed Down Dhaba");
+	}
+
+	@Test
+	void dishesFromKitchensTakingOrdersNowComeFirst() throws Exception {
+		clock.setTo(LocalDateTime.of(2026, 10, 5, 7, 0)); // Monday 7 AM: Sunrise Misal open, Midnight Biryani closed
+		String html = html("/search?q=biryani");
+		assertThat(groups(DISH_LINK, html.substring(html.indexOf("id=\"search-dishes-title\"")), 2))
+			.containsExactly("Kanda Biryani", "Chicken Dum Biryani", "Veg Biryani");
 	}
 
 	@Test
@@ -261,9 +281,9 @@ class SearchPageTest {
 	void suggestionsListRestaurantsFirstThenDishesWithTheMatchInBold() throws Exception {
 		String html = squash(suggestions("/search/suggest?q=bi"));
 		assertThat(groups(OPTION_LINK, html, 1)).containsExactly("/r/midnight-biryani",
-				"/r/sunrise-misal?q=Kanda+Biryani#dish-" + idOf("Kanda Biryani"),
 				"/r/midnight-biryani?q=Chicken+Dum+Biryani#dish-" + chickenBiryaniId,
-				"/r/midnight-biryani?q=Veg+Biryani#dish-" + idOf("Veg Biryani"), "/search?q=bi");
+				"/r/midnight-biryani?q=Veg+Biryani#dish-" + idOf("Veg Biryani"),
+				"/r/sunrise-misal?q=Kanda+Biryani#dish-" + idOf("Kanda Biryani"), "/search?q=bi");
 		assertThat(html).contains("Midnight <mark>Bi</mark>ryani")
 			.contains("Restaurant · Rajarampuri")
 			.contains("Kanda <mark>Bi</mark>ryani")

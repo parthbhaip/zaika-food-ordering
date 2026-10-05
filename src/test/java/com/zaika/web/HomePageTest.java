@@ -122,8 +122,8 @@ class HomePageTest {
 			.contains("<label class=\"visually-hidden\" for=\"home-q\">Search restaurants and dishes</label>",
 					"id=\"home-q\" name=\"q\" type=\"search\" maxlength=\"80\"",
 					"<button type=\"submit\" class=\"btn btn-primary\">Find food</button>",
-					"href=\"/search?q=Misal\"", "href=\"/search?q=Tambda%20Rassa\"")
-			.doesNotContain("Kitchens are closed right now", "No kitchens are live yet")
+					"Try searching for", "href=\"/search?q=Misal\"", "href=\"/search?q=Tambda%20Rassa\"")
+			.doesNotContain("Kitchens are closed right now", "No kitchens are live yet", "Popular right now")
 			.doesNotContainPattern("<script(?![^>]*\\ssrc=)")
 			.doesNotContainPattern("\\son[a-z]+=");
 	}

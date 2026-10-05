@@ -35,9 +35,7 @@ public class RestaurantFilter {
 	}
 
 	public void setQ(String q) {
-		String stripped = q == null ? "" : q.strip();
-		this.q = stripped.isEmpty() ? null
-				: stripped.substring(0, Math.min(stripped.length(), MAX_QUERY_LENGTH)).strip();
+		this.q = CatalogRequests.searchText(q, MAX_QUERY_LENGTH);
 	}
 
 	/** Cuisine slug, or null for every cuisine. */

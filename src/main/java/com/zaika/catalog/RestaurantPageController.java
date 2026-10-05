@@ -35,7 +35,7 @@ class RestaurantPageController {
 		if (htmx) {
 			response.setHeader("HX-Push-Url", canonical);
 		}
-		else if (!canonical.equals(RestaurantListController.currentUrl(request))) {
+		else if (!canonical.equals(CatalogRequests.currentUrl(request))) {
 			return "redirect:" + canonical;
 		}
 		model.addAttribute("menu", menu);

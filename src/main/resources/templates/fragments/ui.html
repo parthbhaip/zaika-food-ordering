@@ -20,7 +20,7 @@
 <!--/* Rating pill: the average out of 5, or "New" while there are no ratings yet. */-->
 <span th:fragment="rating(average, count)" th:remove="tag">
 	<span th:if="${count == null or count == 0}" class="rating-pill is-new">New<span class="visually-hidden">, no ratings yet</span></span>
-	<span th:unless="${count == null or count == 0}" class="rating-pill"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg><th:block th:text="${@fmt.rating(average)}">4.5</th:block><span class="visually-hidden" th:text="| out of 5, ${count} ${count == 1 ? 'rating' : 'ratings'}|"> out of 5, 120 ratings</span></span>
+	<span th:unless="${count == null or count == 0}" class="rating-pill"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg><th:block th:text="${@fmt.rating(average)}">4.5</th:block><span class="visually-hidden" th:text="| out of 5, ${@fmt.count(count)} ${count == 1 ? 'rating' : 'ratings'}|"> out of 5, 120 ratings</span></span>
 </span>
 
 <!--/* Veg / non-veg mark with screen-reader text. */-->

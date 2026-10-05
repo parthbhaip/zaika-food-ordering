@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.validation.ConstraintViolationException;
 
@@ -18,6 +20,7 @@ import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.zaika.config.TimeConfig;
@@ -260,11 +263,19 @@ class CatalogRepositoryTest {
 
 	@Test
 	void listFiltersAndForeignKeysAreIndexed() {
-		assertThat(leadingIndexColumns("restaurants")).contains("status", "city", "slug", "owner_id");
-		assertThat(leadingIndexColumns("restaurant_cuisines")).contains("restaurant_id", "cuisine_id");
-		assertThat(leadingIndexColumns("menu_categories")).contains("restaurant_id");
-		assertThat(leadingIndexColumns("menu_items")).contains("restaurant_id", "category_id");
-		assertThat(leadingIndexColumns("cuisines")).contains("slug", "name");
+		// By name: H2 adds an index of its own for every foreign key, so checking columns alone could never fail for one.
+		assertThat(namedIndexes("restaurants")).containsEntry("idx_restaurants_status", "status")
+			.containsEntry("idx_restaurants_city", "city");
+		assertThat(namedIndexes("restaurant_cuisines")).containsEntry("idx_restaurant_cuisines_cuisine", "cuisine_id");
+		assertThat(namedIndexes("menu_categories"))
+			.containsEntry("idx_menu_categories_restaurant", "restaurant_id,sort_order");
+		assertThat(namedIndexes("menu_items")).containsEntry("idx_menu_items_restaurant", "restaurant_id,sort_order")
+			.containsEntry("idx_menu_items_category", "category_id");
+		// Primary keys and unique constraints are indexes in H2 and MySQL alike.
+		assertThat(keys("restaurants")).containsEntry("uk_restaurants_slug", "slug")
+			.containsEntry("uk_restaurants_owner", "owner_id");
+		assertThat(keys("restaurant_cuisines")).containsEntry("primary key", "restaurant_id,cuisine_id");
+		assertThat(keys("cuisines")).containsEntry("uk_cuisines_slug", "slug").containsEntry("uk_cuisines_name", "name");
 	}
 
 	@Test
@@ -275,13 +286,35 @@ class CatalogRepositoryTest {
 				GROUP BY index_name""", String.class);
 		assertThat(indexes).contains("status,rating_average", "status,avg_prep_minutes", "status,cost_for_two",
 				"status,pure_veg", "status,accepting_orders,opens_at,closes_at");
+		assertThat(namedIndexes("restaurants")).as("top filter and the relevance and rating sorts use rating_count")
+			.containsEntry("idx_restaurants_status_rating_count", "status,rating_average,rating_count");
 	}
 
-	/** Columns that are the first column of some index on {@code table}, i.e. lookups by them use an index. */
-	private List<String> leadingIndexColumns(String table) {
-		return jdbc.queryForList("""
-				SELECT LOWER(column_name) FROM information_schema.index_columns
-				WHERE LOWER(table_name) = ? AND ordinal_position = 1""", String.class, table);
+	/** Index name -> its columns in order ("restaurant_id,sort_order"), for every index on {@code table}. */
+	private Map<String, String> namedIndexes(String table) {
+		return columnsByName("""
+				SELECT LOWER(index_name),
+				LISTAGG(LOWER(column_name), ',') WITHIN GROUP (ORDER BY ordinal_position)
+				FROM information_schema.index_columns WHERE LOWER(table_name) = ?
+				GROUP BY index_name""", table);
+	}
+
+	/** Primary key ("primary key") and unique constraints by name -> their columns in order. */
+	private Map<String, String> keys(String table) {
+		return columnsByName("""
+				SELECT CASE WHEN tc.constraint_type = 'PRIMARY KEY' THEN 'primary key' ELSE LOWER(tc.constraint_name) END,
+				LISTAGG(LOWER(k.column_name), ',') WITHIN GROUP (ORDER BY k.ordinal_position)
+				FROM information_schema.table_constraints tc
+				JOIN information_schema.key_column_usage k ON k.constraint_schema = tc.constraint_schema
+				AND k.constraint_name = tc.constraint_name AND k.table_name = tc.table_name
+				WHERE LOWER(tc.table_name) = ? AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+				GROUP BY tc.constraint_type, tc.constraint_name""", table);
+	}
+
+	private Map<String, String> columnsByName(String sql, String table) {
+		Map<String, String> result = new HashMap<>();
+		jdbc.query(sql, (RowCallbackHandler) rs -> result.put(rs.getString(1), rs.getString(2)), table);
+		return result;
 	}
 
 }

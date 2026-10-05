@@ -54,6 +54,12 @@ public class Formatters {
 		return money.endsWith(".00") ? money.substring(0, money.length() - 3) : money;
 	}
 
+	/** A whole number with Indian digit grouping, e.g. a rating count: {@code 1,23,456}. */
+	public String count(long n) {
+		String digits = Long.toString(n);
+		return n < 0 ? "-" + groupIndian(digits.substring(1)) : groupIndian(digits);
+	}
+
 	/** Average rating with one decimal, rounded half-up: {@code 4.5}. */
 	public String rating(BigDecimal average) {
 		return average == null ? "" : average.setScale(1, RoundingMode.HALF_UP).toPlainString();

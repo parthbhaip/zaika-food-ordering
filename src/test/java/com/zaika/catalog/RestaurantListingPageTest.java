@@ -339,7 +339,42 @@ class RestaurantListingPageTest {
 		assertThat(html).doesNotContain("<html", "site-header", "listing-filters")
 			.contains("id=\"restaurant-results\"", "hx-swap-oob=\"innerHTML\"");
 		assertThat(slugs(html)).containsExactly("midnight-biryani");
-		assertThat(squash(html)).containsPattern("<p id=\"listing-status\" hx-swap-oob=\"innerHTML\">\\s*1 restaurant\\s*</p>");
+		assertThat(statusText(html)).isEqualTo("1 restaurant, sorted by relevance");
+	}
+
+	@Test
+	void theAnnouncementChangesWithTheSortAndPageEvenWhenTheCountDoesNot() throws Exception {
+		// a live region that gets the same text again stays silent
+		assertThat(statusText(htmxHtml("/restaurants?sort=rating")))
+			.isEqualTo("13 restaurants, sorted by rating, page 1 of 2");
+		assertThat(statusText(htmxHtml("/restaurants?sort=fastest")))
+			.isEqualTo("13 restaurants, sorted by delivery time, page 1 of 2");
+		assertThat(statusText(htmxHtml("/restaurants?sort=fastest&page=2")))
+			.isEqualTo("13 restaurants, sorted by delivery time, page 2 of 2");
+		assertThat(statusText(htmxHtml("/restaurants?cuisine=biryani&sort=cost-asc")))
+			.isEqualTo("1 restaurant, sorted by cost: low to high");
+	}
+
+	@Test
+	void htmxPagerLinksUseTheCanonicalUrlNotTheRawQuery() throws Exception {
+		assertThat(htmxHtml("/restaurants?q=&cuisine=&sort=rating"))
+			.contains("href=\"/restaurants?sort=rating&amp;page=2\"")
+			.doesNotContain("q=&amp;");
+		assertThat(htmxHtml("/restaurants?q=&veg=&sort=rating&page=2"))
+			.contains("href=\"/restaurants?sort=rating\"")
+			.doesNotContain("q=&amp;");
+	}
+
+	String htmxHtml(String url) throws Exception {
+		return mvc.perform(htmx(url)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+	}
+
+	/** The text an htmx response puts into the #listing-status live region, whitespace squashed. */
+	static String statusText(String html) {
+		Matcher m = Pattern.compile("<p id=\"listing-status\" hx-swap-oob=\"innerHTML\">(.*?)</p>", Pattern.DOTALL)
+			.matcher(html);
+		assertThat(m.find()).isTrue();
+		return squash(m.group(1)).strip().replace(" ,", ",");
 	}
 
 	@Test

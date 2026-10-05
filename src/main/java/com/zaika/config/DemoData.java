@@ -3,6 +3,7 @@ package com.zaika.config;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.zaika.catalog.RestaurantStatus;
@@ -40,66 +41,84 @@ final class DemoData {
 	}
 
 	record Section(String name, List<Dish> dishes) {
+
+		Section {
+			dishes = List.copyOf(dishes);
+		}
+
 	}
 
-	/** One restaurant with its owner and menu, filled in fluently below. */
-	static final class Place {
+	/** One restaurant with its owner and menu. Immutable; built fluently by {@link PlaceBuilder} below. */
+	record Place(String slug, String name, String tagline, String description, List<String> cuisines, String address,
+			String area, String pincode, String phone, BigDecimal costForTwo, BigDecimal minimumOrder,
+			BigDecimal deliveryFee, int prepMinutes, LocalTime opensAt, LocalTime closesAt, boolean pureVeg,
+			BigDecimal rating, int ratingCount, RestaurantStatus status, Account owner, List<Section> menu) {
 
-		final String slug;
+		Place {
+			cuisines = List.copyOf(cuisines);
+			menu = List.copyOf(menu);
+		}
 
-		final String name;
+	}
 
-		String tagline;
+	/** Fills in a {@link Place} fluently; lives only while the static list below is built. */
+	private static final class PlaceBuilder {
 
-		String description;
+		private final String slug;
 
-		List<String> cuisines;
+		private final String name;
 
-		String address;
+		private final String tagline;
 
-		String area;
+		private final String description;
 
-		String pincode;
+		private List<String> cuisines;
 
-		String phone;
+		private String address;
 
-		BigDecimal costForTwo;
+		private String area;
 
-		BigDecimal minimumOrder;
+		private String pincode;
 
-		BigDecimal deliveryFee;
+		private String phone;
 
-		int prepMinutes;
+		private BigDecimal costForTwo;
 
-		LocalTime opensAt;
+		private BigDecimal minimumOrder;
 
-		LocalTime closesAt;
+		private BigDecimal deliveryFee;
 
-		boolean pureVeg;
+		private int prepMinutes;
 
-		BigDecimal rating = BigDecimal.ZERO;
+		private LocalTime opensAt;
 
-		int ratingCount;
+		private LocalTime closesAt;
 
-		RestaurantStatus status = RestaurantStatus.APPROVED;
+		private boolean pureVeg;
 
-		Account owner;
+		private BigDecimal rating = BigDecimal.ZERO;
 
-		List<Section> menu = new ArrayList<>();
+		private int ratingCount;
 
-		Place(String slug, String name, String tagline, String description) {
+		private RestaurantStatus status = RestaurantStatus.APPROVED;
+
+		private Account owner;
+
+		private final List<Section> menu = new ArrayList<>();
+
+		PlaceBuilder(String slug, String name, String tagline, String description) {
 			this.slug = slug;
 			this.name = name;
 			this.tagline = tagline;
 			this.description = description;
 		}
 
-		Place cuisines(String... names) {
+		PlaceBuilder cuisines(String... names) {
 			this.cuisines = List.of(names);
 			return this;
 		}
 
-		Place at(String address, String area, String pincode, String phone) {
+		PlaceBuilder at(String address, String area, String pincode, String phone) {
 			this.address = address;
 			this.area = area;
 			this.pincode = pincode;
@@ -108,7 +127,7 @@ final class DemoData {
 		}
 
 		/** Cost for two, minimum order and delivery fee in rupees, and the usual preparation time. */
-		Place prices(int costForTwo, int minimumOrder, int deliveryFee, int prepMinutes) {
+		PlaceBuilder prices(int costForTwo, int minimumOrder, int deliveryFee, int prepMinutes) {
 			this.costForTwo = BigDecimal.valueOf(costForTwo);
 			this.minimumOrder = BigDecimal.valueOf(minimumOrder);
 			this.deliveryFee = BigDecimal.valueOf(deliveryFee);
@@ -116,36 +135,42 @@ final class DemoData {
 			return this;
 		}
 
-		Place hours(String opensAt, String closesAt) {
+		PlaceBuilder hours(String opensAt, String closesAt) {
 			this.opensAt = LocalTime.parse(opensAt);
 			this.closesAt = LocalTime.parse(closesAt);
 			return this;
 		}
 
-		Place pureVeg() {
+		PlaceBuilder pureVeg() {
 			this.pureVeg = true;
 			return this;
 		}
 
-		Place rated(String average, int count) {
+		PlaceBuilder rated(String average, int count) {
 			this.rating = new BigDecimal(average);
 			this.ratingCount = count;
 			return this;
 		}
 
-		Place pending() {
+		PlaceBuilder pending() {
 			this.status = RestaurantStatus.PENDING;
 			return this;
 		}
 
-		Place owner(String email, String name, String phone) {
+		PlaceBuilder owner(String email, String name, String phone) {
 			this.owner = new Account(email, name, phone, Role.RESTAURANT_OWNER);
 			return this;
 		}
 
-		Place section(String name, Dish... dishes) {
+		PlaceBuilder section(String name, Dish... dishes) {
 			this.menu.add(new Section(name, List.of(dishes)));
 			return this;
+		}
+
+		Place build() {
+			return new Place(slug, name, tagline, description, cuisines, address, area, pincode, phone, costForTwo,
+					minimumOrder, deliveryFee, prepMinutes, opensAt, closesAt, pureVeg, rating, ratingCount, status, owner,
+					menu);
 		}
 
 	}
@@ -162,8 +187,8 @@ final class DemoData {
 
 	static final String CUSTOMER_EMAIL = "customer@zaika.test";
 
-	static final List<Place> RESTAURANTS = List.of(
-			new Place("rassa-darbar", "Rassa Darbar", "Tambda-pandhra rassa, the Kolhapur way",
+	static final List<Place> RESTAURANTS = places(
+			new PlaceBuilder("rassa-darbar", "Rassa Darbar", "Tambda-pandhra rassa, the Kolhapur way",
 					"Fiery red tambda rassa, soothing white pandhra rassa and slow-cooked mutton, served with hot jowar "
 							+ "bhakri. A Mahadwar Road favourite for Sunday lunch.")
 				.cuisines("Kolhapuri", "Maharashtrian")
@@ -196,7 +221,7 @@ final class DemoData {
 						veg("Chapati", 20, "Soft whole-wheat chapati brushed with ghee."),
 						veg("Jeera Rice", 140, "Basmati tempered with cumin and ghee.")),
 
-			new Place("panchganga-thali-house", "Panchganga Thali House", "Unlimited-style Maharashtrian thalis, pure veg",
+			new PlaceBuilder("panchganga-thali-house", "Panchganga Thali House", "Unlimited-style Maharashtrian thalis, pure veg",
 					"Home-style Maharashtrian thalis with seasonal bhajis, fresh puranpoli and shrikhand. Light on oil, "
 							+ "big on flavour.")
 				.cuisines("Maharashtrian", "North Indian").pureVeg()
@@ -222,7 +247,7 @@ final class DemoData {
 						veg("Shrikhand", 80, "Thick strained yoghurt with saffron, cardamom and pistachio."),
 						veg("Gulab Jamun", 70, "Two warm khoya dumplings in rose-cardamom syrup.")),
 
-			new Place("jhanjhanit-misal-ghar", "Jhanjhanit Misal Ghar", "Fiery misal from 6 AM, till the tarri runs out",
+			new PlaceBuilder("jhanjhanit-misal-ghar", "Jhanjhanit Misal Ghar", "Fiery misal from 6 AM, till the tarri runs out",
 					"An early-morning institution in Kasaba Bawada. Sprouted matki, crunchy farsan and a tarri that "
 							+ "lives up to the name. Breakfast only.")
 				.cuisines("Kolhapuri", "Street Food").pureVeg()
@@ -246,7 +271,7 @@ final class DemoData {
 						veg("Masala Taak", 35, "Spiced buttermilk with coriander and roasted cumin."),
 						veg("Kolhapuri Coffee", 40, "Milky filter-style coffee, frothed and sweet.")),
 
-			new Place("malvan-tide", "Malvan Tide", "Konkan coast seafood, cooked Malvani style",
+			new PlaceBuilder("malvan-tide", "Malvan Tide", "Konkan coast seafood, cooked Malvani style",
 					"Surmai, pomfret and prawns brought up from the coast, with kokum-tangy curries, crisp rava fry "
 							+ "and fluffy amboli.")
 				.cuisines("Malvani")
@@ -277,7 +302,7 @@ final class DemoData {
 						veg("Solkadhi", 60, "Kokum and coconut milk, chilled."),
 						veg("Steamed Rice", 90, "Fragrant Konkan ukda rice.")),
 
-			new Place("udupi-leaf", "Udupi Leaf", "Crisp dosas and filter coffee since breakfast",
+			new PlaceBuilder("udupi-leaf", "Udupi Leaf", "Crisp dosas and filter coffee since breakfast",
 					"South Indian vegetarian classics: paper-thin dosas, pillowy idlis and sambar simmered fresh every "
 							+ "morning.")
 				.cuisines("South Indian").pureVeg()
@@ -306,7 +331,7 @@ final class DemoData {
 						veg("Filter Coffee", 45, "Decoction coffee with frothy hot milk, served in a davara.").best(),
 						veg("Badam Milk", 70, "Warm almond milk with saffron and cardamom.")),
 
-			new Place("noor-biryani-kebabs", "Noor Biryani & Kebabs", "Dum biryani and smoky kebabs till 3 AM",
+			new PlaceBuilder("noor-biryani-kebabs", "Noor Biryani & Kebabs", "Dum biryani and smoky kebabs till 3 AM",
 					"Slow-cooked dum biryani sealed with dough, seekh kebabs off the coals and late-night cravings "
 							+ "sorted. Open till 3 AM.")
 				.cuisines("Biryani", "North Indian")
@@ -337,7 +362,7 @@ final class DemoData {
 						veg("Burani Raita", 50, "Garlicky yoghurt raita, made for biryani."),
 						veg("Phirni", 90, "Chilled ground-rice pudding with pistachio, set in a clay pot.")),
 
-			new Place("wok-street", "Wok Street", "Indo-Chinese, tossed hot in the wok",
+			new PlaceBuilder("wok-street", "Wok Street", "Indo-Chinese, tossed hot in the wok",
 					"Schezwan everything, crisp Manchurian and hakka noodles with real wok smoke. Spice levels you can "
 							+ "trust.")
 				.cuisines("Chinese")
@@ -367,7 +392,7 @@ final class DemoData {
 								+ "sauce.").spice(1),
 						veg("Paneer Chilli Gravy", 240, "Paneer cubes in a glossy chilli-garlic gravy.").spice(2)),
 
-			new Place("rankala-slice-co", "Rankala Slice Co.", "Wood-fired style pizzas with a local twist",
+			new PlaceBuilder("rankala-slice-co", "Rankala Slice Co.", "Wood-fired style pizzas with a local twist",
 					"Thin, blistered crusts, a slow-cooked tomato sauce and toppings like Kolhapuri chicken tikka. "
 							+ "Two minutes from Rankala lake.")
 				.cuisines("Pizza")
@@ -393,7 +418,7 @@ final class DemoData {
 						veg("Choco Lava Cake", 109, "Warm chocolate cake with a molten centre."),
 						veg("Cold Coffee", 129, "Thick, chilled coffee blended with ice cream.")),
 
-			new Place("bhel-bandi", "Bhel Bandi", "Chaat and vada pav from the evening lanes",
+			new PlaceBuilder("bhel-bandi", "Bhel Bandi", "Chaat and vada pav from the evening lanes",
 					"Tangy bhel, crisp pani puri and buttery pav bhaji, made to order the way Shivaji Peth likes it.")
 				.cuisines("Street Food").pureVeg()
 				.at("Shop 9, Shivaji Peth Main Road, near Ubha Maruti Chowk", "Shivaji Peth", "416012", "9823014509")
@@ -415,7 +440,7 @@ final class DemoData {
 						veg("Kokum Sharbat", 40, "Chilled kokum with a pinch of black salt and cumin."),
 						veg("Sweet Lassi", 70, "Thick churned curd with a touch of cardamom.")),
 
-			new Place("gulkand-and-co", "Gulkand & Co.", "Ice creams, kulfi and mithai made in small batches",
+			new PlaceBuilder("gulkand-and-co", "Gulkand & Co.", "Ice creams, kulfi and mithai made in small batches",
 					"Natural ice creams churned with real fruit, rose gulkand and saffron kulfi, plus the falooda the "
 							+ "whole city queues for.")
 				.cuisines("Desserts").pureVeg()
@@ -439,7 +464,7 @@ final class DemoData {
 						veg("Mango Mastani", 130, "Mango milkshake crowned with ice cream and dry fruits."),
 						veg("Thick Chocolate Shake", 140, "Dark chocolate blended with ice cream and milk.")),
 
-			new Place("punjab-tadka-dhaba", "Punjab Tadka Dhaba", "Highway dhaba flavours in the city",
+			new PlaceBuilder("punjab-tadka-dhaba", "Punjab Tadka Dhaba", "Highway dhaba flavours in the city",
 					"Dal makhani simmered overnight, butter chicken from the tandoor and naan with plenty of butter, "
 							+ "dhaba-style.")
 				.cuisines("North Indian")
@@ -467,7 +492,7 @@ final class DemoData {
 						veg("Jeera Rice", 150, "Basmati with cumin and ghee."),
 						veg("Veg Pulao", 180, "Basmati cooked with vegetables and whole spices.")),
 
-			new Place("aajis-kitchen", "Aaji's Kitchen", "Home-style Maharashtrian cooking, like Aaji made it",
+			new PlaceBuilder("aajis-kitchen", "Aaji's Kitchen", "Home-style Maharashtrian cooking, like Aaji made it",
 					"Everyday Maharashtrian food from a family kitchen: zunka bhakar, usal, kombdi rassa and ukadiche "
 							+ "modak on Sundays.")
 				.cuisines("Maharashtrian")
@@ -492,7 +517,7 @@ final class DemoData {
 						veg("Sheera", 60, "Semolina halwa with ghee, saffron and cashews."),
 						veg("Ukadiche Modak", 90, "Two steamed modaks with coconut-jaggery filling and ghee.")),
 
-			new Place("brew-lab-cafe", "Brew Lab Cafe", "Small-batch coffee and fresh bakes",
+			new PlaceBuilder("brew-lab-cafe", "Brew Lab Cafe", "Small-batch coffee and fresh bakes",
 					"Specialty coffee from Chikmagalur estates, brewed by the cup, with cakes baked every morning.")
 				.cuisines("Desserts").pureVeg().pending()
 				.at("1st floor, Ruikar Trust Building, Ruikar Colony", "Ruikar Colony", "416005", "9823014513")
@@ -500,13 +525,25 @@ final class DemoData {
 				.owner("owner13@zaika.test", "Kunal Kadam", "9823100013")
 				.section("Coffee",
 						veg("Cappuccino", 140, "Double shot espresso with silky steamed milk."),
-						veg("Cold Brew", 160, "Steeped for 18 hours, smooth and chocolatey."),
-						veg("Hazelnut Latte", 170, "Espresso, steamed milk and house hazelnut syrup."))
+						veg("Cold Brew", 160, "Steeped for 18 hours, smooth and chocolatey.").best(),
+						veg("Hazelnut Latte", 170, "Espresso, steamed milk and house hazelnut syrup."),
+						veg("Pour Over", 180, "Single-estate Chikmagalur beans, brewed by hand to order."))
 				.section("Bakes",
 						veg("Banana Walnut Cake", 120, "Moist slice with toasted walnuts."),
-						veg("Chocolate Brownie", 110, "Dense, fudgy and served warm.")));
+						veg("Chocolate Brownie", 110, "Dense, fudgy and served warm.").best(),
+						veg("Butter Croissant", 130, "Flaky, all-butter and baked at 9 AM. Usually gone by noon.")
+							.unavailable())
+				.section("Sandwiches",
+						veg("Paneer Pesto Sandwich", 190, "Grilled paneer, basil pesto and roasted peppers on sourdough."),
+						veg("Bombay Masala Toast", 150, "Spiced potato, beetroot, onion and green chutney, toasted crisp.")
+							.spice(1),
+						veg("Mushroom Cheese Melt", 200, "Garlic mushrooms under melted cheddar on multigrain bread.")));
 
 	private DemoData() {
+	}
+
+	private static List<Place> places(PlaceBuilder... places) {
+		return Arrays.stream(places).map(PlaceBuilder::build).toList();
 	}
 
 	private static Dish veg(String name, int price, String description) {

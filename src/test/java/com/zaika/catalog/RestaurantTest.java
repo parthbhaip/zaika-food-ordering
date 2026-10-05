@@ -101,6 +101,16 @@ class RestaurantTest {
 	}
 
 	@Test
+	void aRestaurantNeedsASlugAndAName() {
+		User owner = new User("Ravi", "ravi@example.com", "9876543210", "hash", Role.RESTAURANT_OWNER);
+
+		assertThatThrownBy(() -> new Restaurant(owner, null, "X")).isInstanceOf(NullPointerException.class)
+			.hasMessage("slug");
+		assertThatThrownBy(() -> new Restaurant(owner, "x", null)).isInstanceOf(NullPointerException.class)
+			.hasMessage("name");
+	}
+
+	@Test
 	void rejectingOrSuspendingNeedsAReasonAndApprovingClearsIt() {
 		Restaurant r = new Restaurant(owner(), "misal-house", "Misal House");
 

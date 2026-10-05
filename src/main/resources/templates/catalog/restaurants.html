@@ -77,12 +77,12 @@
 				<th:block th:if="${filter.q == null and filter.filtered}"><div th:replace="~{fragments/ui :: emptyState('filter', 'No restaurants match these filters',
 					'Try another cuisine, or turn off Open now to see kitchens that open later.', 'Clear filters', '/restaurants')}"></div></th:block>
 				<th:block th:unless="${filter.filtered}"><div th:replace="~{fragments/ui :: emptyState('store', 'No kitchens are live yet',
-					'New restaurants are joining Zaika. Check back soon.', null, null)}"></div></th:block>
+					'No kitchens are taking orders in Kolhapur right now.', 'List your restaurant', '/partner-with-us/restaurant')}"></div></th:block>
 			</div>
 
 			<!--/* Only the pager is boosted: a page change swaps the results and keeps the form as it is. */-->
 			<div th:if="${page.totalPages > 1}" class="listing-pager" hx-boost="true" hx-target="#restaurant-results" hx-swap="outerHTML">
-				<nav th:replace="~{fragments/pagination :: pagination(${page})}"></nav>
+				<nav th:replace="~{fragments/pagination :: pagination(${page}, ${filter.url()})}"></nav>
 			</div>
 		</section>
 	</div>
@@ -92,10 +92,13 @@
 <th:block th:fragment="count-text" th:with="n=${page.totalElements}"><th:block th:text="|${n} ${n == 1 ? 'restaurant' : 'restaurants'}|">12 restaurants</th:block><th:block th:if="${filter.q != null}" th:text="| for “${filter.q}”|"></th:block></th:block>
 
 <!--/* What htmx requests get: the new results, plus the count announced through the live region (innerHTML keeps
-     the #listing-status node, so screen readers notice the change). */-->
+     the #listing-status node, so screen readers notice the change). The sort and page are part of the text: a live
+     region that receives the same text again stays silent, and a new sort or page often keeps the count. */-->
 <th:block th:fragment="htmx-results">
 	<section th:replace="~{::results}"></section>
-	<p id="listing-status" hx-swap-oob="innerHTML"><th:block th:replace="~{::count-text}">12 restaurants</th:block></p>
+	<p id="listing-status" hx-swap-oob="innerHTML"><th:block th:replace="~{::count-text}">12 restaurants</th:block><th:block
+		th:text="|, sorted by ${#strings.toLowerCase(filter.sortOption.label)}|">, sorted by rating</th:block><th:block
+		th:if="${page.totalPages > 1}" th:text="|, page ${page.number + 1} of ${page.totalPages}|">, page 2 of 3</th:block></p>
 </th:block>
 </body>
 </html>

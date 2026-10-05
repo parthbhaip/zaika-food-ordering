@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
@@ -78,13 +79,19 @@ public class StorageService {
 
 	/**
 	 * Removes a stored image, for example after it was replaced. Null, missing files and paths that point outside the
-	 * upload directory are ignored.
+	 * upload directory (or are not valid paths at all) are ignored.
 	 */
 	public void delete(String storedPath) {
 		if (storedPath == null || storedPath.isBlank()) {
 			return;
 		}
-		Path target = root.resolve(storedPath).normalize();
+		Path target;
+		try {
+			target = root.resolve(storedPath).normalize();
+		}
+		catch (InvalidPathException ex) { // not a path this file system can hold, so nothing of ours to delete
+			return;
+		}
 		if (!target.startsWith(root) || target.equals(root)) {
 			return;
 		}

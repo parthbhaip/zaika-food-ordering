@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.time.ZoneId;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,9 +21,12 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.zaika.catalog.CuisineRepository;
+import com.zaika.catalog.RestaurantRepository;
 import com.zaika.config.AppProperties;
 import com.zaika.notification.LoggingMailService;
 import com.zaika.notification.MailService;
+import com.zaika.user.UserRepository;
 
 /** The application context starts on the test profile with the shared settings from application.properties. */
 @SpringBootTest
@@ -44,6 +48,15 @@ class ZaikaApplicationTests {
 
 	@Autowired
 	ApplicationContext context;
+
+	@Autowired
+	RestaurantRepository restaurants;
+
+	@Autowired
+	CuisineRepository cuisines;
+
+	@Autowired
+	UserRepository users;
 
 	@Test
 	void contextLoadsOnTestProfileWithInMemoryH2() {
@@ -89,8 +102,13 @@ class ZaikaApplicationTests {
 
 	@Test
 	void demoDataIsNotLoadedWhenSeedingIsOff() {
-		// app.seed-demo=false here (and by default in mysql): the seeder bean does not even exist
-		assertThat(context.containsBean("demoDataSeeder")).isFalse();
+		// app.seed-demo=false here (and by default in mysql): no demo kitchens, cuisines or demo logins
+		assertThat(restaurants.findBySlug("rassa-darbar")).isEmpty();
+		assertThat(restaurants.findBySlug("brew-lab-cafe")).isEmpty();
+		assertThat(cuisines.findBySlug("kolhapuri")).isEmpty();
+		for (String email : List.of("admin@zaika.test", "owner1@zaika.test", "rider1@zaika.test", "customer@zaika.test")) {
+			assertThat(users.existsByEmailIgnoreCase(email)).as(email).isFalse();
+		}
 	}
 
 	@Test

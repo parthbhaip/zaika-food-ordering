@@ -24,7 +24,7 @@
 				<div class="rp-rating">
 					<span th:replace="~{fragments/ui :: rating(${r.ratingAverage}, ${r.ratingCount})}"></span>
 					<span class="rp-rating-count" aria-hidden="true"
-						th:text="${r.ratingCount == 0} ? 'No ratings yet' : |${#numbers.formatInteger(r.ratingCount, 1, 'COMMA')} ${r.ratingCount == 1 ? 'rating' : 'ratings'}|">2,140 ratings</span>
+						th:text="${r.ratingCount == 0} ? 'No ratings yet' : |${@fmt.count(r.ratingCount)} ${r.ratingCount == 1 ? 'rating' : 'ratings'}|">2,140 ratings</span>
 				</div>
 
 				<ul class="rp-facts">

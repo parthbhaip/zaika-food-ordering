@@ -10,8 +10,8 @@
 		<div th:replace="~{fragments/form :: field('password', 'Password', 'password', null, 'current-password')}"></div>
 	</form>
 
-	<div id="pager"><nav th:replace="~{fragments/pagination :: pagination(${page})}"></nav></div>
-	<div id="single-page"><nav th:replace="~{fragments/pagination :: pagination(${singlePage})}"></nav></div>
+	<div id="pager"><nav th:replace="~{fragments/pagination :: pagination(${page}, null)}"></nav></div>
+	<div id="single-page"><nav th:replace="~{fragments/pagination :: pagination(${singlePage}, null)}"></nav></div>
 
 	<div id="empty"><div th:replace="~{fragments/ui :: emptyState('cart', 'Your cart is empty', 'Good food is a few taps away.', 'Browse restaurants', '/restaurants')}"></div></div>
 	<div id="empty-no-action"><div th:replace="~{fragments/ui :: emptyState('search', 'No matches', 'Try another dish.', null, null)}"></div></div>

@@ -83,6 +83,25 @@ class PlaceholderControllerTest {
 	}
 
 	@Test
+	void theDishDrawingFollowsTheDishNameNotItsHash() throws Exception {
+		assertThat(fetch("/placeholder/dish/chicken-thali.svg")).contains(PlaceholderController.PLATE);
+		for (String plate : List.of("veg-kolhapuri-thali", "zunka-bhakar-plate", "family-meal", "tandoori-platter",
+				"lunch-combos")) {
+			assertThat(PlaceholderController.dishGlyph(plate)).as(plate).isEqualTo(PlaceholderController.PLATE);
+		}
+		for (String drink : List.of("sweet-lassi", "cutting-chai", "masala-taak", "solkadhi", "sol-kadhi", "cold-coffee",
+				"thick-chocolate-shake", "kokum-sharbat", "royal-falooda", "fresh-lime-soda", "mint-mojito", "chaas",
+				"spiced-buttermilk", "watermelon-juice", "ginger-tea", "summer-cooler")) {
+			assertThat(PlaceholderController.dishGlyph(drink)).as(drink).isEqualTo(PlaceholderController.GLASS);
+		}
+		// whole words only: "thalipeeth" is not a thali, "steak" and "teacake" are not tea
+		for (String bowl : List.of("misal-pav", "tambda-rassa", "chicken-dum-biryani", "thalipeeth", "steak",
+				"teacake")) {
+			assertThat(PlaceholderController.dishGlyph(bowl)).as(bowl).isEqualTo(PlaceholderController.BOWL);
+		}
+	}
+
+	@Test
 	void placeholdersAreInertImagesWithNoScriptOrExternalReferences() throws Exception {
 		for (String kind : List.of("restaurant", "logo", "dish")) {
 			String svg = fetch("/placeholder/" + kind + "/panchganga-misal-house.svg");

@@ -51,6 +51,7 @@ public class Restaurant extends BaseEntity {
 	@JoinColumn(name = "owner_id", nullable = false, updatable = false, unique = true)
 	private User owner;
 
+	@NotNull
 	@Pattern(regexp = Slugs.PATTERN)
 	@Size(max = 80)
 	@Column(nullable = false, length = 80, unique = true, updatable = false)
@@ -170,8 +171,8 @@ public class Restaurant extends BaseEntity {
 			throw new IllegalArgumentException("A restaurant's owner must have the RESTAURANT_OWNER role");
 		}
 		this.owner = owner;
-		this.slug = slug;
-		this.name = name;
+		this.slug = Objects.requireNonNull(slug, "slug");
+		this.name = Objects.requireNonNull(name, "name");
 	}
 
 	/**

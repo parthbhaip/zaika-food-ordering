@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!--/* Pager for a Spring Data Page: th:replace="~{fragments/pagination :: pagination(${page})}". Renders nothing when
-     everything fits on one page. Links keep the current query (filters, search) and change only ?page=.
+<!--/* Pager for a Spring Data Page: th:replace="~{fragments/pagination :: pagination(${page}, ${base})}". Renders nothing
+     when everything fits on one page. Links are base (the list's canonical URL, e.g. ${filter.url()}) with only ?page=
+     changed; a null base keeps the current request's query instead.
      URLs are computed in th:with: Thymeleaf 3.1 forbids bean calls (@pages) inside th:href itself. */-->
-<nav th:fragment="pagination(page)" th:if="${page.totalPages > 1}" class="pagination" aria-label="Pages">
+<nav th:fragment="pagination(page, base)" th:if="${page.totalPages > 1}" class="pagination" aria-label="Pages">
 	<ul>
-		<li th:if="${page.hasPrevious()}" th:with="href=${@pages.url(page.number)}"><a class="page-link page-prev" rel="prev" th:href="${href}" href="?page=1"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg><span class="visually-hidden">Previous page</span></a></li>
+		<li th:if="${page.hasPrevious()}" th:with="href=${@pages.url(base, page.number)}"><a class="page-link page-prev" rel="prev" th:href="${href}" href="?page=1"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg><span class="visually-hidden">Previous page</span></a></li>
 		<li th:unless="${page.hasPrevious()}"><span class="page-link page-prev is-disabled" aria-disabled="true"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg><span class="visually-hidden">Previous page</span></span></li>
-		<li th:each="n : ${@pages.numbers(page)}" th:with="href=${n == null ? null : @pages.url(n)}">
+		<li th:each="n : ${@pages.numbers(page)}" th:with="href=${n == null ? null : @pages.url(base, n)}">
 			<span th:if="${n == null}" class="page-gap" aria-hidden="true">…</span>
 			<a th:if="${n != null}" class="page-link" th:href="${href}" href="?page=2"
 				th:aria-current="${n == page.number + 1} ? 'page'"><span class="visually-hidden">Page </span><th:block th:text="${n}">2</th:block></a>
 		</li>
-		<li th:if="${page.hasNext()}" th:with="href=${@pages.url(page.number + 2)}"><a class="page-link" rel="next" th:href="${href}" href="?page=3"><span class="visually-hidden">Next page</span><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></a></li>
+		<li th:if="${page.hasNext()}" th:with="href=${@pages.url(base, page.number + 2)}"><a class="page-link" rel="next" th:href="${href}" href="?page=3"><span class="visually-hidden">Next page</span><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></a></li>
 		<li th:unless="${page.hasNext()}"><span class="page-link is-disabled" aria-disabled="true"><span class="visually-hidden">Next page</span><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></span></li>
 	</ul>
 </nav>

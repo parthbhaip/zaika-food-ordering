@@ -386,11 +386,12 @@ a:hover { text-decoration-thickness: 2px; }
 .restaurant-grid {
 	display: grid;
 	gap: var(--space-6) var(--space-5);
-	grid-template-columns: 1fr;
+	grid-template-columns: minmax(0, 1fr);
 }
-@media (min-width: 640px) { .restaurant-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 960px) { .restaurant-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1200px) { .restaurant-grid { grid-template-columns: repeat(4, 1fr); } }
+/* minmax(0, 1fr), not 1fr: a 1fr column never shrinks below its widest card's content */
+@media (min-width: 640px) { .restaurant-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .restaurant-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .restaurant-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 .restaurant-card {
 	position: relative;
@@ -451,7 +452,8 @@ a:hover { text-decoration-thickness: 2px; }
 	z-index: 2;
 }
 .restaurant-card-fav[aria-pressed="true"] { color: var(--color-primary); }
-.restaurant-card-body { display: grid; gap: 2px; padding-inline: var(--space-1); }
+/* One minmax(0, 1fr) column: an auto column would grow to the unwrapped name and cuisines and spill out of the card */
+.restaurant-card-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding-inline: var(--space-1); }
 .restaurant-card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .restaurant-card-name {
 	min-width: 0;
@@ -1814,6 +1816,7 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 .rp-sections { display: grid; gap: var(--space-2); min-width: 0; padding-top: var(--space-4); }
 .rp-menu-count { color: var(--color-text-secondary); font-size: var(--text-sm); font-weight: var(--weight-semibold); }
 .rp-section { padding-top: var(--space-4); scroll-margin-top: 64px; } /* clears the sticky section bar */
+.rp-section .menu-item { scroll-margin-top: 64px; } /* search results link to #dish-{id} */
 .rp-section-title { font-size: var(--text-xl); font-weight: var(--weight-extrabold); letter-spacing: -0.01em; }
 .rp-section-count { color: var(--color-text-muted); font-size: var(--text-md); font-weight: var(--weight-semibold); }
 
@@ -1830,10 +1833,18 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.rp-offers { flex-wrap: wrap; margin-inline: 0; padding-inline: 0; overflow: visible; }
 	.rp-menu-body { grid-template-columns: 220px minmax(0, 1fr); gap: var(--space-10); align-items: start; }
 	.rp-nav { top: calc(var(--header-height) + var(--space-4)); margin: 0; padding: var(--space-4) 0 0; background: none; border: 0; }
-	.rp-nav-list { flex-direction: column; gap: 2px; padding: 2px; overflow: visible; }
+	.rp-nav-list {
+		flex-direction: column;
+		gap: 2px;
+		max-height: calc(100vh - var(--header-height) - var(--space-8));
+		padding: var(--space-1); /* room for the focus ring inside the scroll box */
+		overflow: hidden auto;
+		scrollbar-width: thin; /* the phone bar hides its scrollbar; a long sidebar shows it */
+	}
 	.rp-nav-link { justify-content: space-between; width: 100%; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: none; }
 	.rp-nav-link:hover { background: var(--color-surface-muted); }
-	.rp-section { scroll-margin-top: 0; }
+	.rp-section,
+	.rp-section .menu-item { scroll-margin-top: 0; }
 }
 
 /* ------------------------------------------------------------------ Search (/search and the header suggestions) */
@@ -1909,6 +1920,7 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	top: calc(100% + var(--space-2));
 	left: 0;
 	right: 0;
+	min-width: 320px; /* wider than the box at 960-1100px, so names are not cut short */
 	z-index: 5;
 	display: grid;
 	padding: var(--space-2);

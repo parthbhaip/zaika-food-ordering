@@ -37,10 +37,20 @@ public class PageLinks {
 		return numbers;
 	}
 
-	/** The current URL (path and query) pointing at page {@code number}; page 1 drops the parameter. */
-	public String url(int number) {
-		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-		UriComponentsBuilder uri = UriComponentsBuilder.fromPath(request.getRequestURI()).query(request.getQueryString());
+	/**
+	 * {@code base} (a list's canonical URL, path and query) pointing at page {@code number}, or the current request's
+	 * URL when {@code base} is null. Page 1 drops the parameter.
+	 */
+	public String url(String base, int number) {
+		UriComponentsBuilder uri;
+		if (base != null) {
+			uri = UriComponentsBuilder.fromUriString(base);
+		}
+		else {
+			HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+				.getRequest();
+			uri = UriComponentsBuilder.fromPath(request.getRequestURI()).query(request.getQueryString());
+		}
 		if (number > 1) {
 			uri.replaceQueryParam("page", number);
 		}

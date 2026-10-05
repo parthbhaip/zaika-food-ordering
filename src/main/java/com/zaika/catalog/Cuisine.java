@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -19,6 +20,7 @@ public class Cuisine extends BaseEntity {
 	@Column(nullable = false, length = 40, unique = true)
 	private String name;
 
+	@NotNull
 	@Pattern(regexp = Slugs.PATTERN)
 	@Size(max = 40)
 	@Column(nullable = false, length = 40, unique = true)

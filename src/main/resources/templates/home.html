@@ -27,7 +27,7 @@
 				</form>
 
 				<div th:if="${live > 0}" class="home-popular">
-					<p id="home-popular-title" class="home-popular-title">Popular right now</p>
+					<p id="home-popular-title" class="home-popular-title">Try searching for</p>
 					<ul class="home-popular-list" aria-labelledby="home-popular-title">
 						<li th:each="term : ${ {'Misal', 'Tambda Rassa', 'Thali', 'Biryani', 'Dosa', 'Pizza'} }"><a class="chip" th:href="@{/search(q=${term})}" href="/search?q=Misal" th:text="${term}">Misal</a></li>
 					</ul>
@@ -79,7 +79,7 @@
 	</th:block>
 
 	<section th:if="${live == 0}" class="container home-section">
-		<div th:replace="~{fragments/ui :: emptyState('store', 'No kitchens are live yet', 'New restaurants are joining Zaika. Check back soon, or list your own kitchen below.', null, null)}"></div>
+		<div th:replace="~{fragments/ui :: emptyState('store', 'No kitchens are live yet', 'No kitchens are taking orders in Kolhapur right now. Run one? List it with us below.', null, null)}"></div>
 	</section>
 
 	<section class="container home-section" aria-labelledby="home-how-title">

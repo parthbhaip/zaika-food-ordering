@@ -51,13 +51,6 @@ public class SearchService {
 		this.clock = clock;
 	}
 
-	/** Search text as the search box sends it, stripped and cut like the listing's; null when blank. */
-	public static String normalize(String raw) {
-		RestaurantFilter filter = new RestaurantFilter();
-		filter.setQ(raw);
-		return filter.getQ();
-	}
-
 	/** {@code /search} or {@code /search?q=misal+pav}. */
 	public static String url(String q) {
 		return q == null ? "/search" : "/search?q=" + URLEncoder.encode(q, StandardCharsets.UTF_8);
@@ -74,10 +67,10 @@ public class SearchService {
 		Page<RestaurantCard> found = browse.browse(filter);
 
 		String pattern = RestaurantBrowseService.likePattern(q);
-		List<MenuItem> dishes = items.searchByName(RestaurantStatus.APPROVED, pattern, Limit.of(DISH_LIMIT));
+		LocalTime now = LocalTime.now(clock);
+		List<MenuItem> dishes = items.searchByName(RestaurantStatus.APPROVED, pattern, now, Limit.of(DISH_LIMIT));
 		long dishCount = dishes.size() < DISH_LIMIT ? dishes.size()
 				: items.countByName(RestaurantStatus.APPROVED, pattern);
-		LocalTime now = LocalTime.now(clock);
 		return new Results(q, found.getContent(), found.getTotalElements(),
 				dishes.stream().map(item -> toHit(item, now)).toList(), dishCount);
 	}
@@ -99,7 +92,8 @@ public class SearchService {
 		}
 		int room = SUGGESTION_LIMIT - suggestions.size();
 		if (room > 0) {
-			for (MenuItem item : items.searchByName(RestaurantStatus.APPROVED, pattern, Limit.of(room))) {
+			for (MenuItem item : items.searchByName(RestaurantStatus.APPROVED, pattern, LocalTime.now(clock),
+					Limit.of(room))) {
 				suggestions.add(Suggestion.of(Suggestion.Kind.DISH, item.getName(), q,
 						"Dish at " + item.getRestaurant().getName(), images.dish(item), dishUrl(item), item.isVeg()));
 			}

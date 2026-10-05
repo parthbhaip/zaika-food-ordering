@@ -180,7 +180,7 @@ class RestaurantPageTest {
 			.contains("<h1 id=\"rp-name\">Rassa House</h1>")
 			.contains("<p class=\"rp-cuisines\">Kolhapuri, Maharashtrian</p>")
 			.contains("12, Main Road, Rajarampuri")
-			.contains("4.5<span class=\"visually-hidden\"> out of 5, 2140 ratings</span>", ">2,140 ratings</span>")
+			.contains("4.5<span class=\"visually-hidden\"> out of 5, 2,140 ratings</span>", ">2,140 ratings</span>")
 			.contains("<strong>30-35 min</strong><small>Delivery time</small>")
 			.contains("<strong>₹400</strong><small>Cost for two</small>")
 			.contains("<strong>11:00 AM – 11:00 PM</strong><small>Today's timings</small>")

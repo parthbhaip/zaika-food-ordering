@@ -39,9 +39,19 @@ class HomePageEmptyCatalogTest {
 				"Kolhapur's favourite kitchens are joining Zaika.",
 				"<h2 class=\"empty-state-title\">No kitchens are live yet</h2>",
 				"action=\"/search\"", "How Zaika works", "href=\"/partner-with-us/restaurant\"")
-			.doesNotContain("kitchens open now", "Kitchens are closed right now", "Popular right now",
+			.doesNotContain("kitchens open now", "Kitchens are closed right now", "Try searching for",
 					"home-cuisine", "home-top-title", "home-fast-title", "home-veg-title", "home-note",
 					"Waiting Room Cafe");
+	}
+
+	@Test
+	void theUnfilteredListingSaysNoKitchenIsTakingOrdersAndOffersToListOne() throws Exception {
+		String html = mvc.perform(get("/restaurants"))
+			.andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString().replaceAll("\s+", " ");
+		assertThat(html).contains("No kitchens are taking orders in Kolhapur right now.",
+				"href=\"/partner-with-us/restaurant\">List your restaurant</a>")
+			.doesNotContain("Check back soon");
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.zaika.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -161,8 +162,9 @@ class DemoDataSeederTest {
 
 	@Test
 	@Transactional
-	void everyApprovedRestaurantHasAFullRealisticMenu() {
-		for (Restaurant r : approved()) {
+	void everyRestaurantHasAFullRealisticMenuIncludingThePendingOne() {
+		// the pending restaurant too, so it is demo-ready the moment an admin approves it
+		for (Restaurant r : restaurants.findAll()) {
 			assertThat(categories.findByRestaurantIdOrderBySortOrderAscIdAsc(r.getId())).as(r.getSlug())
 				.hasSizeBetween(3, 5);
 			List<MenuItem> menu = items.findByRestaurantIdAndArchivedFalseOrderBySortOrderAscIdAsc(r.getId());
@@ -184,6 +186,16 @@ class DemoDataSeederTest {
 			}
 		}
 		assertThat(items.findAll()).extracting(MenuItem::getSpiceLevel).contains(0, 1, 2, 3);
+	}
+
+	@Test
+	void theSeedDefinitionsAreImmutable() {
+		DemoData.Place first = DemoData.RESTAURANTS.get(0);
+
+		assertThatThrownBy(() -> DemoData.RESTAURANTS.add(first)).isInstanceOf(UnsupportedOperationException.class);
+		assertThatThrownBy(() -> first.menu().clear()).isInstanceOf(UnsupportedOperationException.class);
+		assertThatThrownBy(() -> first.menu().get(0).dishes().clear()).isInstanceOf(UnsupportedOperationException.class);
+		assertThatThrownBy(() -> first.cuisines().clear()).isInstanceOf(UnsupportedOperationException.class);
 	}
 
 	@Test

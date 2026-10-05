@@ -14,17 +14,17 @@ import com.zaika.catalog.Slugs;
  * Picks the picture to show, as the template bean {@code img}:
  * {@code <img th:with="src=${@img.cover(restaurant)}" th:src="@{${src}}">} (Thymeleaf does not allow bean calls
  * inside {@code th:src} itself).
- * Order: the uploaded image, else a bundled seed photo {@code /img/seed/{slug}.jpg} if that file exists, else a
- * generated placeholder from {@link PlaceholderController}. Seed photos are looked up by restaurant slug
- * ({@code {slug}.jpg} for the cover, {@code {slug}-logo.jpg} for the logo) and by slugified dish name, so one
- * "Misal Pav" photo serves every menu that sells it.
+ * Order: the uploaded image, else a bundled seed photo if that file exists, else a generated placeholder from
+ * {@link PlaceholderController}. Seed photos live in one folder per kind, so a dish can never pick up a restaurant's
+ * cover: {@code /img/seed/cover/{slug}.jpg} and {@code /img/seed/logo/{slug}.jpg} by restaurant slug, and
+ * {@code /img/seed/dish/{slug}.jpg} by slugified dish name, so one "Misal Pav" photo serves every menu that sells it.
  */
 @Component("img")
 public class ImageUrls {
 
-	private static final String SEED_FOLDER = "static/img/seed/";
+	private static final String SEED_URL = "/img/seed/";
 
-	/** Seed file name -> whether it ships with the app. The classpath never changes while running. */
+	/** Seed path ({@code kind/slug.jpg}) -> whether it ships with the app. The classpath never changes while running. */
 	private final Map<String, Boolean> seedExists = new ConcurrentHashMap<>();
 
 	public String cover(Restaurant restaurant) {
@@ -33,7 +33,7 @@ public class ImageUrls {
 
 	/** For read models that carry the fields instead of the entity. */
 	public String cover(String uploadedPath, String slug) {
-		return pick(uploadedPath, slug, slug, "restaurant");
+		return pick(uploadedPath, "cover", slug, slug, "restaurant");
 	}
 
 	public String logo(Restaurant restaurant) {
@@ -41,7 +41,7 @@ public class ImageUrls {
 	}
 
 	public String logo(String uploadedPath, String slug) {
-		return pick(uploadedPath, slug + "-logo", slug, "logo");
+		return pick(uploadedPath, "logo", slug, slug, "logo");
 	}
 
 	public String dish(MenuItem item) {
@@ -50,21 +50,23 @@ public class ImageUrls {
 
 	public String dish(String uploadedPath, String dishName) {
 		String slug = Slugs.slugify(dishName);
-		return pick(uploadedPath, slug, slug.isEmpty() ? "dish" : slug, "dish");
+		return pick(uploadedPath, "dish", slug, slug.isEmpty() ? "dish" : slug, "dish");
 	}
 
-	private String pick(String uploadedPath, String seedName, String placeholderSeed, String placeholderKind) {
+	private String pick(String uploadedPath, String seedFolder, String seedName, String placeholderSeed,
+			String placeholderKind) {
 		if (uploadedPath != null && !uploadedPath.isBlank()) {
 			return StorageService.URL_PREFIX + uploadedPath;
 		}
-		if (!seedName.isEmpty() && seedExists.computeIfAbsent(seedName + ".jpg", this::onClasspath)) {
-			return "/img/seed/" + seedName + ".jpg";
+		String seedPath = seedFolder + "/" + seedName + ".jpg";
+		if (!seedName.isEmpty() && seedExists.computeIfAbsent(seedPath, this::onClasspath)) {
+			return SEED_URL + seedPath;
 		}
 		return "/placeholder/" + placeholderKind + "/" + placeholderSeed + ".svg";
 	}
 
-	private boolean onClasspath(String fileName) {
-		return new ClassPathResource(SEED_FOLDER + fileName).exists();
+	private boolean onClasspath(String seedPath) {
+		return new ClassPathResource("static" + SEED_URL + seedPath).exists();
 	}
 
 }

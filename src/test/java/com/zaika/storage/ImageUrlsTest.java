@@ -26,7 +26,7 @@ import com.zaika.user.User;
 
 /**
  * The img helper: uploaded image, else a bundled seed photo, else a generated placeholder. Seed photos for these tests
- * live in src/test/resources/static/img/seed (zaika-test-kitchen.jpg, test-misal-pav.jpg).
+ * live in src/test/resources/static/img/seed (cover/zaika-test-kitchen.jpg, dish/test-misal-pav.jpg).
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -55,11 +55,11 @@ class ImageUrlsTest {
 	void aSeedPhotoIsUsedWhenItShipsWithTheApp() {
 		Restaurant seeded = restaurant("zaika-test-kitchen", "Zaika Test Kitchen");
 
-		assertThat(img.cover(seeded)).isEqualTo("/img/seed/zaika-test-kitchen.jpg");
+		assertThat(img.cover(seeded)).isEqualTo("/img/seed/cover/zaika-test-kitchen.jpg");
 		assertThat(img.dish(item(seeded, "Test Misal Pav", null))).as("found by slugified dish name")
-			.isEqualTo("/img/seed/test-misal-pav.jpg");
+			.isEqualTo("/img/seed/dish/test-misal-pav.jpg");
 		assertThat(img.dish(item(seeded, "  Test Misál Pav!  ", " "))).as("blank upload path counts as none")
-			.isEqualTo("/img/seed/test-misal-pav.jpg");
+			.isEqualTo("/img/seed/dish/test-misal-pav.jpg");
 	}
 
 	@Test
@@ -68,7 +68,7 @@ class ImageUrlsTest {
 
 		assertThat(img.cover(plain)).isEqualTo("/placeholder/restaurant/rankala-tandoor.svg");
 		assertThat(img.logo(restaurant("zaika-test-kitchen", "Zaika Test Kitchen")))
-			.as("no zaika-test-kitchen-logo.jpg seed, so the initials badge")
+			.as("no logo/zaika-test-kitchen.jpg seed, so the initials badge")
 			.isEqualTo("/placeholder/logo/zaika-test-kitchen.svg");
 		assertThat(img.dish(item(plain, "Tambda Rassa Thali", null))).isEqualTo("/placeholder/dish/tambda-rassa-thali.svg");
 		assertThat(img.dish(item(plain, "!!!", null))).as("a name with no letters still gets a valid seed")
@@ -76,8 +76,18 @@ class ImageUrlsTest {
 	}
 
 	@Test
+	void eachKindHasItsOwnSeedFolderSoADishNeverShowsARestaurantCover() {
+		Restaurant seeded = restaurant("zaika-test-kitchen", "Zaika Test Kitchen");
+
+		assertThat(img.dish(item(seeded, "Zaika Test Kitchen", null))).as("same slug as the restaurant's cover photo")
+			.isEqualTo("/placeholder/dish/zaika-test-kitchen.svg");
+		assertThat(img.cover(restaurant("test-misal-pav", "Test Misal Pav"))).as("same slug as a dish photo")
+			.isEqualTo("/placeholder/restaurant/test-misal-pav.svg");
+	}
+
+	@Test
 	void everyUrlTheHelperPicksIsActuallyServed() throws Exception {
-		for (String url : new String[] { "/img/seed/zaika-test-kitchen.jpg", "/img/seed/test-misal-pav.jpg",
+		for (String url : new String[] { "/img/seed/cover/zaika-test-kitchen.jpg", "/img/seed/dish/test-misal-pav.jpg",
 				img.cover(restaurant("rankala-tandoor", "Rankala Tandoor")),
 				img.logo(restaurant("rankala-tandoor", "Rankala Tandoor")),
 				img.dish(item(restaurant("rankala-tandoor", "Rankala Tandoor"), "!!!", null)) }) {
@@ -93,7 +103,7 @@ class ImageUrlsTest {
 			.contains("id=\"cover\" src=\"/placeholder/restaurant/rankala-tandoor.svg\"")
 			.contains("id=\"logo\" src=\"/placeholder/logo/rankala-tandoor.svg\"")
 			.contains("id=\"uploaded\" src=\"/uploads/dish/1b2c.jpg\"")
-			.contains("id=\"seeded\" src=\"/img/seed/test-misal-pav.jpg\"");
+			.contains("id=\"seeded\" src=\"/img/seed/dish/test-misal-pav.jpg\"");
 	}
 
 	static Restaurant restaurant(String slug, String name) {
