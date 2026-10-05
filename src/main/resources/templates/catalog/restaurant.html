@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${menu.restaurant.name + ' | Zaika'}">Rassa Darbar | Zaika</title></head>
+<body>
+<!--/* A restaurant page. Model: menu (catalog.RestaurantMenu), filter (catalog.MenuFilter), optional cartQuantities
+     (Map<Long, Integer> of item id -> quantity in the cart; T21). The menu search and the "Pure veg only" toggle
+     are a plain GET form; with htmx every change reloads only #menu-results (the htmx-menu fragment below). */-->
+<main id="main" class="restaurant-page" th:with="r=${menu.restaurant}, card=${menu.card}">
+	<section class="rp-hero" aria-labelledby="rp-name">
+		<div class="rp-cover" th:classappend="${card.openNow} ? '' : 'is-closed'">
+			<img th:src="@{${card.imageUrl}}" src="/placeholder/restaurant/rassa-darbar.svg" alt="" width="1200" height="400">
+		</div>
+		<div class="container">
+			<div class="rp-head">
+				<img class="rp-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg"
+					th:alt="|${r.name} logo|" alt="Rassa Darbar logo" width="88" height="88">
+				<div class="rp-title">
+					<a class="rp-back" th:href="@{/restaurants}" href="/restaurants">All restaurants</a>
+					<h1 id="rp-name" th:text="${r.name}">Rassa Darbar</h1>
+					<p th:if="${r.tagline != null}" class="rp-tagline" th:text="${r.tagline}">Tambda-pandhra rassa, the Kolhapur way</p>
+					<p class="rp-cuisines" th:text="${#strings.listJoin(card.cuisines, ', ')}">Kolhapuri, Maharashtrian</p>
+					<p class="rp-address"><svg th:replace="~{fragments/icon :: icon('location')}"></svg><span th:text="|${r.address}, ${r.area}|">14, Mahadwar Road, Mahadwar Road</span></p>
+				</div>
+				<div class="rp-rating">
+					<span th:replace="~{fragments/ui :: rating(${r.ratingAverage}, ${r.ratingCount})}"></span>
+					<span class="rp-rating-count" aria-hidden="true"
+						th:text="${r.ratingCount == 0} ? 'No ratings yet' : |${#numbers.formatInteger(r.ratingCount, 1, 'COMMA')} ${r.ratingCount == 1 ? 'rating' : 'ratings'}|">2,140 ratings</span>
+				</div>
+
+				<ul class="rp-facts">
+					<li><svg th:replace="~{fragments/icon :: icon('bike')}"></svg><span><strong th:text="|${card.deliveryMinutes}-${card.deliveryMinutes + 5} min|">35-40 min</strong><small>Delivery time</small></span></li>
+					<li><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg><span><strong th:text="${@fmt.price(r.costForTwo)}">₹650</strong><small>Cost for two</small></span></li>
+					<li><svg th:replace="~{fragments/icon :: icon('clock')}"></svg><span>
+						<strong th:text="${menu.openAllDay} ? 'Open 24 hours' : |${@fmt.timeOfDay(r.opensAt)} – ${@fmt.timeOfDay(r.closesAt)}|">11:30 AM – 11:00 PM</strong><small>Today's timings</small></span></li>
+					<li class="rp-state">
+						<span th:if="${card.openNow}" class="badge badge-success badge-dot">Open now</span>
+						<span th:if="${!card.openNow and !r.acceptingOrders}" class="badge badge-warning badge-dot">Not taking orders</span>
+						<span th:if="${!card.openNow and r.acceptingOrders}" class="badge badge-danger badge-dot">Closed now</span>
+						<small th:if="${card.openNow and !menu.openAllDay}" th:text="|Closes at ${@fmt.timeOfDay(r.closesAt)}|">Closes at 11:00 PM</small>
+						<small th:if="${card.opensAt != null}" th:text="|Opens at ${@fmt.timeOfDay(card.opensAt)}|">Opens at 11:30 AM</small>
+						<small th:if="${r.minimumOrder.signum() > 0}" th:text="|Min. order ${@fmt.price(r.minimumOrder)}|">Min. order ₹199</small>
+					</li>
+				</ul>
+				<p th:if="${r.description != null}" class="rp-desc" th:text="${r.description}">Fiery red tambda rassa, soothing white pandhra rassa and slow-cooked mutton.</p>
+			</div>
+
+			<div th:if="${!card.openNow and r.acceptingOrders}" class="alert alert-warning rp-notice"><svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+				<p><strong>Closed now.</strong> <th:block th:text="|Opens at ${@fmt.timeOfDay(card.opensAt)}.|">Opens at 6:00 AM.</th:block> Have a look at the menu and order once the kitchen opens.</p></div>
+			<div th:if="${!r.acceptingOrders}" class="alert alert-warning rp-notice"><svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+				<p><strong>Not taking orders right now.</strong> The kitchen has paused new orders for a little while.
+					<a th:href="@{/restaurants(open=true)}" href="/restaurants?open=true">See what's open</a></p></div>
+
+			<ul class="rp-offers" aria-label="Offers">
+				<li th:each="offer : ${menu.offers}" class="rp-offer"><span class="rp-offer-icon"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+					<span><strong th:text="${offer.title}">Free delivery above ₹499</strong><small th:text="${offer.detail}">₹35 delivery fee below that</small></span></li>
+			</ul>
+		</div>
+	</section>
+
+	<section class="container rp-menu" aria-labelledby="rp-menu-title">
+		<h2 id="rp-menu-title" class="visually-hidden">Menu</h2>
+		<form class="rp-tools" role="search" aria-label="Search this menu" th:object="${filter}"
+			th:action="@{/r/{slug}(slug=${r.slug})}" action="/r/rassa-darbar" method="get"
+			th:hx-get="@{/r/{slug}(slug=${r.slug})}" hx-target="#menu-results" hx-swap="outerHTML" hx-push-url="true"
+			hx-trigger="submit, change, input changed delay:300ms from:#menu-q" hx-sync="this:replace"
+			hx-indicator="#menu-results">
+			<div class="rp-search">
+				<label class="visually-hidden" for="menu-q">Search this menu</label>
+				<div class="input-group">
+					<svg th:replace="~{fragments/icon :: icon('search')}"></svg>
+					<input class="input" id="menu-q" name="q" type="search" maxlength="60" autocomplete="off"
+						th:placeholder="|Search dishes at ${r.name}|" placeholder="Search dishes at Rassa Darbar" th:value="*{q}">
+				</div>
+			</div>
+			<label th:unless="${r.pureVeg}" class="check rp-veg-toggle"><input class="switch" type="checkbox" name="veg" value="true" th:checked="*{veg}"><span class="check-text">Pure veg only</span></label>
+			<p th:if="${r.pureVeg}" class="rp-veg-note"><span th:replace="~{fragments/ui :: veg(true)}"></span>Pure veg kitchen: every dish is vegetarian</p>
+			<noscript><button type="submit" class="btn btn-secondary">Search menu</button></noscript>
+		</form>
+
+		<p id="menu-status" class="visually-hidden" role="status"></p>
+
+		<div th:fragment="results" id="menu-results" class="rp-menu-body">
+			<nav th:unless="${menu.sections.isEmpty()}" class="rp-nav" aria-label="Menu sections">
+				<ul class="rp-nav-list">
+					<li th:each="s : ${menu.sections}"><a class="rp-nav-link" th:href="|#menu-${s.id}|" href="#menu-1"><span th:text="${s.name}">Thalis</span> <span class="rp-nav-count" th:text="${s.items.size()}">3</span></a></li>
+				</ul>
+			</nav>
+
+			<div class="rp-sections">
+				<p th:unless="${menu.sections.isEmpty()}" class="rp-menu-count"><th:block th:replace="~{::count-text}">14 dishes</th:block></p>
+
+				<section th:each="s : ${menu.sections}" class="rp-section" th:id="|menu-${s.id}|" id="menu-1" th:aria-labelledby="|menu-${s.id}-title|">
+					<h3 class="rp-section-title" th:id="|menu-${s.id}-title|"><th:block th:text="${s.name}">Thalis</th:block> <span class="rp-section-count" th:text="|(${s.items.size()})|">(3)</span></h3>
+					<div class="menu-list">
+						<th:block th:each="item : ${s.items}" th:with="qty=${cartQuantities != null ? cartQuantities.get(item.id) : null}">
+							<article th:replace="~{::menu-item(${item}, ${card.openNow}, ${qty ?: 0})}"></article>
+						</th:block>
+					</div>
+				</section>
+
+				<th:block th:if="${menu.sections.isEmpty()}">
+					<th:block th:if="${menu.dishCount == 0}"><div th:replace="~{fragments/ui :: emptyState('store', 'No dishes listed yet',
+						'This kitchen is still adding its menu. Meanwhile, plenty of others are cooking.', 'Browse restaurants', '/restaurants')}"></div></th:block>
+					<th:block th:if="${menu.dishCount > 0 and filter.q != null}"><div th:replace="~{fragments/ui :: emptyState('search', |No dishes match “${filter.q}”|,
+						${filter.veg} ? 'Check the spelling, or turn off Pure veg only.' : 'Check the spelling, or try a shorter word.', 'Show the full menu', |/r/${r.slug}|)}"></div></th:block>
+					<th:block th:if="${menu.dishCount > 0 and filter.q == null}"><div th:replace="~{fragments/ui :: emptyState('leaf', 'No vegetarian dishes here',
+						'This kitchen cooks only non-veg dishes. Turn off Pure veg only to see the menu.', 'Show the full menu', |/r/${r.slug}|)}"></div></th:block>
+				</th:block>
+			</div>
+		</div>
+	</section>
+</main>
+
+<!--/* "14 dishes", or "3 of 14 dishes" with a filter on. Shared by the visible count and the live region. */-->
+<th:block th:fragment="count-text"><th:block th:if="${filter.filtered}" th:text="|${menu.shownCount} of |">3 of </th:block><th:block th:text="|${menu.dishCount} ${menu.dishCount == 1 ? 'dish' : 'dishes'}|">14 dishes</th:block><th:block th:if="${filter.q != null}" th:text="| match “${filter.q}”|"></th:block><th:block th:if="${filter.veg}" th:text="${filter.q != null} ? ', veg only' : ' · veg only'"></th:block></th:block>
+
+<!--/* One dish. canOrder: the restaurant is open and taking orders. qty: how many are in the cart (0 shows ADD).
+     The ADD and stepper forms post to /cart/items/{id} with the new quantity (handled from T19/T21). */-->
+<article th:fragment="menu-item(item, canOrder, qty)" class="menu-item" th:classappend="${item.available} ? '' : 'is-unavailable'" th:id="|dish-${item.id}|">
+	<div class="menu-item-info">
+		<div class="menu-item-tags">
+			<span th:replace="~{fragments/ui :: veg(${item.veg})}"></span>
+			<span th:if="${item.bestseller}" class="badge badge-bestseller"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>Bestseller</span>
+			<span th:if="${item.spiceLevel > 0}" class="badge" th:classappend="${item.spiceLevel == 3} ? 'badge-danger' : 'badge-warning'"
+				th:text="${item.spiceLevel == 1 ? 'Mild spice' : (item.spiceLevel == 2 ? 'Spicy' : 'Very spicy')}">Spicy</span>
+			<span th:unless="${item.available}" class="badge">Sold out today</span>
+		</div>
+		<h4 class="menu-item-name" th:text="${item.name}">Mutton Thali</h4>
+		<p class="menu-item-price"><span th:replace="~{fragments/ui :: price(${item.price})}"></span></p>
+		<p th:if="${item.description != null}" class="menu-item-desc" th:text="${item.description}">Sukka mutton, tambda and pandhra rassa, two bhakris.</p>
+	</div>
+	<div class="menu-item-media">
+		<img th:with="src=${@img.dish(item)}" th:src="@{${src}}" src="/placeholder/dish/mutton-thali.svg" th:alt="${item.name}" alt="Mutton Thali" width="136" height="136" loading="lazy">
+		<div class="menu-item-action">
+			<button th:unless="${item.available}" type="button" class="btn btn-add" disabled>ADD<span class="visually-hidden" th:text="| ${item.name}, sold out|">, sold out</span></button>
+			<button th:if="${item.available and !canOrder}" type="button" class="btn btn-add" disabled>ADD<span class="visually-hidden" th:text="| ${item.name}, ordering is closed|">, ordering is closed</span></button>
+			<form th:if="${item.available and canOrder and qty == 0}" th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post">
+				<input type="hidden" name="quantity" value="1">
+				<button type="submit" class="btn btn-add">ADD<span class="visually-hidden" th:text="| ${item.name} to cart|"> Mutton Thali to cart</span></button>
+			</form>
+			<form th:if="${item.available and canOrder and qty > 0}" class="qty" role="group" th:aria-label="|Quantity of ${item.name}|"
+				th:action="@{/cart/items/{id}(id=${item.id})}" action="/cart/items/1" method="post">
+				<button type="submit" class="qty-btn" name="quantity" th:value="${qty - 1}" value="1" th:aria-label="|Remove one ${item.name}|"><svg th:replace="~{fragments/icon :: icon('minus')}"></svg></button>
+				<span class="qty-value" th:text="${qty}">2</span>
+				<button type="submit" class="qty-btn" name="quantity" th:value="${qty + 1}" value="3" th:aria-label="|Add one more ${item.name}|"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg></button>
+			</form>
+		</div>
+	</div>
+</article>
+
+<!--/* What htmx requests get: the new menu, plus the count announced through the live region. */-->
+<th:block th:fragment="htmx-menu" th:with="r=${menu.restaurant}, card=${menu.card}">
+	<div th:replace="~{::results}"></div>
+	<p id="menu-status" hx-swap-oob="innerHTML"><th:block th:replace="~{::count-text}">14 dishes</th:block></p>
+</th:block>
+</body>
+</html>

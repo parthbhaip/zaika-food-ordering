@@ -95,7 +95,7 @@ How this file works
   - Filters: cuisine, pure veg, rating 4.0+, open now. Sort: relevance, rating, fastest, cost low-high, cost high-low. Search by restaurant or dish name. Pagination.
   - Works with plain links/forms; htmx swaps the results and pushes the URL. Only APPROVED restaurants appear. Tests.
 
-- [ ] T16 Restaurant page `/r/{slug}`
+- [x] T16 Restaurant page `/r/{slug}`
   - Header: cover, logo, name, cuisines, rating, area, timings, open/closed state, cost for two, delivery time, offers strip.
   - Sticky category navigation, menu sections, item rows (veg mark, bestseller tag, spice level, price, description, image, Add button or quantity stepper - wired in T21), "Pure veg only" toggle, search within menu.
   - Sold-out and archived items handled (sold-out shown disabled, archived hidden). Unknown or non-approved slug -> 404. Tests.

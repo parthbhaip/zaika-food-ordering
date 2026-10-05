@@ -59,7 +59,7 @@ class RestaurantListController {
 	}
 
 	/** The requested URL. {@code %20} and {@code +} both mean a space in a query, so they compare equal. */
-	private static String currentUrl(HttpServletRequest request) {
+	static String currentUrl(HttpServletRequest request) {
 		String query = request.getQueryString();
 		return request.getRequestURI() + (query == null ? "" : "?" + query.replace("%20", "+"));
 	}

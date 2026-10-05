@@ -81,6 +81,15 @@ class DevProfileTest {
 	}
 
 	@Test
+	void seededRestaurantPagesRenderTheirMenus() throws Exception {
+		String html = mvc.perform(get("/r/rassa-darbar")).andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString().replaceAll("\\s+", " ");
+		assertThat(html).contains("<h1 id=\"rp-name\">Rassa Darbar</h1>", "Mutton Thali", "Bestseller",
+				"Sold out today", "Kheema Masala, sold out", "Free delivery above ₹499");
+		mvc.perform(get("/r/brew-lab-cafe")).andExpect(status().isNotFound()); // still PENDING
+	}
+
+	@Test
 	void devProfileCreatesTheDemoAdminOnStartup() throws Exception {
 		Properties dev = PropertiesLoaderUtils.loadProperties(new ClassPathResource("application-dev.properties"));
 		PropertySourcesPropertyResolver noVariables = new PropertySourcesPropertyResolver(new MutablePropertySources());
