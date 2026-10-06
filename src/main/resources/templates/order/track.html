@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${'Track order ' + order.code + ' | Zaika'}">Track order ZK-26-000123 | Zaika</title></head>
+<body>
+<!--/* /orders/{code}/track: where a placed order stands. The live part (status, ETA, delivery code, progress, rider,
+     cancel form) is the #track-live section; while the order moves, htmx asks for it every 10 s with the version the
+     page shows (?v=) and the server answers 204 until something changed. A delivered, cancelled or rejected order is
+     rendered without the polling attributes, so polling stops. Without JavaScript the "Refresh" link reloads the page.
+     Model: t (order.OrderTrackingService.Tracking), order (restaurant, rider and dishes loaded), cancelForm,
+     cancelReasons, cancelOpen (re-shown with errors). */-->
+<main id="main" class="track-page">
+	<div class="container track" th:with="r=${order.restaurant}, approved=${order.restaurant.status.name() == 'APPROVED'}">
+		<header class="order-head">
+			<a class="checkout-back" th:href="@{/orders/{code}(code=${order.code})}" href="/orders/ZK-26-000123"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>Order details</a>
+			<h1 class="order-title">Track your order</h1>
+			<p class="order-head-meta"><span th:text="${order.code}">ZK-26-000123</span>
+				· <a th:if="${approved}" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar" th:text="${r.name}">Rassa Darbar</a><span th:unless="${approved}" th:text="${r.name}">Rassa Darbar</span>
+				· <time th:datetime="${order.createdAt}" th:text="${@fmt.dateTime(order.createdAt)}">4 Oct 2026, 7:30 PM</time></p>
+		</header>
+
+		<!--/* Status changes found by polling are announced here (empty at first paint). */-->
+		<p id="track-announce" class="visually-hidden" role="status"></p>
+
+		<section id="track-live" class="track-live" aria-labelledby="track-headline" th:fragment="live"
+			th:hx-get="${t.live()} ? @{/orders/{code}/track(code=${order.code}, v=${order.version})}"
+			th:hx-trigger="${t.live()} ? 'every 10s'" th:hx-swap="${t.live()} ? 'outerHTML'">
+
+			<div class="card track-status">
+				<span class="badge order-status" th:classappend="|badge-${order.status.tone}|" th:text="${order.status.label}">Preparing</span>
+				<h2 class="track-headline" id="track-headline" th:text="${t.headline()}">Your food is being prepared</h2>
+				<p th:if="${t.live() and !t.late()}" class="track-eta">Arriving by <strong th:text="${@fmt.time(order.estimatedDeliveryAt)}">8:05 PM</strong>
+					<span class="muted" th:text="|(${@fmt.relative(order.estimatedDeliveryAt)})|">(in 25 min)</span></p>
+				<p th:if="${t.late()}" class="track-eta">Running a little late. We expected it by <strong th:text="${@fmt.time(order.estimatedDeliveryAt)}">8:05 PM</strong>.</p>
+				<p th:if="${order.status.name() == 'DELIVERED'}" class="track-eta">Delivered at <strong th:text="${@fmt.time(order.timestampOf(order.status))}">8:02 PM</strong>.</p>
+				<th:block th:if="${t.endedBy() != null}">
+					<p><strong th:text="${t.endedBy()}">You cancelled this order.</strong>
+						<span th:if="${order.cancelReason != null}" th:text="|Reason: ${order.cancelReason}.|">Reason: Ordered by mistake.</span></p>
+					<p th:if="${order.paymentStatus.name() == 'REFUND_PENDING'}" th:text="|Your refund of ${@fmt.money(order.bill.grandTotal)} is on its way. It reaches your account in 5-7 working days.|">Your refund of ₹297.50 is on its way.</p>
+					<p th:if="${order.paymentStatus.name() == 'REFUNDED'}" th:text="|We refunded ${@fmt.money(order.bill.grandTotal)} to your account.|">We refunded ₹297.50 to your account.</p>
+					<p th:if="${order.paymentStatus.name() != 'REFUND_PENDING' and order.paymentStatus.name() != 'REFUNDED'}">You have not been charged.</p>
+				</th:block>
+
+				<div th:if="${t.showOtp()}" class="track-otp">
+					<p class="track-otp-label">Delivery code</p>
+					<p class="track-otp-code"><span aria-hidden="true" th:text="${order.deliveryOtp}">4821</span><span class="visually-hidden" th:text="${t.spokenOtp()}">4 8 2 1</span></p>
+					<p class="track-otp-help" th:text="|Tell ${t.riderFirstName()} this code at the door, once your food is in your hands.|">Tell Sagar this code at the door, once your food is in your hands.</p>
+				</div>
+			</div>
+
+			<div class="card track-progress">
+				<h2 class="order-section-title">Progress</h2>
+				<ol class="stepper track-steps" aria-label="Order progress">
+					<li th:each="s : ${t.steps()}" class="step" th:classappend="${s.cssClass()}"
+						th:aria-current="${s.state.name() == 'CURRENT' or s.state.name() == 'FAILED'} ? 'step'">
+						<span class="step-marker"><svg th:replace="~{fragments/icon :: icon(${s.icon})}"></svg></span>
+						<span class="step-label" th:text="${s.label}">Being prepared</span>
+						<span class="step-time" th:if="${s.at != null or s.note != null}"><time th:if="${s.at != null}" th:datetime="${s.at}" th:text="${@fmt.time(s.at)}">7:41 PM</time><th:block th:if="${s.at != null and s.note != null}"> · </th:block><span th:if="${s.note != null}" th:text="${s.note}">Cooked fresh for you</span></span>
+					</li>
+				</ol>
+			</div>
+
+			<div th:if="${order.rider != null}" class="card track-rider">
+				<span class="track-rider-avatar" aria-hidden="true" th:text="${#strings.substring(order.rider.name, 0, 1)}">S</span>
+				<div>
+					<p class="track-rider-role" th:text="${order.status.name() == 'DELIVERED'} ? 'Delivered by' : 'Your delivery partner'">Your delivery partner</p>
+					<p class="track-rider-name" th:text="${order.rider.name}">Sagar Patil</p>
+					<p class="track-rider-phone"><svg th:replace="~{fragments/icon :: icon('phone')}"></svg><span aria-hidden="true" th:text="${@fmt.maskedPhone(order.rider.phone)}">+91 98••• ••345</span><span class="visually-hidden" th:text="|Phone number ending ${#strings.substring(order.rider.phone, 7)}|">Phone number ending 345</span></p>
+				</div>
+			</div>
+			<p th:if="${order.rider == null and t.live()}" class="card track-rider track-rider-pending"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg>
+				<span>We assign a delivery partner when your food is nearly ready.</span></p>
+
+			<details th:if="${t.canCancel()}" class="card track-cancel" th:open="${cancelOpen}">
+				<summary class="track-cancel-summary"><span><strong>Cancel order</strong>
+					<span class="muted">Free until the restaurant accepts it</span></span><svg th:replace="~{fragments/icon :: icon('chevron-down')}"></svg></summary>
+				<form class="track-cancel-form" th:action="@{/orders/{code}/cancel(code=${order.code})}" action="/orders/ZK-26-000123/cancel" method="post" th:object="${cancelForm}" novalidate>
+					<fieldset class="field" th:with="invalid=${#fields.hasErrors('reason')}" th:classappend="${invalid} ? 'has-error'"
+						th:aria-describedby="${invalid} ? 'reason-error'">
+						<legend class="field-label">Why are you cancelling?</legend>
+						<label class="check" th:each="reason, s : ${cancelReasons}"><input class="radio" type="radio" name="reason" th:id="|reason-${s.index}|"
+							th:value="${reason}" th:checked="${cancelForm.reason == reason}"><span class="check-text" th:text="${reason}">Ordered by mistake</span></label>
+						<p class="field-error" th:if="${invalid}" id="reason-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:errors="*{reason}">Choose why you are cancelling.</span></p>
+					</fieldset>
+					<div class="field" th:with="invalid=${#fields.hasErrors('details')}" th:classappend="${invalid} ? 'has-error'">
+						<label class="field-label" for="details">Anything else? (optional)</label>
+						<textarea class="textarea" id="details" name="details" rows="2" maxlength="200" th:text="*{details}"
+							th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? 'details-error details-help' : 'details-help'"></textarea>
+						<p class="field-help" id="details-help">Required if you pick &ldquo;Something else&rdquo;. Up to 200 characters.</p>
+						<p class="field-error" th:if="${invalid}" id="details-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:errors="*{details}">Tell us why you are cancelling.</span></p>
+					</div>
+					<p class="muted track-cancel-note" th:text="${order.paymentStatus.name() == 'PAID'} ? |You get the full ${@fmt.money(order.bill.grandTotal)} back in 5-7 working days.| : 'You will not be charged.'">You will not be charged.</p>
+					<button type="submit" class="btn btn-danger">Cancel order</button>
+				</form>
+			</details>
+
+			<noscript th:if="${t.live()}"><p class="track-refresh"><a class="btn btn-ghost btn-sm" th:href="@{/orders/{code}/track(code=${order.code})}" href="/orders/ZK-26-000123/track">Refresh status</a></p></noscript>
+		</section>
+
+		<aside class="track-side" aria-label="Restaurant and delivery">
+			<section class="card order-section" aria-labelledby="track-restaurant-title">
+				<h2 class="order-section-title" id="track-restaurant-title"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Restaurant</h2>
+				<div>
+					<p><strong th:text="${r.name}">Rassa Darbar</strong></p>
+					<p class="order-address" th:text="|${r.address}, ${r.area}|">Shop 3, Laxmi Complex, Rajarampuri</p>
+				</div>
+				<a class="btn btn-secondary btn-block" th:href="|tel:+91${r.phone}|" href="tel:+919876543210"><svg th:replace="~{fragments/icon :: icon('phone')}"></svg>Call <span th:text="${@fmt.phone(r.phone)}">+91 98765 43210</span></a>
+			</section>
+
+			<section class="card order-section" aria-labelledby="track-order-title">
+				<h2 class="order-section-title" id="track-order-title"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg>Your order</h2>
+				<ul class="track-items">
+					<li th:each="item : ${order.items}"><span th:replace="~{fragments/ui :: veg(${item.veg})}"></span><span th:text="|${item.quantity} × ${item.name}|">2 × Mutton Thali</span></li>
+				</ul>
+				<p class="track-total"><span>Total</span> <span class="price" th:text="${@fmt.money(order.bill.grandTotal)}">₹423.50</span></p>
+				<p class="muted" th:text="${order.paymentMethod.name() == 'COD'} ? 'Cash on delivery' : |Online · ${order.paymentStatus.label}|">Cash on delivery</p>
+			</section>
+
+			<section class="card order-section" aria-labelledby="track-address-title">
+				<h2 class="order-section-title" id="track-address-title"><svg th:replace="~{fragments/icon :: icon('location')}"></svg>Delivering to</h2>
+				<p><strong th:text="${order.address.label.displayName}">Home</strong></p>
+				<address class="order-address" th:text="${order.address.oneLine()}">Flat 4B, Shree Apartments, Rajarampuri 5th Lane, Kolhapur 416008</address>
+			</section>
+
+			<div class="order-actions">
+				<a class="btn btn-ghost btn-block" th:href="@{/orders/{code}(code=${order.code})}" href="/orders/ZK-26-000123"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg>Order details and bill</a>
+				<a class="btn btn-ghost btn-block" th:href="@{/contact}" href="/contact"><svg th:replace="~{fragments/icon :: icon('phone')}"></svg>Help with this order</a>
+			</div>
+		</aside>
+	</div>
+</main>
+
+<!--/* What an htmx poll gets when the order changed: the live section, and the new status for screen readers. */-->
+<th:block th:fragment="htmx-live">
+	<section th:replace="~{::live}"></section>
+	<p id="track-announce" hx-swap-oob="innerHTML" th:text="${t.headline()}">Your food is being prepared</p>
+</th:block>
+</body>
+</html>

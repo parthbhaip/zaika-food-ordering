@@ -18,6 +18,7 @@
 					Arriving by <strong th:text="${@fmt.time(order.estimatedDeliveryAt)}">8:05 PM</strong>
 					<span class="muted" th:text="|(${@fmt.relative(order.estimatedDeliveryAt)})|">(in 35 min)</span>.</p>
 				<p class="muted" th:text="${order.paymentMethod.name() == 'COD'} ? |Keep ${@fmt.money(bill.grandTotal)} ready to pay in cash at the door.| : |You paid ${@fmt.money(bill.grandTotal)} online.|">Keep ₹297.50 ready to pay in cash at the door.</p>
+				<p><a class="btn btn-primary btn-sm" th:href="@{/orders/{code}/track(code=${order.code})}" href="/orders/ZK-26-000123/track"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg>Track your order</a></p>
 			</div>
 		</section>
 
@@ -43,7 +44,10 @@
 		</div>
 		<div th:if="${detail.live()}" class="alert alert-info order-alert" role="status">
 			<svg th:replace="~{fragments/icon :: icon('bike')}"></svg>
-			<p><strong th:text="|${order.status.label}.|">Placed.</strong> Arriving by <strong th:text="${@fmt.time(order.estimatedDeliveryAt)}">8:05 PM</strong>.</p>
+			<div>
+				<p><strong th:text="|${order.status.label}.|">Placed.</strong> Arriving by <strong th:text="${@fmt.time(order.estimatedDeliveryAt)}">8:05 PM</strong>.</p>
+				<a th:unless="${placed}" class="btn btn-primary btn-sm" th:href="@{/orders/{code}/track(code=${order.code})}" href="/orders/ZK-26-000123/track">Track order</a>
+			</div>
 		</div>
 		<div th:if="${order.status.name() == 'DELIVERED'}" class="alert alert-success order-alert" role="status">
 			<svg th:replace="~{fragments/icon :: icon('check')}"></svg>

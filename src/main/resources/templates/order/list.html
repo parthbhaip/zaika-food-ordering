@@ -32,6 +32,7 @@
 					<p class="order-card-total"><span class="visually-hidden">Total </span><span class="price" th:text="${@fmt.money(o.bill.grandTotal)}">₹530.00</span>
 						<span class="muted" th:text="${o.paymentMethod.name() == 'COD'} ? 'Cash on delivery' : |Online · ${o.paymentStatus.label}|">Cash on delivery</span></p>
 					<a th:if="${o.status.name() == 'PENDING_PAYMENT'}" class="btn btn-primary btn-sm order-card-pay" th:href="@{/pay/{code}(code=${o.code})}" href="/pay/ZK-26-000123">Pay now</a>
+					<a th:if="${o.status.name() != 'PENDING_PAYMENT' and !o.status.isFinal()}" class="btn btn-primary btn-sm order-card-track" th:href="@{/orders/{code}/track(code=${o.code})}" href="/orders/ZK-26-000123/track">Track<span class="visually-hidden" th:text="| order ${o.code}|"> order ZK-26-000123</span></a>
 					<a class="btn btn-secondary btn-sm order-card-more" th:href="@{/orders/{code}(code=${o.code})}" href="/orders/ZK-26-000123">View order<span class="visually-hidden" th:text="| ${o.code}|"> ZK-26-000123</span></a>
 				</div>
 			</li>

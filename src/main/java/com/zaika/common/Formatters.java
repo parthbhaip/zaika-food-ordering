@@ -123,6 +123,29 @@ public class Formatters {
 		return days < 7 ? days + " days ago" : date(t);
 	}
 
+	/** A 10-digit mobile number as people write it: {@code 9876543210} -> "+91 98765 43210". Anything else as is. */
+	public String phone(String digits) {
+		if (digits == null) {
+			return "";
+		}
+		return digits.matches("[0-9]{10}") ? "+91 " + digits.substring(0, 5) + " " + digits.substring(5) : digits;
+	}
+
+	/**
+	 * A mobile number with only its first two and last three digits showing: {@code 9822012345} -> "+91 98••• ••345".
+	 * For people the customer should recognise but not get the number of (the rider). Anything that is not a 10-digit
+	 * number becomes all dots.
+	 */
+	public String maskedPhone(String digits) {
+		if (digits == null) {
+			return "";
+		}
+		if (!digits.matches("[0-9]{10}")) {
+			return "•••••";
+		}
+		return "+91 " + digits.substring(0, 2) + "••• ••" + digits.substring(7);
+	}
+
 	/** 1234567 -> 12,34,567: the last three digits, then groups of two. */
 	private static String groupIndian(String digits) {
 		int len = digits.length();

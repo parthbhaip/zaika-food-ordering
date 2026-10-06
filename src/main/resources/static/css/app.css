@@ -2504,6 +2504,86 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.order-side { position: sticky; top: calc(var(--header-height) + var(--space-4)); grid-column: 2; }
 }
 
+/* ------------------------------------------------------------------ Order tracking (/orders/{code}/track)
+   Phones: status, progress, rider, cancel, then restaurant and order cards. From 960px the live part is the left
+   column and the restaurant, order and address cards a sticky right column. */
+.track-page { padding-block: var(--space-6) var(--space-16); }
+.track { display: grid; gap: var(--space-5); max-width: 720px; }
+.track-live, .track-side { display: grid; gap: var(--space-4); align-content: start; min-width: 0; }
+.track-status { display: grid; justify-items: start; gap: var(--space-2); padding: var(--space-5); }
+.track-headline { font-size: var(--text-xl); font-weight: var(--weight-extrabold); letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.track-eta { color: var(--color-text-secondary); }
+.track-eta strong { color: var(--color-ink); }
+.track-otp {
+	display: grid;
+	gap: var(--space-1);
+	width: 100%;
+	margin-top: var(--space-2);
+	padding: var(--space-4);
+	border: 1px dashed var(--color-primary);
+	border-radius: var(--radius-md);
+	background: var(--color-primary-tint);
+	text-align: center;
+}
+.track-otp-label { color: var(--color-primary-hover); font-size: var(--text-xs); font-weight: var(--weight-bold); letter-spacing: 0.08em; text-transform: uppercase; }
+.track-otp-code { color: var(--color-ink); font-size: var(--text-3xl); font-weight: var(--weight-extrabold); letter-spacing: 0.3em; font-variant-numeric: tabular-nums; padding-left: 0.3em; }
+.track-otp-help { color: var(--color-text-secondary); font-size: var(--text-sm); }
+.track-progress { display: grid; gap: var(--space-4); padding: var(--space-5); }
+.track-rider { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4) var(--space-5); }
+.track-rider-avatar {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: var(--color-primary-tint);
+	color: var(--color-primary-hover);
+	font-weight: var(--weight-extrabold);
+}
+.track-rider-role { color: var(--color-text-muted); font-size: var(--text-xs); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: 0.06em; }
+.track-rider-name { font-weight: var(--weight-bold); overflow-wrap: anywhere; }
+.track-rider-phone { display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-secondary); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.track-rider-phone .icon { width: 16px; height: 16px; }
+.track-rider-pending { color: var(--color-text-secondary); font-size: var(--text-sm); }
+.track-rider-pending .icon { flex: none; width: 24px; height: 24px; color: var(--color-primary); }
+.track-cancel { padding: 0; }
+.track-cancel-summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: var(--space-4) var(--space-5);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	list-style: none;
+}
+.track-cancel-summary::-webkit-details-marker { display: none; }
+.track-cancel-summary > span { display: grid; gap: 2px; }
+.track-cancel-summary strong { color: var(--color-danger); }
+.track-cancel-summary .muted { font-size: var(--text-sm); }
+.track-cancel-summary .icon { flex: none; width: 20px; height: 20px; color: var(--color-text-muted); transition: transform var(--duration-fast) ease; }
+.track-cancel[open] .track-cancel-summary .icon { transform: rotate(180deg); }
+.track-cancel-summary:hover { background: var(--color-danger-tint); }
+.track-cancel-form { display: grid; justify-items: start; gap: var(--space-4); padding: 0 var(--space-5) var(--space-5); }
+.track-cancel-form .field { width: 100%; border: 0; margin: 0; padding: 0; min-width: 0; }
+.track-cancel-note { font-size: var(--text-sm); }
+.track-refresh { margin: 0; }
+.track-items { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.track-items li { display: flex; align-items: center; gap: var(--space-2); overflow-wrap: anywhere; }
+.track-total { display: flex; justify-content: space-between; padding-top: var(--space-3); border-top: 1px solid var(--color-line); font-weight: var(--weight-bold); }
+.track-side .muted { font-size: var(--text-sm); }
+@media (min-width: 640px) {
+	.track-page { padding-top: var(--space-10); }
+	.track-status, .track-progress { padding: var(--space-6); }
+}
+@media (min-width: 960px) {
+	.track { max-width: none; grid-template-columns: minmax(0, 1fr) 360px; align-items: start; }
+	.track > .order-head { grid-column: 1 / -1; }
+	.track-live { grid-column: 1; }
+	.track-side { position: sticky; top: calc(var(--header-height) + var(--space-4)); grid-column: 2; }
+}
+
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */
 .error-body {
 	min-height: 100vh;

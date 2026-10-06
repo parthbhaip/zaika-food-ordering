@@ -34,6 +34,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 	@EntityGraph(attributePaths = { "restaurant", "items" })
 	Optional<Order> findByCodeAndCustomerId(String code, long customerId);
 
+	/** The customer's order for its tracking page: restaurant, rider (if any) and dishes in one query. */
+	@EntityGraph(attributePaths = { "restaurant", "rider", "items" })
+	Optional<Order> findTrackedByCodeAndCustomerId(String code, long customerId);
+
 	/** The order with a row lock, so paying, cancelling and expiring it never run at the same time. */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select o from Order o where o.code = :code")

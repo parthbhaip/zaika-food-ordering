@@ -147,7 +147,7 @@ How this file works
   - Confirmation page; `/orders` paginated list with status chips and totals; detail page with items, bill, address and payment.
   - Another customer's order -> 404. Tests.
 
-- [ ] T27 Live order tracking `/orders/{code}/track`
+- [x] T27 Live order tracking `/orders/{code}/track`
   - Status stepper with timestamps, ETA, restaurant contact, rider name with masked phone once assigned, delivery OTP shown once OUT_FOR_DELIVERY.
   - htmx polling every 10 s that stops at DELIVERED / CANCELLED / REJECTED.
   - Customer can cancel only while PLACED (reason required). Tests.

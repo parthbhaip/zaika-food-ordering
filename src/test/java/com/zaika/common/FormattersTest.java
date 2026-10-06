@@ -140,4 +140,14 @@ class FormattersTest {
 		assertThat(fmt.year()).isEqualTo(2026);
 	}
 
+	@Test
+	void phonesShowInFullOrMasked() {
+		assertThat(fmt.phone("9876543210")).isEqualTo("+91 98765 43210");
+		assertThat(fmt.phone("12345")).isEqualTo("12345");
+		assertThat(fmt.phone(null)).isEmpty();
+		assertThat(fmt.maskedPhone("9822012345")).isEqualTo("+91 98••• ••345").doesNotContain("20123");
+		assertThat(fmt.maskedPhone("98220")).isEqualTo("•••••");
+		assertThat(fmt.maskedPhone(null)).isEmpty();
+	}
+
 }
