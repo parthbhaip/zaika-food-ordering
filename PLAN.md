@@ -143,7 +143,7 @@ How this file works
   - `Payment` entity. Success -> PLACED + PAID. Failure -> retry, switch to COD, or cancel. Unpaid orders expire after 15 minutes (`@Scheduled`, uses Clock).
   - `docs/PAYMENTS.md` explains how a real gateway's test mode would plug in. Tests.
 
-- [ ] T26 Order confirmation, history and detail
+- [x] T26 Order confirmation, history and detail
   - Confirmation page; `/orders` paginated list with status chips and totals; detail page with items, bill, address and payment.
   - Another customer's order -> 404. Tests.
 

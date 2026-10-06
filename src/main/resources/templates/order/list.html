@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Your orders | Zaika</title></head>
+<body>
+<!--/* /orders: the customer's orders, newest first, 10 to a page. Each card: restaurant, status chip, when, what, the
+     total, and a link to the order (plus "Pay now" while an online order waits for its payment).
+     Model: orders (Page<order.Order>, restaurants and dishes loaded). */-->
+<main id="main" class="orders-page">
+	<div class="container orders">
+		<header class="orders-head">
+			<h1 class="orders-title">Your orders</h1>
+			<p th:if="${orders.totalElements > 0}" class="muted"
+				th:text="${orders.totalElements == 1} ? 'One order so far' : |${@fmt.count(orders.totalElements)} orders so far|">12 orders so far</p>
+		</header>
+
+		<div th:if="${orders.totalElements == 0}" class="card orders-empty">
+			<div th:replace="~{fragments/ui :: emptyState('receipt', 'No orders yet', 'When you order from a Kolhapur kitchen, it shows up here with its bill and status.', 'Browse restaurants', '/restaurants')}"></div>
+		</div>
+
+		<ol th:if="${orders.hasContent()}" class="order-list" aria-label="Orders, newest first">
+			<li th:each="o : ${orders.content}" class="card order-card" th:with="r=${o.restaurant}">
+				<div class="order-card-head">
+					<img class="order-card-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="48" height="48" loading="lazy">
+					<div class="order-card-who">
+						<h2 class="order-card-name" th:text="${r.name}">Rassa Darbar</h2>
+						<p class="order-card-meta"><span th:text="${o.code}">ZK-26-000123</span> · <time th:datetime="${o.createdAt}" th:text="${@fmt.dateTime(o.createdAt)}">4 Oct 2026, 7:30 PM</time></p>
+					</div>
+					<span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Delivered</span>
+				</div>
+				<p class="order-card-items"><th:block th:each="i, s : ${o.items}" th:text="|${i.quantity} × ${i.name}${s.last ? '' : ', '}|">2 × Mutton Thali, </th:block></p>
+				<div class="order-card-foot">
+					<p class="order-card-total"><span class="visually-hidden">Total </span><span class="price" th:text="${@fmt.money(o.bill.grandTotal)}">₹530.00</span>
+						<span class="muted" th:text="${o.paymentMethod.name() == 'COD'} ? 'Cash on delivery' : |Online · ${o.paymentStatus.label}|">Cash on delivery</span></p>
+					<a th:if="${o.status.name() == 'PENDING_PAYMENT'}" class="btn btn-primary btn-sm order-card-pay" th:href="@{/pay/{code}(code=${o.code})}" href="/pay/ZK-26-000123">Pay now</a>
+					<a class="btn btn-secondary btn-sm order-card-more" th:href="@{/orders/{code}(code=${o.code})}" href="/orders/ZK-26-000123">View order<span class="visually-hidden" th:text="| ${o.code}|"> ZK-26-000123</span></a>
+				</div>
+			</li>
+		</ol>
+
+		<div th:replace="~{fragments/pagination :: pagination(${orders}, '/orders')}"></div>
+	</div>
+</main>
+</body>
+</html>

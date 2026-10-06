@@ -104,6 +104,9 @@ class CheckoutController {
 		if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
 			return "redirect:/pay/" + order.getCode();
 		}
+		if (!placement.repeat()) {
+			redirect.addFlashAttribute(OrderController.PLACED, true);
+		}
 		redirect.addFlashAttribute(placement.repeat() ? "flashInfo" : "flashSuccess", placement.repeat()
 				? "This order was already placed. Here it is." : "Order placed. " + order.getRestaurant().getName()
 						+ " will confirm it shortly.");

@@ -40,4 +40,14 @@ public enum OrderStatus {
 		return this == DELIVERED || this == CANCELLED || this == REJECTED;
 	}
 
+	/** Badge colour for status chips ({@code badge-<tone>}): awaiting payment warns, live is primary, the end states. */
+	public String getTone() {
+		return switch (this) {
+			case PENDING_PAYMENT -> "warning";
+			case DELIVERED -> "success";
+			case CANCELLED, REJECTED -> "danger";
+			default -> "primary";
+		};
+	}
+
 }

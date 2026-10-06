@@ -63,6 +63,7 @@ class PaymentController {
 		Order order = result.order();
 		return switch (result.kind()) {
 			case PAID -> {
+				redirect.addFlashAttribute("placed", true);
 				redirect.addFlashAttribute("flashSuccess", "Payment of " + fmt.money(order.getBill().grandTotal())
 						+ " received. " + order.getRestaurant().getName() + " will confirm your order shortly.");
 				yield "redirect:/orders/" + order.getCode();
@@ -77,6 +78,7 @@ class PaymentController {
 		if (!payments.switchToCash(me.getId(), code)) {
 			return "redirect:/pay/" + code;
 		}
+		redirect.addFlashAttribute("placed", true);
 		redirect.addFlashAttribute("flashSuccess",
 				"Order placed. Pay in cash when your food arrives. The kitchen will confirm it shortly.");
 		return "redirect:/orders/" + code;

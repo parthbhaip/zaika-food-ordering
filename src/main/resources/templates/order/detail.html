@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${'Order ' + order.code + ' | Zaika'}">Order ZK-26-000123 | Zaika</title></head>
+<body>
+<!--/* /orders/{code}: one of the customer's orders. Right after checkout or payment (flash attribute placed) the top is
+     the order confirmation. Then the status (awaiting payment, on its way, delivered, cancelled or rejected with the
+     reason, refunds), the dishes and notes, the bill, the delivery address and the payment.
+     Model: detail (order.OrderHistoryService.Detail), order (its order, restaurant and dishes loaded); placed. */-->
+<main id="main" class="order-page">
+	<div class="container order-detail" th:with="r=${order.restaurant}, bill=${order.bill}, approved=${order.restaurant.status.name() == 'APPROVED'}">
+
+		<!--/* The confirmation, right after the order reached the kitchen */-->
+		<section th:if="${placed}" class="card order-confirmed" aria-labelledby="order-confirmed-title">
+			<span class="order-confirmed-icon"><svg th:replace="~{fragments/icon :: icon('check')}"></svg></span>
+			<div class="order-confirmed-body">
+				<h2 class="order-confirmed-title" id="order-confirmed-title">Order placed</h2>
+				<p><strong th:text="${r.name}">Rassa Darbar</strong> has your order and will confirm it shortly.
+					Arriving by <strong th:text="${@fmt.time(order.estimatedDeliveryAt)}">8:05 PM</strong>
+					<span class="muted" th:text="|(${@fmt.relative(order.estimatedDeliveryAt)})|">(in 35 min)</span>.</p>
+				<p class="muted" th:text="${order.paymentMethod.name() == 'COD'} ? |Keep ${@fmt.money(bill.grandTotal)} ready to pay in cash at the door.| : |You paid ${@fmt.money(bill.grandTotal)} online.|">Keep ₹297.50 ready to pay in cash at the door.</p>
+			</div>
+		</section>
+
+		<header class="order-head">
+			<a class="checkout-back" th:href="@{/orders}" href="/orders"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>All orders</a>
+			<div class="order-head-row">
+				<h1 class="order-title" th:text="|Order ${order.code}|">Order ZK-26-000123</h1>
+				<span class="badge order-status" th:classappend="|badge-${order.status.tone}|" th:text="${order.status.label}">Placed</span>
+			</div>
+			<p class="order-head-meta">
+				<a th:if="${approved}" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar" th:text="${r.name}">Rassa Darbar</a><span th:unless="${approved}" th:text="${r.name}">Rassa Darbar</span>
+				· <span th:text="${r.area}">Rajarampuri</span>
+				· <time th:datetime="${order.createdAt}" th:text="${@fmt.dateTime(order.createdAt)}">4 Oct 2026, 7:30 PM</time></p>
+		</header>
+
+		<!--/* Where the order stands */-->
+		<div th:if="${detail.awaitingPayment()}" class="alert alert-warning order-alert" role="status">
+			<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+			<div>
+				<p><strong>Waiting for your payment.</strong> Pay by <strong th:text="${@fmt.time(detail.payBy())}">7:45 PM</strong> or we cancel this order automatically. You have not been charged.</p>
+				<a class="btn btn-primary btn-sm" th:href="@{/pay/{code}(code=${order.code})}" href="/pay/ZK-26-000123">Complete payment</a>
+			</div>
+		</div>
+		<div th:if="${detail.live()}" class="alert alert-info order-alert" role="status">
+			<svg th:replace="~{fragments/icon :: icon('bike')}"></svg>
+			<p><strong th:text="|${order.status.label}.|">Placed.</strong> Arriving by <strong th:text="${@fmt.time(order.estimatedDeliveryAt)}">8:05 PM</strong>.</p>
+		</div>
+		<div th:if="${order.status.name() == 'DELIVERED'}" class="alert alert-success order-alert" role="status">
+			<svg th:replace="~{fragments/icon :: icon('check')}"></svg>
+			<p>Delivered on <strong th:text="${@fmt.dateTime(order.timestampOf(order.status))}">4 Oct 2026, 8:02 PM</strong>. Enjoy your meal!</p>
+		</div>
+		<div th:if="${detail.endedBy() != null}" class="alert alert-error order-alert" role="status">
+			<svg th:replace="~{fragments/icon :: icon('x')}"></svg>
+			<div>
+				<p><strong th:text="${detail.endedBy()}">You cancelled this order.</strong>
+					<span th:if="${order.cancelReason != null}" th:text="|Reason: ${order.cancelReason}.|">Reason: Ordered by mistake.</span></p>
+				<p th:if="${order.paymentStatus.name() == 'REFUND_PENDING'}" th:text="|Your refund of ${@fmt.money(bill.grandTotal)} is on its way. It reaches your account in 5-7 working days.|">Your refund of ₹297.50 is on its way. It reaches your account in 5-7 working days.</p>
+				<p th:if="${order.paymentStatus.name() == 'REFUNDED'}" th:text="|We refunded ${@fmt.money(bill.grandTotal)} to your account.|">We refunded ₹297.50 to your account.</p>
+				<p th:if="${order.paymentStatus.name() != 'REFUND_PENDING' and order.paymentStatus.name() != 'REFUNDED'}">You have not been charged.</p>
+			</div>
+		</div>
+
+		<div class="order-main">
+			<section class="card order-section" aria-labelledby="order-items-title">
+				<header class="cart-restaurant">
+					<img class="cart-restaurant-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="56" height="56">
+					<div>
+						<h2 class="order-section-title" id="order-items-title" th:text="${r.name}">Rassa Darbar</h2>
+						<p class="muted checkout-eta" th:text="|${order.itemCount} ${order.itemCount == 1 ? 'item' : 'items'}|">3 items</p>
+					</div>
+				</header>
+				<ul class="checkout-lines order-lines" aria-label="Dishes">
+					<li th:each="item : ${order.items}" class="checkout-line">
+						<span th:replace="~{fragments/ui :: veg(${item.veg})}"></span>
+						<span class="checkout-line-name"><span class="checkout-line-qty" th:text="|${item.quantity} ×|">2 ×</span> <span th:text="${item.name}">Mutton Thali</span>
+							<span class="order-line-each" th:if="${item.quantity > 1}" th:text="|${@fmt.money(item.unitPrice)} each|">₹250.00 each</span></span>
+						<span class="price" th:text="${@fmt.money(item.lineTotal)}">₹500.00</span>
+					</li>
+				</ul>
+				<p th:if="${order.restaurantNote != null}" class="checkout-note"><strong>Note for the restaurant:</strong> <span th:text="${order.restaurantNote}">Less spicy, please.</span></p>
+			</section>
+
+			<section class="card order-section" aria-labelledby="order-bill-title">
+				<h2 class="order-section-title" id="order-bill-title">Bill details</h2>
+				<dl class="bill">
+					<div class="bill-row"><dt>Item total</dt><dd th:text="${@fmt.money(bill.itemTotal)}">₹500.00</dd></div>
+					<div th:if="${bill.discount.signum() > 0}" class="bill-row bill-discount"><dt th:text="|Coupon ${order.couponCode}|">Coupon WELCOME50</dt><dd th:text="|−${@fmt.money(bill.discount)}|">−₹50.00</dd></div>
+					<div class="bill-row"><dt>Delivery fee</dt>
+						<dd th:if="${bill.deliveryFee.signum() > 0}" th:text="${@fmt.money(bill.deliveryFee)}">₹30.00</dd>
+						<dd th:if="${bill.deliveryFee.signum() == 0}"><span class="bill-free">FREE</span></dd></div>
+					<div class="bill-row"><dt>Platform fee</dt><dd th:text="${@fmt.money(bill.platformFee)}">₹5.00</dd></div>
+					<div class="bill-row"><dt>GST on food</dt><dd th:text="${@fmt.money(bill.gst)}">₹22.50</dd></div>
+					<div class="bill-row bill-total"><dt th:text="${order.paymentStatus.name() == 'PAID'} ? 'Paid' : 'Total'">Total</dt><dd th:text="${@fmt.money(bill.grandTotal)}">₹557.50</dd></div>
+				</dl>
+			</section>
+		</div>
+
+		<aside class="order-side" aria-label="Delivery and payment">
+			<section class="card order-section" aria-labelledby="order-address-title">
+				<h2 class="order-section-title" id="order-address-title"><svg th:replace="~{fragments/icon :: icon('location')}"></svg>Delivering to</h2>
+				<p><strong th:text="${order.address.label.displayName}">Home</strong></p>
+				<address class="order-address" th:text="${order.address.oneLine()}">Flat 4B, Shree Apartments, Rajarampuri 5th Lane, near Ganesh Mandir, Kolhapur 416008</address>
+				<p th:if="${order.deliveryNote != null}" class="checkout-note"><strong>Note for the rider:</strong> <span th:text="${order.deliveryNote}">Ring the bell twice.</span></p>
+			</section>
+
+			<section class="card order-section" aria-labelledby="order-payment-title">
+				<h2 class="order-section-title" id="order-payment-title"><svg th:replace="~{fragments/icon :: icon(${order.paymentMethod.name() == 'COD' ? 'cash' : 'card'})}"></svg>Payment</h2>
+				<dl class="order-facts">
+					<div><dt>Method</dt><dd th:text="${order.paymentMethod.name() == 'COD'} ? 'Cash on delivery' : 'Online (test mode)'">Cash on delivery</dd></div>
+					<div><dt>Status</dt><dd th:text="${order.paymentStatus.label}">Pending</dd></div>
+					<div th:if="${detail.payment != null}"><dt>Paid with</dt><dd th:text="${detail.payment.instrument}">Card ending 1111</dd></div>
+					<div th:if="${detail.payment != null}"><dt>Reference</dt><dd class="order-ref" th:text="${detail.payment.gatewayReference}">MOCK-1A2B3C4D5E6F7A8B</dd></div>
+				</dl>
+			</section>
+
+			<div class="order-actions">
+				<a th:if="${order.status.isFinal() and approved}" class="btn btn-primary btn-block" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar" th:text="|Order again from ${r.name}|">Order again from Rassa Darbar</a>
+				<a class="btn btn-ghost btn-block" th:href="@{/contact}" href="/contact"><svg th:replace="~{fragments/icon :: icon('phone')}"></svg>Help with this order</a>
+			</div>
+		</aside>
+	</div>
+</main>
+</body>
+</html>
