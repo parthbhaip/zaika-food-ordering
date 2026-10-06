@@ -86,6 +86,9 @@ Every unfinished instruction from this file, grouped by the task that must handl
   - Build `/partner-with-us` and `/partner-with-us/restaurant` (linked from home partner band, footer, login page); add tests that those links answer 200.
   - Generate restaurant slugs with `Slugs.slugify`.
   - Catch `InvalidImageException` from `StorageService.store` and `rejectValue` on the file field; map `MaxUploadSizeExceededException` (requests over 5/6 MB) to the same inline error or flash.
+  - Signing the new owner in right after the form: reuse what `RegistrationController` does for customers (change the session id, drop the CSRF token, save the context through `HttpSessionSecurityContextRepository`); a taken email throws `user.EmailTakenException`. After sign-in each role lands on its area: CUSTOMER `/`, RESTAURANT_OWNER `/owner`, DELIVERY_PARTNER `/partner`, ADMIN `/admin` (driven by `SecurityConfig.AREAS`).
+  - New `Restaurant` defaults: status PENDING, accepting orders on, minimum order and delivery fee 0.00, prep 20 min. `address` holds only the street line; area, city and pincode are separate columns.
+- Admin-area tests (T38-T42): the test profile leaves `app.admin.*` unset, so test contexts start with no ADMIN account; create one in the test.
 - T30 Owner menu management:
   - Catch `InvalidImageException` and `rejectValue` on the file field.
   - Add a move-dish-to-category operation that checks the category belongs to the same restaurant (`MenuItem` has no category setter).
@@ -93,7 +96,7 @@ Every unfinished instruction from this file, grouped by the task that must handl
   - A dish that was ever ordered must be archived, never deleted (`order_items.menu_item_id` FK has no cascade).
 - T31 Owner restaurant profile: reject non-veg items in a pure-veg restaurant (e.g. when switching a restaurant to pure veg); reuse `User.PHONE_PATTERN` / `Address.PINCODE_PATTERN`.
 - T32 Owner live orders: when the owner rejects an order call `CouponService.release` for its coupon use; paid online orders go to REFUND_PENDING (via `OrderWorkflow`).
-- T34 Rider onboarding: build `/partner-with-us/rider` (linked from home and footer) with a test that it answers 200; seed rider profiles in `DemoDataSeeder` create-if-missing (riders are plain DELIVERY_PARTNER users today).
+- T34 Rider onboarding: build `/partner-with-us/rider` (linked from home and footer) with a test that it answers 200; seed rider profiles in `DemoDataSeeder` create-if-missing (riders are plain DELIVERY_PARTNER users today). Reuse the sign-up auto-login steps noted under T28.
 - T35 Rider dashboard: claim orders with `Order.assignRider(user)` under `@Version` optimistic locking (it is not a status change).
 - T36 Delivery flow: the caller checks the customer OTP before `OUT_FOR_DELIVERY -> DELIVERED`; any mail carrying an OTP or phone number must be masked in `LoggingMailService` (it logs full bodies).
 - T39 Restaurant moderation: build mail links from `AppProperties.baseUrl`.
@@ -113,9 +116,9 @@ Every unfinished instruction from this file, grouped by the task that must handl
   - Make sure `CartModelInterceptor` never runs for `/api/**` REST controllers.
 - T51 Responsive and accessibility audit: `.tab` inside `.tabs` (`overflow-x: auto`) needs `outline-offset: -2px`; restore the `noindex` meta on `/dev/ui-kit`; add a visible scroll hint to `.home-row` / `.home-cuisines` on phones; consider type-ahead suggestions on `/search` for phones (the header box is hidden below 960px).
 - T54 Performance: consider a composite index (user_id, is_default, id) on `addresses`; drop V5's `(status, rating_average)` index (a prefix of V6's); `CartService.view()` takes a PESSIMISTIC_WRITE user-row lock on every /cart view and the header cart count costs one query per request: measure and relax.
-- T55 Security review: rate-limit wrong current-password attempts on POST `/account/password`, POST `/forgot-password` (per IP and per email), wrong reset attempts and login enumeration by volume; end other live sessions on password reset/change (SessionRegistry or a security stamp); map `OptimisticLockException` on concurrent address edits to a friendly "try again" flash; the concurrent reset double-submit has no concurrent test.
+- T55 Security review: rate-limit wrong current-password attempts on POST `/account/password`, POST `/forgot-password` (per IP and per email), wrong reset attempts and login enumeration by volume; end other live sessions on password reset/change (SessionRegistry or a security stamp); map `OptimisticLockException` on concurrent address edits to a friendly "try again" flash; the concurrent reset double-submit has no concurrent test. `CartController.signInForCart` relies on the URL rule alone (`hasRole(CUSTOMER)`); restore its controller-level customer check so every /cart handler has both layers.
 - T56 MySQL readiness: an unreachable SMTP server makes `/actuator/health` DOWN; set `management.health.mail.enabled=false` or document it in `docs/SETUP-MYSQL.md`; permit `/actuator/health` if an external probe needs it.
-- T58 Final QA: render the reset-link lifetime ("30 minutes", hard-coded in templates) from `PasswordResetService`'s lifetime constant.
+- T58 Final QA: render the reset-link lifetime ("30 minutes", hard-coded in templates) from `PasswordResetService`'s lifetime constant. On `/orders`, hide "Pay now" for an unpaid order once `order.payBy()` is before now (the detail page already says "Payment time is up" via `Detail.paymentTimeUp()`).
 
 ---
 
