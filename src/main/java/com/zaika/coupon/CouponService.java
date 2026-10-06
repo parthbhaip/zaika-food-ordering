@@ -147,6 +147,14 @@ public class CouponService {
 		redemptions.findById(redeemed.redemptionId()).orElseThrow().setOrder(order);
 	}
 
+	/**
+	 * Gives back the coupon use of an order that will never be fulfilled (cancelled, rejected, expired unpaid), so the
+	 * coupon's total and per-customer limits count only live orders. Returns how many uses were released (0 or 1).
+	 */
+	public long release(Order order) {
+		return redemptions.deleteByOrderId(order.getId());
+	}
+
 	/** Coupons open to everyone at this restaurant now (its own first), for the cart and the restaurant page. */
 	@Transactional(readOnly = true)
 	public List<CouponOffer> offers(long restaurantId) {

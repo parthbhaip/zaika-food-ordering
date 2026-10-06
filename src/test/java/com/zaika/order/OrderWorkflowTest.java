@@ -273,6 +273,39 @@ class OrderWorkflowTest {
 	}
 
 	@Test
+	void aConfirmedOnlinePaymentPlacesTheOrderAsPaid() {
+		Order order = orderAt(OrderStatus.PENDING_PAYMENT, PaymentMethod.ONLINE);
+		order.paymentFailed(); // an earlier attempt was declined
+		assertThat(order.getPaymentStatus()).isEqualTo(PaymentStatus.FAILED);
+
+		workflow.confirmPayment(order);
+
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.PLACED);
+		assertThat(order.getPaymentStatus()).isEqualTo(PaymentStatus.PAID);
+		assertThat(order.timestampOf(OrderStatus.PLACED)).isEqualTo(NOW);
+		// paid twice, or a cash order "paid online": refused, nothing changes
+		assertThatThrownBy(() -> workflow.confirmPayment(order)).isInstanceOf(OrderTransitionException.class);
+		Order cash = orderAt(OrderStatus.PENDING_PAYMENT, PaymentMethod.COD);
+		assertThatThrownBy(() -> workflow.confirmPayment(cash)).isInstanceOf(IllegalStateException.class);
+		assertThat(cash.getStatus()).isEqualTo(OrderStatus.PENDING_PAYMENT);
+	}
+
+	@Test
+	void onlyAnOrderAwaitingAnOnlinePaymentCanFailOrSwitchToCash() {
+		Order order = orderAt(OrderStatus.PENDING_PAYMENT, PaymentMethod.ONLINE);
+		order.paymentFailed();
+		order.switchToCashOnDelivery();
+		assertThat(order.getPaymentMethod()).isEqualTo(PaymentMethod.COD);
+		assertThat(order.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING_PAYMENT); // the caller places it
+
+		assertThatThrownBy(order::switchToCashOnDelivery).isInstanceOf(IllegalStateException.class); // now cash
+		Order placed = orderAt(OrderStatus.PLACED, PaymentMethod.ONLINE);
+		assertThatThrownBy(placed::paymentFailed).isInstanceOf(IllegalStateException.class);
+		assertThatThrownBy(placed::switchToCashOnDelivery).isInstanceOf(IllegalStateException.class);
+	}
+
+	@Test
 	void aNewOrderAwaitsPaymentWithAFourDigitOtpAndItsSnapshots() {
 		Order order = orderAt(OrderStatus.PENDING_PAYMENT);
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING_PAYMENT);

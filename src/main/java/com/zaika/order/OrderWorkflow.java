@@ -89,6 +89,21 @@ public class OrderWorkflow {
 		return order;
 	}
 
+	/**
+	 * The online payment for {@code order} went through: it goes to the kitchen (PLACED, by the system) and is PAID.
+	 *
+	 * @throws OrderTransitionException if the order is no longer awaiting payment
+	 * @throws IllegalStateException    if it is a cash order
+	 */
+	public Order confirmPayment(Order order) {
+		if (order.getPaymentMethod() != PaymentMethod.ONLINE) {
+			throw new IllegalStateException("Order " + order.getCode() + " is not paid online");
+		}
+		transition(order, OrderStatus.PLACED, OrderActor.system());
+		order.setPaymentStatus(PaymentStatus.PAID);
+		return order;
+	}
+
 	/** Whether {@code actor} may move {@code order} to {@code target} right now (to show or hide a button). */
 	public boolean can(Order order, OrderStatus target, OrderActor actor) {
 		return isParty(order, actor) && allowed(order.getStatus(), target, actor.kind());

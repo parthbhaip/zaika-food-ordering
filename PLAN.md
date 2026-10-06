@@ -138,7 +138,7 @@ How this file works
   - Server recomputes everything and validates: restaurant approved, open and accepting; items available; minimum order; coupon still valid.
   - Idempotency key stops duplicate orders on double submit. Order creation and cart clearing in one transaction. Tests.
 
-- [ ] T25 Mock payment
+- [x] T25 Mock payment
   - `PaymentGateway` interface + `MockPaymentGateway`. Page `/pay/{code}` clearly labelled "TEST MODE - no real money": UPI and Card tabs with format validation, Pay -> success, a "Simulate failure" option.
   - `Payment` entity. Success -> PLACED + PAID. Failure -> retry, switch to COD, or cancel. Unpaid orders expire after 15 minutes (`@Scheduled`, uses Clock).
   - `docs/PAYMENTS.md` explains how a real gateway's test mode would plug in. Tests.

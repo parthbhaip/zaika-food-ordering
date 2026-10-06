@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Pay for your order | Zaika</title></head>
+<body>
+<!--/* /pay/{code}: the test-mode payment page. A banner says no real money moves. UPI and Card are tabs (plain links,
+     ?tab=card), each a plain form posting to /pay/{code} with "Pay" or "Simulate failure". After a declined attempt
+     the page says why and offers cash on delivery or cancelling. An order cancelled before payment shows a closed
+     state instead. Model: page (payment.PaymentService.PayPage), order, form (payment.PaymentForm); payError after
+     a submit with invalid details. */-->
+<main id="main" class="pay-page">
+	<div class="container" th:with="r=${order.restaurant}, total=${order.bill.grandTotal}">
+
+		<!--/* Cancelled before payment: by the customer, or because time ran out */-->
+		<section th:if="${page.cancelledUnpaid()}" class="card pay-closed" aria-labelledby="pay-closed-title">
+			<span class="empty-state-icon"><svg th:replace="~{fragments/icon :: icon('x')}"></svg></span>
+			<h1 class="pay-closed-title" id="pay-closed-title" th:text="${page.expired()} ? 'Time ran out for this order' : 'Order cancelled'">Time ran out for this order</h1>
+			<p class="pay-closed-text" th:if="${page.expired()}">We cancelled <strong th:text="${order.code}">ZK-26-000123</strong> because it was not paid within 15 minutes. You have not been charged.</p>
+			<p class="pay-closed-text" th:unless="${page.expired()}">You cancelled <strong th:text="${order.code}">ZK-26-000123</strong> before paying. You have not been charged.</p>
+			<div class="pay-closed-actions">
+				<a class="btn btn-primary" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar" th:text="|Order again from ${r.name}|">Order again from Rassa Darbar</a>
+				<a class="btn btn-secondary" th:href="@{/restaurants}" href="/restaurants">Browse restaurants</a>
+			</div>
+		</section>
+
+		<div th:if="${page.awaitingPayment()}" class="pay">
+			<header class="checkout-head pay-head">
+				<h1 class="checkout-title">Pay for your order</h1>
+				<p class="muted">Order <span th:text="${order.code}">ZK-26-000123</span> · <span th:text="${r.name}">Rassa Darbar</span></p>
+			</header>
+
+			<div class="pay-test-mode" role="note">
+				<span class="pay-test-mode-tag">TEST MODE - no real money</span>
+				<p>This is a demo payment page. No bank is contacted and nothing is charged. Do not enter real card details.</p>
+			</div>
+
+			<div th:if="${page.lastAttemptFailed()}" class="alert alert-error pay-alert" role="alert">
+				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+				<div>
+					<p><strong th:text="|Your payment of ${@fmt.money(total)} did not go through.|">Your payment of ₹530.00 did not go through.</strong>
+						<span th:text="${page.lastAttempt.failureReason}">Your bank declined the card. No money left your account.</span></p>
+					<p>Try again, pay in cash when your food arrives, or cancel the order.</p>
+				</div>
+			</div>
+			<div th:if="${payError != null}" class="alert alert-error pay-alert" role="alert">
+				<svg th:replace="~{fragments/icon :: icon('info')}"></svg><p th:text="${payError}">Check the details marked below.</p>
+			</div>
+
+			<section class="card pay-card" aria-labelledby="pay-method-title">
+				<h2 class="visually-hidden" id="pay-method-title">Payment details</h2>
+				<p class="pay-deadline"><svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+					<span>Pay by <strong th:text="${@fmt.time(page.deadline)}">7:45 PM</strong> to keep this order. After that we cancel it automatically.</span></p>
+
+				<nav class="tabs pay-tabs" aria-label="Payment method">
+					<a th:each="c : ${T(com.zaika.payment.PaymentChannel).values()}" class="tab"
+						th:href="@{/pay/{code}(code=${order.code}, tab=${c.tab})}" href="/pay/ZK-26-000123?tab=upi"
+						th:aria-current="${form.channel == c} ? 'page'" th:text="${c.label}">UPI</a>
+				</nav>
+
+				<form class="pay-form" th:object="${form}" th:action="@{/pay/{code}(code=${order.code})}" action="/pay/ZK-26-000123" method="post" novalidate>
+					<input type="hidden" name="channel" th:value="${form.channel}" value="UPI">
+
+					<th:block th:if="${form.channel.name() == 'UPI'}">
+						<div th:replace="~{fragments/form :: field('upiId', 'UPI ID', 'text', 'Any valid UPI ID works in test mode, like riya@upi.', 'off')}"></div>
+					</th:block>
+
+					<th:block th:if="${form.channel.name() == 'CARD'}">
+						<th:block th:with="inputmode='numeric'"><div th:replace="~{fragments/form :: field('cardNumber', 'Card number', 'text', 'In test mode use 4111 1111 1111 1111.', 'off')}"></div></th:block>
+						<div class="field-pair pay-card-pair">
+							<th:block th:with="inputmode='numeric'"><div th:replace="~{fragments/form :: field('cardExpiry', 'Expiry (MM/YY)', 'text', null, 'off')}"></div></th:block>
+							<th:block th:with="inputmode='numeric'"><div th:replace="~{fragments/form :: field('cardCvv', 'CVV', 'password', null, 'off')}"></div></th:block>
+						</div>
+						<div th:replace="~{fragments/form :: field('cardName', 'Name on card', 'text', null, 'off')}"></div>
+					</th:block>
+
+					<div class="pay-actions">
+						<button type="submit" class="btn btn-primary btn-lg btn-block cart-checkout-btn" id="pay-now">
+							<span>Pay now</span><span class="cart-checkout-total" th:text="${@fmt.money(total)}">₹530.00</span>
+						</button>
+						<button type="submit" class="btn btn-secondary btn-block" name="simulateFailure" value="true" aria-describedby="simulate-help">Simulate failure</button>
+						<p class="pay-simulate-help" id="simulate-help">Test mode: see what happens when a payment is declined.</p>
+					</div>
+				</form>
+			</section>
+
+			<aside class="pay-side" aria-label="Order summary and other options">
+				<section class="card checkout-summary">
+					<header class="cart-restaurant">
+						<img class="cart-restaurant-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="56" height="56">
+						<div>
+							<h2 class="checkout-summary-title" th:text="${r.name}">Rassa Darbar</h2>
+							<p class="muted checkout-eta" th:text="|${order.itemCount} ${order.itemCount == 1 ? 'item' : 'items'}|">3 items</p>
+						</div>
+					</header>
+					<ul class="checkout-lines" aria-label="Your order">
+						<li th:each="item : ${order.items}" class="checkout-line">
+							<span th:replace="~{fragments/ui :: veg(${item.veg})}"></span>
+							<span class="checkout-line-name"><span class="checkout-line-qty" th:text="|${item.quantity} ×|">2 ×</span> <span th:text="${item.name}">Mutton Thali</span></span>
+							<span class="price" th:text="${@fmt.money(item.lineTotal)}">₹500.00</span>
+						</li>
+					</ul>
+					<dl class="bill">
+						<div th:if="${order.bill.discount.signum() > 0}" class="bill-row bill-discount"><dt th:text="|Coupon ${order.couponCode}|">Coupon WELCOME50</dt><dd th:text="|−${@fmt.money(order.bill.discount)}|">−₹50.00</dd></div>
+						<div class="bill-row bill-total"><dt>To pay</dt><dd th:text="${@fmt.money(total)}">₹530.00</dd></div>
+					</dl>
+				</section>
+
+				<section class="card pay-other" aria-labelledby="pay-other-title">
+					<h2 class="pay-other-title" id="pay-other-title">Prefer not to pay online?</h2>
+					<form th:action="@{/pay/{code}/cash(code=${order.code})}" action="/pay/ZK-26-000123/cash" method="post">
+						<button type="submit" class="btn btn-secondary btn-block"><svg th:replace="~{fragments/icon :: icon('cash')}"></svg>Pay cash on delivery instead</button>
+					</form>
+					<details class="confirm pay-cancel" data-menu>
+						<summary class="btn btn-ghost btn-block">Cancel order</summary>
+						<div class="confirm-panel">
+							<p>Cancel this order? You will not be charged.</p>
+							<form th:action="@{/pay/{code}/cancel(code=${order.code})}" action="/pay/ZK-26-000123/cancel" method="post">
+								<button type="submit" class="btn btn-danger btn-sm">Yes, cancel order</button>
+							</form>
+						</div>
+					</details>
+				</section>
+			</aside>
+		</div>
+	</div>
+</main>
+</body>
+</html>

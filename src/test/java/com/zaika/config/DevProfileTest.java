@@ -24,6 +24,8 @@ import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySourcesPropertyResolver;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
+import org.springframework.scheduling.config.CronTask;
+import org.springframework.scheduling.config.ScheduledTaskHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -78,6 +80,15 @@ class DevProfileTest {
 		// DemoDataSeeder ran on startup: 12 approved restaurants and one pending, owner1's among them
 		assertThat(restaurants.count()).isEqualTo(13);
 		assertThat(restaurants.findByOwnerId(users.findByEmail("owner1@zaika.test").orElseThrow().getId())).isPresent();
+	}
+
+	@Test
+	void unpaidOrdersAreExpiredByAJobThatRunsEveryMinute() {
+		assertThat(context.getBeansOfType(ScheduledTaskHolder.class).values())
+			.flatMap(ScheduledTaskHolder::getScheduledTasks)
+			.filteredOn(task -> task.toString().contains("PaymentService.expireUnpaid"))
+			.singleElement()
+			.satisfies(task -> assertThat(((CronTask) task.getTask()).getExpression()).isEqualTo("0 * * * * *"));
 	}
 
 	@Test

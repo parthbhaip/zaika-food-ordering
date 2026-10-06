@@ -8,4 +8,7 @@ public interface CouponRedemptionRepository extends JpaRepository<CouponRedempti
 
 	long countByCouponIdAndUserId(long couponId, long userId);
 
+	/** Uses idx_coupon_redemptions_order. */
+	long deleteByOrderId(long orderId);
+
 }

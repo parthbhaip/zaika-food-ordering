@@ -228,6 +228,28 @@ public class Order extends BaseEntity {
 		this.paymentStatus = Objects.requireNonNull(paymentStatus, "paymentStatus");
 	}
 
+	/** An online payment attempt failed: the order keeps waiting for payment (retry, cash or cancel). */
+	public void paymentFailed() {
+		requireAwaitingOnlinePayment();
+		this.paymentStatus = PaymentStatus.FAILED;
+	}
+
+	/**
+	 * The customer gives up paying online and pays the rider instead. The caller then places the order through the
+	 * workflow, as checkout does for cash orders.
+	 */
+	public void switchToCashOnDelivery() {
+		requireAwaitingOnlinePayment();
+		this.paymentMethod = PaymentMethod.COD;
+		this.paymentStatus = PaymentStatus.PENDING;
+	}
+
+	private void requireAwaitingOnlinePayment() {
+		if (status != OrderStatus.PENDING_PAYMENT || paymentMethod != PaymentMethod.ONLINE) {
+			throw new IllegalStateException("Order " + code + " is not awaiting an online payment");
+		}
+	}
+
 	/**
 	 * Gives the order to a rider: not a status change, so not the workflow's job. The rider panel's claim (T35) calls
 	 * this under optimistic locking; only the assigned rider can then pick the order up and deliver it.
