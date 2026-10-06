@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.zaika.common.BaseEntity;
+import com.zaika.order.Order;
 import com.zaika.user.User;
 
 /** One use of a coupon: written when an order is placed with it. The coupon's limits count these rows. */
@@ -30,6 +31,11 @@ public class CouponRedemption extends BaseEntity {
 	@Column(nullable = false, precision = 10, scale = 2, updatable = false)
 	private BigDecimal discount;
 
+	/** The order placed with this use; set right after the order is saved, in the same transaction. */
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "order_id")
+	private Order order;
+
 	protected CouponRedemption() {
 	}
 
@@ -37,6 +43,14 @@ public class CouponRedemption extends BaseEntity {
 		this.coupon = Objects.requireNonNull(coupon, "coupon");
 		this.user = Objects.requireNonNull(user, "user");
 		this.discount = discount.setScale(2, RoundingMode.HALF_UP);
+	}
+
+	void setOrder(Order order) {
+		this.order = Objects.requireNonNull(order, "order");
+	}
+
+	public Order getOrder() {
+		return order;
 	}
 
 	public Coupon getCoupon() {

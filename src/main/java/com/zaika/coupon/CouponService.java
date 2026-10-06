@@ -16,6 +16,7 @@ import com.zaika.cart.CartRepository;
 import com.zaika.cart.CartService;
 import com.zaika.cart.CartView;
 import com.zaika.common.Formatters;
+import com.zaika.order.Order;
 import com.zaika.order.OrderRepository;
 import com.zaika.order.OrderStatus;
 import com.zaika.user.UserRepository;
@@ -131,9 +132,19 @@ public class CouponService {
 		Coupon coupon = coupons.findForUpdate(applied.getId()).orElseThrow();
 		CouponResult result = check(coupon, userId, cart);
 		if (result.applied()) {
-			redemptions.save(new CouponRedemption(coupon, users.getReferenceById(userId), result.discount()));
+			CouponRedemption use = redemptions
+				.save(new CouponRedemption(coupon, users.getReferenceById(userId), result.discount()));
+			result = result.recordedAs(use.getId());
 		}
 		return Optional.of(result);
+	}
+
+	/** Ties the use {@link #redeem} recorded to the order placed with it, so cancelling the order can give it back. */
+	public void linkToOrder(CouponResult redeemed, Order order) {
+		if (redeemed.redemptionId() == null) {
+			throw new IllegalArgumentException("No coupon use was recorded for " + redeemed.code());
+		}
+		redemptions.findById(redeemed.redemptionId()).orElseThrow().setOrder(order);
 	}
 
 	/** Coupons open to everyone at this restaurant now (its own first), for the cart and the restaurant page. */
@@ -182,7 +193,7 @@ public class CouponService {
 		}
 		BigDecimal discount = coupon.discountOn(cart.itemTotal());
 		return new CouponResult(coupon.getCode(), discount, null,
-				coupon.getCode() + " applied. You save " + fmt.money(discount) + " on this order.");
+				coupon.getCode() + " applied. You save " + fmt.money(discount) + " on this order.", null);
 	}
 
 	/** Placed an order before that was not cancelled or rejected (an unpaid online order does not count). */
@@ -216,11 +227,17 @@ public class CouponService {
 	/**
 	 * The outcome of applying or re-checking a coupon: {@code problem} is {@code null} when it works, and then
 	 * {@code discount} is what it takes off the item total. {@code message} is ready to show either way.
+	 * {@code redemptionId} is the use {@link #redeem} recorded at checkout, else {@code null}.
 	 */
-	public record CouponResult(String code, BigDecimal discount, CouponProblem problem, String message) {
+	public record CouponResult(String code, BigDecimal discount, CouponProblem problem, String message,
+			Long redemptionId) {
 
 		static CouponResult rejected(String code, CouponProblem problem, String message) {
-			return new CouponResult(code, ZERO, problem, message);
+			return new CouponResult(code, ZERO, problem, message, null);
+		}
+
+		CouponResult recordedAs(long id) {
+			return new CouponResult(code, discount, problem, message, id);
 		}
 
 		public boolean applied() {

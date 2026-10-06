@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Checkout | Zaika</title></head>
+<body>
+<!--/* /checkout: where to deliver (a saved address or a new one), a note for the rider, how to pay, and the order
+     summary with the bill. One plain form posting to /checkout; the server re-checks and re-prices everything.
+     Model: form (order.CheckoutForm, with the one-time idempotencyKey and the expectedTotal this page shows),
+     cart (cart.CartView), coupon (coupon.CouponService.CartCoupon), bill (cart.PriceBreakdown), gstPercent,
+     addresses (the customer's saved addresses, default first), addressBookFull; checkoutError after a failed submit.
+     The new-address fields show only while "Add a new address" is picked (CSS :has; without it they always show). */-->
+<main id="main" class="checkout-page">
+	<div class="container">
+		<form class="checkout" th:object="${form}" th:action="@{/checkout}" action="/checkout" method="post" novalidate
+			th:with="r=${cart.restaurant}">
+			<input type="hidden" th:field="*{idempotencyKey}">
+			<input type="hidden" th:field="*{expectedTotal}">
+
+			<header class="checkout-head">
+				<a class="checkout-back" th:href="@{/cart}" href="/cart"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>Back to cart</a>
+				<h1 class="checkout-title">Checkout</h1>
+			</header>
+
+			<div th:if="${checkoutError != null}" class="alert alert-error checkout-alert" role="alert">
+				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+				<div>
+					<p th:text="${checkoutError}">Your total is now ₹540.90. Check the bill, then place your order again.</p>
+					<ul th:unless="${cart.notices.isEmpty()}"><li th:each="n : ${cart.notices}" th:text="${n}">Mutton Thali now costs ₹440 (was ₹420).</li></ul>
+				</div>
+			</div>
+			<div th:if="${checkoutError == null and !cart.notices.isEmpty()}" class="alert alert-warning checkout-alert" role="status">
+				<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+				<ul><li th:each="n : ${cart.notices}" th:text="${n}">Mutton Thali now costs ₹440 (was ₹420).</li></ul>
+			</div>
+
+			<div class="checkout-main">
+				<!--/* Step 1: address and the note for the rider */-->
+				<section class="card checkout-step" aria-labelledby="checkout-address-title">
+					<h2 class="checkout-step-title" id="checkout-address-title"><span class="checkout-step-no" aria-hidden="true">1</span>Deliver to</h2>
+
+					<fieldset class="checkout-addresses" th:with="invalid=${#fields.hasErrors('addressId')}"
+						th:aria-describedby="${invalid} ? 'addressId-error'">
+						<legend class="visually-hidden">Delivery address</legend>
+						<label th:each="a : ${addresses}" class="address-option">
+							<input class="radio" type="radio" name="addressId" th:value="${a.id}" th:id="|address-${a.id}|" th:checked="${form.addressId == a.id}">
+							<span class="address-option-body">
+								<span class="address-option-head"><svg th:replace="~{fragments/icon :: icon('location')}"></svg><strong th:text="${a.label.displayName}">Home</strong>
+									<span th:if="${a.defaultAddress}" class="badge badge-success">Default</span></span>
+								<span class="address-option-line" th:text="${a.oneLine}">Flat 4B, Shree Apartments, Rajarampuri 5th Lane, near Ganesh Mandir, Kolhapur 416008</span>
+							</span>
+						</label>
+
+						<label th:if="${!addresses.isEmpty() and !addressBookFull}" class="address-option address-option-new">
+							<input class="radio" type="radio" name="addressId" value="0" id="address-new" th:checked="${form.wantsNewAddress()}">
+							<span class="address-option-body">
+								<span class="address-option-head"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg><strong>Add a new address</strong></span>
+								<span class="address-option-line">We will save it to your address book.</span>
+							</span>
+						</label>
+						<input th:if="${addresses.isEmpty()}" type="hidden" name="addressId" value="0">
+						<p class="field-error" th:if="${invalid}" id="addressId-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:errors="*{addressId}">Choose where we should deliver.</span></p>
+
+						<div th:unless="${addressBookFull}" class="checkout-new-address" th:classappend="${addresses.isEmpty()} ? 'is-only'">
+							<p th:if="${addresses.isEmpty()}" class="checkout-new-address-intro">Where should we bring your food? We will save this address for next time.</p>
+							<fieldset class="field choice-field" th:with="labelInvalid=${#fields.hasErrors('newAddress.label')}" th:classappend="${labelInvalid} ? 'has-error'">
+								<legend class="field-label">Save as</legend>
+								<div class="choice-row">
+									<label class="choice" th:each="l : ${T(com.zaika.user.AddressLabel).values()}">
+										<input class="radio" type="radio" name="newAddress.label" th:value="${l}" th:id="|new-label-${l}|" th:checked="${form.newAddress.label == l}"><span th:text="${l.displayName}">Home</span>
+									</label>
+								</div>
+							</fieldset>
+							<div th:replace="~{fragments/form :: field('newAddress.house', 'House, flat or building', 'text', 'For example: Flat 4B, Shree Apartments', 'address-line1')}"></div>
+							<div th:replace="~{fragments/form :: field('newAddress.street', 'Street or area', 'text', 'For example: Rajarampuri 5th Lane', 'address-line2')}"></div>
+							<div th:replace="~{fragments/form :: field('newAddress.landmark', 'Landmark (optional)', 'text', 'Something nearby a rider can spot, like a temple or a school.', 'off')}"></div>
+							<div class="field-pair">
+								<div th:replace="~{fragments/form :: field('newAddress.city', 'City', 'text', null, 'address-level2')}"></div>
+								<th:block th:with="inputmode='numeric'"><div th:replace="~{fragments/form :: field('newAddress.pincode', 'PIN code', 'text', null, 'postal-code')}"></div></th:block>
+							</div>
+						</div>
+					</fieldset>
+					<p th:if="${addressBookFull}" class="checkout-book-full muted">Your address book is full. To deliver somewhere new, <a th:href="@{/account/addresses}" href="/account/addresses">remove a saved address</a> first.</p>
+
+					<div class="field" th:with="invalid=${#fields.hasErrors('deliveryNote')}" th:classappend="${invalid} ? 'has-error'">
+						<label class="field-label" for="deliveryNote">Note for the rider (optional)</label>
+						<textarea class="textarea" id="deliveryNote" name="deliveryNote" rows="2" maxlength="250" th:text="*{deliveryNote}"
+							placeholder="Ring the bell twice, or leave it with the watchman" th:aria-invalid="${invalid} ? 'true'"
+							th:aria-describedby="${invalid} ? 'deliveryNote-error deliveryNote-help' : 'deliveryNote-help'"></textarea>
+						<p class="field-help" id="deliveryNote-help">Directions for the door. Up to 250 characters.</p>
+						<p class="field-error" th:if="${invalid}" id="deliveryNote-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:errors="*{deliveryNote}">Keep the note for the rider to 250 characters or fewer.</span></p>
+					</div>
+				</section>
+
+				<!--/* Step 2: payment method */-->
+				<section class="card checkout-step" aria-labelledby="checkout-pay-title">
+					<h2 class="checkout-step-title" id="checkout-pay-title"><span class="checkout-step-no" aria-hidden="true">2</span>Pay with</h2>
+					<fieldset class="pay-options" th:with="invalid=${#fields.hasErrors('paymentMethod')}" th:aria-describedby="${invalid} ? 'paymentMethod-error'">
+						<legend class="visually-hidden">Payment method</legend>
+						<label class="pay-option">
+							<input class="radio" type="radio" name="paymentMethod" value="COD" id="pay-cod" th:checked="${form.paymentMethod?.name() == 'COD'}">
+							<svg th:replace="~{fragments/icon :: icon('cash')}"></svg>
+							<span class="pay-option-body"><strong>Cash on delivery</strong><span>Pay the rider in cash when your food arrives.</span></span>
+						</label>
+						<label class="pay-option">
+							<input class="radio" type="radio" name="paymentMethod" value="ONLINE" id="pay-online" th:checked="${form.paymentMethod?.name() == 'ONLINE'}">
+							<svg th:replace="~{fragments/icon :: icon('card')}"></svg>
+							<span class="pay-option-body"><strong>Pay online</strong><span>UPI or card on the next step. The kitchen gets your order once it is paid.</span></span>
+						</label>
+						<p class="field-error" th:if="${invalid}" id="paymentMethod-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:errors="*{paymentMethod}">Choose how you want to pay.</span></p>
+					</fieldset>
+				</section>
+			</div>
+
+			<!--/* The order summary and the place-order box */-->
+			<aside class="checkout-side" aria-labelledby="checkout-summary-title">
+				<section class="card checkout-summary">
+					<header class="cart-restaurant">
+						<img class="cart-restaurant-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="56" height="56">
+						<div>
+							<h2 class="checkout-summary-title" id="checkout-summary-title" th:text="${r.name}">Rassa Darbar</h2>
+							<p class="muted checkout-eta"><svg th:replace="~{fragments/icon :: icon('clock')}"></svg><span th:text="|Arrives in about ${r.deliveryMinutes} min|">Arrives in about 35 min</span></p>
+						</div>
+					</header>
+					<ul class="checkout-lines" aria-label="Your order">
+						<li th:each="line : ${cart.lines}" th:with="item=${line.item}" class="checkout-line">
+							<span th:replace="~{fragments/ui :: veg(${item.veg})}"></span>
+							<span class="checkout-line-name"><span class="checkout-line-qty" th:text="|${line.quantity} ×|">2 ×</span> <span th:text="${item.name}">Mutton Thali</span></span>
+							<span class="price" th:text="${@fmt.money(line.lineTotal)}">₹840.00</span>
+						</li>
+					</ul>
+					<p th:if="${cart.instructions != null}" class="checkout-note"><strong>Note for the restaurant:</strong> <span th:text="${cart.instructions}">Less spicy, please.</span></p>
+					<p class="checkout-edit"><a th:href="@{/cart}" href="/cart"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Edit dishes, note or coupon</a></p>
+
+					<p th:if="${coupon.notice != null}" class="alert alert-warning coupon-notice" role="status"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${coupon.notice}">We removed WELCOME50.</span></p>
+					<dl class="bill">
+						<div class="bill-row"><dt>Item total</dt><dd th:text="${@fmt.money(bill.itemTotal)}">₹458.00</dd></div>
+						<div th:if="${bill.discount.signum() > 0}" class="bill-row bill-discount"><dt th:text="|Coupon ${coupon.applied.code}|">Coupon WELCOME50</dt><dd th:text="|−${@fmt.money(bill.discount)}|">−₹50.00</dd></div>
+						<div class="bill-row">
+							<dt>Delivery fee</dt>
+							<dd th:if="${bill.deliveryFee.signum() > 0}" th:text="${@fmt.money(bill.deliveryFee)}">₹35.00</dd>
+							<dd th:if="${bill.deliveryFee.signum() == 0}"><s th:if="${r.deliveryFee.signum() > 0}" class="muted" th:text="${@fmt.money(r.deliveryFee)}">₹35.00</s> <span class="bill-free">FREE</span></dd>
+						</div>
+						<div class="bill-row"><dt>Platform fee</dt><dd th:text="${@fmt.money(bill.platformFee)}">₹5.00</dd></div>
+						<div class="bill-row"><dt th:text="|GST (${gstPercent}% on food)|">GST (5% on food)</dt><dd th:text="${@fmt.money(bill.gst)}">₹22.90</dd></div>
+						<div class="bill-row bill-total"><dt>To pay</dt><dd th:text="${@fmt.money(bill.grandTotal)}">₹520.90</dd></div>
+					</dl>
+				</section>
+
+				<div class="cart-checkout checkout-place">
+					<button type="submit" class="btn btn-primary btn-lg btn-block cart-checkout-btn" id="place-order">
+						<span>Place order</span><span class="cart-checkout-total" th:text="${@fmt.money(bill.grandTotal)}">₹520.90</span>
+					</button>
+					<p class="checkout-terms">By placing this order you agree to our <a th:href="@{/terms}" href="/terms">Terms</a> and <a th:href="@{/refund-policy}" href="/refund-policy">Refund policy</a>. You can cancel until the kitchen accepts it.</p>
+				</div>
+			</aside>
+		</form>
+	</div>
+</main>
+</body>
+</html>

@@ -148,6 +148,10 @@ public class Order extends BaseEntity {
 	@Column(name = "cancelled_by", length = 20)
 	private OrderActor.Kind cancelledBy;
 
+	/** The checkout form's one-time key: a second submit of the same form finds this order instead of a new one. */
+	@Column(name = "idempotency_key", length = 36, updatable = false)
+	private String idempotencyKey;
+
 	protected Order() {
 	}
 
@@ -258,6 +262,18 @@ public class Order extends BaseEntity {
 	/** Number of dishes (sum of quantities). */
 	public int getItemCount() {
 		return items.stream().mapToInt(OrderItem::getQuantity).sum();
+	}
+
+	/** Set once, at checkout, before the order is saved. */
+	public void setIdempotencyKey(String idempotencyKey) {
+		if (this.idempotencyKey != null) {
+			throw new IllegalStateException("The checkout key is already set");
+		}
+		this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
+	}
+
+	public String getIdempotencyKey() {
+		return idempotencyKey;
 	}
 
 	public void setRestaurantNote(String note) {

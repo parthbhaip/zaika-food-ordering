@@ -133,7 +133,7 @@ How this file works
   - Statuses: PENDING_PAYMENT, PLACED, ACCEPTED, PREPARING, READY_FOR_PICKUP, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, REJECTED.
   - `OrderWorkflow.transition(order, target, actor)` enforces allowed transitions and which role may make each one. Unit tests for every allowed and every forbidden transition.
 
-- [ ] T24 Checkout `/checkout`
+- [x] T24 Checkout `/checkout`
   - Pick or add an address inline, delivery instructions, payment method, order summary.
   - Server recomputes everything and validates: restaurant approved, open and accepting; items available; minimum order; coupon still valid.
   - Idempotency key stops duplicate orders on double submit. Order creation and cart clearing in one transaction. Tests.
