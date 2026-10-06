@@ -19,7 +19,6 @@ class UiKitController {
 	@GetMapping("/dev/ui-kit")
 	String uiKit(Model model) {
 		model.addAttribute("icons", ICONS);
-		model.addAttribute("cartCount", 2); // shows the header cart badge
 		return "dev/ui-kit";
 	}
 

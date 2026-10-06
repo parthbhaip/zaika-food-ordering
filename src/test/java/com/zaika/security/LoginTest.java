@@ -8,6 +8,7 @@ import static org.springframework.security.test.web.servlet.response.SecurityMoc
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -188,11 +189,20 @@ class LoginTest {
 		for (MockHttpServletRequestBuilder denied : List.of(get("/account/addresses").header("HX-Request", "true"),
 				get("/.well-known/change-password"))) {
 			MockHttpSession session = (MockHttpSession) mvc.perform(denied)
-				.andExpect(redirectedUrl("/login"))
 				.andReturn().getRequest().getSession();
 			mvc.perform(login(customer.getEmail(), PASSWORD).session(session))
 				.andExpect(redirectedUrl("/"));
 		}
+	}
+
+	@Test
+	void anHtmxRequestThatNeedsASignInSendsTheWholePageToTheLoginPage() throws Exception {
+		// htmx would follow a redirect and swap the login page into its target (a 10 s order-tracking poll)
+		mvc.perform(get("/orders/ZK-26-000123/track").header("HX-Request", "true"))
+			.andExpect(status().isUnauthorized())
+			.andExpect(header().string("HX-Redirect", "/login"))
+			.andExpect(header().doesNotExist("Location"));
+		mvc.perform(get("/orders/ZK-26-000123/track")).andExpect(redirectedUrl("/login"));
 	}
 
 	@Test

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -73,6 +74,11 @@ public class CartService {
 			throw new IllegalArgumentException("Quantity must not be negative");
 		}
 		MenuItem item = visibleItem(itemId);
+		return guarded(owner, () -> change(owner, item, quantity, startNew));
+	}
+
+	private CartChange change(CartOwner owner, MenuItem item, int quantity, boolean startNew) {
+		long itemId = item.getId();
 		CartContents cart = loadForUpdate(owner, true);
 		int current = cart.quantities().getOrDefault(itemId, 0);
 		int target = Math.min(quantity, MAX_QUANTITY);
@@ -110,6 +116,10 @@ public class CartService {
 	 * change comes back as a notice, once.
 	 */
 	public CartView view(CartOwner owner) {
+		return guarded(owner, () -> recheck(owner));
+	}
+
+	private CartView recheck(CartOwner owner) {
 		CartContents cart = loadForUpdate(owner, false);
 		Map<Long, Integer> quantities = cart.quantities();
 		if (quantities.isEmpty()) {
@@ -177,14 +187,19 @@ public class CartService {
 			case CartOwner.Customer customer -> carts.summarize(customer.userId());
 			case CartOwner.Guest guest -> {
 				GuestCart cart = guest.cart();
-				Map<Long, Integer> quantities = cart.quantities();
-				Long restaurantId = cart.restaurantId();
+				Map<Long, Integer> quantities;
+				Long restaurantId;
+				BigDecimal total;
+				synchronized (cart) { // one consistent reading, not a line removed halfway by a parallel request
+					quantities = cart.quantities();
+					restaurantId = cart.restaurantId();
+					total = quantities.entrySet().stream()
+						.map(e -> cart.seenPrice(e.getKey()).multiply(BigDecimal.valueOf(e.getValue())))
+						.reduce(BigDecimal.ZERO, BigDecimal::add);
+				}
 				if (quantities.isEmpty() || restaurantId == null) {
 					yield CartSummary.EMPTY;
 				}
-				BigDecimal total = quantities.entrySet().stream()
-					.map(e -> cart.seenPrice(e.getKey()).multiply(BigDecimal.valueOf(e.getValue())))
-					.reduce(BigDecimal.ZERO, BigDecimal::add);
 				int count = quantities.values().stream().mapToInt(Integer::intValue).sum();
 				yield new CartSummary(count, total.setScale(2), restaurants.findById(restaurantId)
 					.map(Restaurant::getName).orElse(null));
@@ -203,12 +218,14 @@ public class CartService {
 		if (note != null && note.length() > MAX_INSTRUCTIONS) {
 			throw new IllegalArgumentException("Note longer than " + MAX_INSTRUCTIONS);
 		}
-		CartContents cart = loadForUpdate(owner, false);
-		if (cart.quantities().isEmpty()) {
-			return false;
-		}
-		cart.setInstructions(note);
-		return true;
+		return guarded(owner, () -> {
+			CartContents cart = loadForUpdate(owner, false);
+			if (cart.quantities().isEmpty()) {
+				return false;
+			}
+			cart.setInstructions(note);
+			return true;
+		});
 	}
 
 	/** Whether the restaurant takes orders right now: accepting orders and within its hours. */
@@ -272,6 +289,20 @@ public class CartService {
 		return items.findWithRestaurantById(itemId)
 			.filter(item -> !item.isArchived() && item.getRestaurant().getStatus() == RestaurantStatus.APPROVED)
 			.orElseThrow(() -> new NotFoundException("Menu item " + itemId));
+	}
+
+	/**
+	 * Runs {@code work} as one step: a guest's session cart is held under its own lock for the whole read-check-write
+	 * (parallel requests of one session, such as two tabs, share it); a customer's cart is serialized by the account
+	 * row lock {@link #loadForUpdate} takes.
+	 */
+	private static <T> T guarded(CartOwner owner, Supplier<T> work) {
+		if (owner instanceof CartOwner.Guest guest) {
+			synchronized (guest.cart()) {
+				return work.get();
+			}
+		}
+		return work.get();
 	}
 
 	private CartContents load(CartOwner owner) {

@@ -19,5 +19,8 @@
 	<div class="toast-body"><span class="toast-title" th:text="${message}">Address saved</span></div>
 	<button th:fragment="close" type="button" class="toast-close" data-toast-close aria-label="Dismiss"><svg th:replace="~{fragments/icon :: icon('x')}"></svg></button>
 </div>
+
+<!--/* The whole answer to an htmx request that failed (common.HtmxErrors), swapped beforeend into #toasts. Model: message. */-->
+<th:block th:fragment="htmx-error"><div th:replace="~{fragments/flash :: toast('error', ${message})}"></div></th:block>
 </body>
 </html>

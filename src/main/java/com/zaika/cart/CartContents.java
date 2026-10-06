@@ -20,7 +20,10 @@ interface CartContents {
 	/** The price the customer last saw for this dish. */
 	BigDecimal seenPrice(long itemId);
 
-	/** Sets the dish's quantity (adding it if needed) and remembers its current price as seen. */
+	/**
+	 * Sets the dish's quantity. A new dish remembers its current price as seen; a dish already in the cart keeps the
+	 * price remembered for it, so a price change is still reported (and acknowledged) by {@link CartService#view}.
+	 */
 	void put(MenuItem item, int quantity);
 
 	/** Remembers {@code price} as the one the customer has now seen. */

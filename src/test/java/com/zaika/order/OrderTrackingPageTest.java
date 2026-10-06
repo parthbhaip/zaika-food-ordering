@@ -494,6 +494,20 @@ class OrderTrackingPageTest {
 	}
 
 	@Test
+	void anUnpaidOrderIsCancelledOnItsPaymentPageNotHere() throws Exception {
+		User me = orders.customer();
+		String unpaid = orders.create(me.getId(), thali.getId(), 1, PaymentMethod.ONLINE).getCode();
+		String message = "Finish or skip payment first. You can also cancel this unpaid order here.";
+
+		// straight to the payment page: the tracking page would redirect there and lose the toast on the way
+		mvc.perform(cancel(me, unpaid, "Ordered by mistake", null)).andExpect(redirectedUrl("/pay/" + unpaid))
+			.andExpect(flash().attribute("flashError", message));
+		mvc.perform(cancel(me, unpaid, null, null)).andExpect(redirectedUrl("/pay/" + unpaid))
+			.andExpect(flash().attribute("flashError", message));
+		assertThat(order(unpaid)).containsEntry("status", "PENDING_PAYMENT").containsEntry("cancel_reason", null);
+	}
+
+	@Test
 	void cancellingTwiceSaysItIsAlreadyCancelled() throws Exception {
 		User me = orders.customer();
 		String code = place(me, OrderStatus.PLACED);

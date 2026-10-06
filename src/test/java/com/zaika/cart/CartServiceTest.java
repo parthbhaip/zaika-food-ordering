@@ -6,6 +6,9 @@ import static org.assertj.core.api.Assertions.entry;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -286,6 +289,42 @@ class CartServiceTest {
 		assertThat(view.notices()).containsExactly("Tambda Rassa Thali now costs ₹440 (was ₹420).");
 		assertThat(view.itemTotal()).isEqualByComparingTo("880.00");
 		assertThat(carts.view(owner).notices()).isEmpty();
+	}
+
+	@Test
+	void changingTheQuantityKeepsTheRememberedPriceSoTheCartStillReportsTheChange() {
+		for (CartOwner owner : new CartOwner[] { customer(), new CartOwner.Guest(new GuestCart()) }) {
+			MenuItem thali = dish(rassa, "Kolhapuri Thali", "420");
+			carts.setQuantity(owner, thali.getId(), 1, false);
+			change(thali, item -> item.setPrice(new BigDecimal("440")));
+
+			carts.setQuantity(owner, thali.getId(), 2, false); // "+" on the restaurant page
+			carts.setQuantity(owner, thali.getId(), 1, false); // "-"
+
+			assertThat(carts.view(owner).notices()).containsExactly("Kolhapuri Thali now costs ₹440 (was ₹420).");
+			assertThat(carts.view(owner).notices()).isEmpty();
+		}
+	}
+
+	@Test
+	void aGuestCartIsHeldUnderItsLockForAWholeChange() {
+		MenuItem thali = dish(rassa, "Guest Thali", "300");
+		List<Boolean> locked = new ArrayList<>();
+		GuestCart cart = new GuestCart() { // records whether each read happens inside the service's lock
+			@Override
+			public Map<Long, Integer> quantities() {
+				locked.add(Thread.holdsLock(this));
+				return super.quantities();
+			}
+		};
+		CartOwner guest = new CartOwner.Guest(cart);
+
+		carts.setQuantity(guest, thali.getId(), 2, false);
+		carts.view(guest);
+		carts.saveInstructions(guest, "Less spicy");
+		carts.summary(guest);
+
+		assertThat(locked).hasSizeGreaterThanOrEqualTo(4).containsOnly(true);
 	}
 
 	@Test

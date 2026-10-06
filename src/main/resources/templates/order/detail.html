@@ -37,9 +37,12 @@
 		<!--/* Where the order stands */-->
 		<div th:if="${detail.awaitingPayment()}" class="alert alert-warning order-alert" role="status">
 			<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
-			<div>
+			<div th:unless="${detail.paymentTimeUp()}">
 				<p><strong>Waiting for your payment.</strong> Pay by <strong th:text="${@fmt.time(detail.payBy())}">7:45 PM</strong> or we cancel this order automatically. You have not been charged.</p>
 				<a class="btn btn-primary btn-sm" th:href="@{/pay/{code}(code=${order.code})}" href="/pay/ZK-26-000123">Complete payment</a>
+			</div>
+			<div th:if="${detail.paymentTimeUp()}">
+				<p><strong>Payment time is up.</strong> We are cancelling this unpaid order. You have not been charged.</p>
 			</div>
 		</div>
 		<div th:if="${detail.live()}" class="alert alert-info order-alert" role="status">

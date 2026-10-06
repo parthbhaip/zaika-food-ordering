@@ -29,7 +29,7 @@ import com.zaika.security.CurrentUser;
  */
 @Controller
 @RequestMapping("/orders")
-class OrderController {
+public class OrderController {
 
 	static final String LIST_VIEW = "order/list";
 
@@ -38,7 +38,7 @@ class OrderController {
 	static final String TRACK_VIEW = "order/track";
 
 	/** Flash attribute set by checkout and payment right after an order reaches the kitchen. */
-	static final String PLACED = "placed";
+	public static final String PLACED = "placed";
 
 	private final OrderHistoryService history;
 
@@ -109,8 +109,7 @@ class OrderController {
 				showTracking(t, form, true, model);
 				return TRACK_VIEW;
 			}
-			redirect.addFlashAttribute("flashError", tooLate(t.order()));
-			return "redirect:/orders/" + code + "/track";
+			return cannotCancel(t.order(), redirect);
 		}
 		OrderTrackingService.CancelResult result = tracking.cancel(me.getId(), code, form.fullReason());
 		Order order = result.order();
@@ -125,14 +124,24 @@ class OrderController {
 			redirect.addFlashAttribute("flashInfo", "This order is already cancelled.");
 		}
 		else {
-			redirect.addFlashAttribute("flashError", tooLate(order));
+			return cannotCancel(order, redirect);
 		}
 		return "redirect:/orders/" + code + "/track";
 	}
 
-	private static String tooLate(Order order) {
-		return "Too late to cancel: this order is now “" + order.getStatus().getLabel()
-				+ "”. Need help with it? Contact us.";
+	/**
+	 * Why the order cannot be cancelled here. An unpaid one is the payment page's business (pay, switch to cash or
+	 * cancel there); any other has moved on past PLACED.
+	 */
+	private static String cannotCancel(Order order, RedirectAttributes redirect) {
+		if (order.getStatus() == OrderStatus.PENDING_PAYMENT) {
+			redirect.addFlashAttribute("flashError",
+					"Finish or skip payment first. You can also cancel this unpaid order here.");
+			return "redirect:/pay/" + order.getCode();
+		}
+		redirect.addFlashAttribute("flashError", "Too late to cancel: this order is now “"
+				+ order.getStatus().getLabel() + "”. Need help with it? Contact us.");
+		return "redirect:/orders/" + order.getCode() + "/track";
 	}
 
 	private static void showTracking(OrderTrackingService.Tracking t, CancelOrderForm form, boolean cancelOpen,

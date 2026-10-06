@@ -13,3 +13,11 @@ document.addEventListener('htmx:configRequest', function (event) {
     event.detail.headers[header.content] = token.content;
   }
 });
+
+// htmx swaps nothing for an error status. An error answer that names its own target (HX-Retarget: the error toast
+// of common.HtmxErrors) is shown anyway, so a failed click never goes silent.
+document.addEventListener('htmx:beforeSwap', function (event) {
+  if (event.detail.isError && event.detail.xhr.getResponseHeader('HX-Retarget')) {
+    event.detail.shouldSwap = true;
+  }
+});

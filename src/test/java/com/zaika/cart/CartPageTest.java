@@ -7,11 +7,13 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -25,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import com.zaika.catalog.MenuCategoryRepository;
@@ -354,6 +357,28 @@ class CartPageTest {
 			.andExpect(status().isForbidden());
 	}
 
+	@Test
+	void theUrlRulesKeepStaffOutOfTheCartBeforeAnyControllerRuns() throws Exception {
+		MenuItem thali = dish(rassa, "Bombil Thali", "480");
+		for (String role : new String[] { "RESTAURANT_OWNER", "DELIVERY_PARTNER", "ADMIN" }) {
+			RequestPostProcessor staff = user("staff-" + role).roles(role);
+			for (MockHttpServletRequestBuilder request : List.of(get("/cart").with(staff),
+					get("/cart/sign-in").with(staff), get("/cart/replace/" + thali.getId()).with(staff),
+					post("/cart/items/" + thali.getId()).param("quantity", "1").with(staff).with(csrf()))) {
+				mvc.perform(request).andExpect(status().isForbidden())
+					.andExpect(result -> assertThat(result.getModelAndView()).as("no controller ran").isNull());
+			}
+		}
+
+		mvc.perform(get("/cart")).andExpect(status().isOk());
+		mvc.perform(post("/cart/items/" + thali.getId()).param("quantity", "1").with(csrf()))
+			.andExpect(status().isFound());
+		mvc.perform(get("/cart/sign-in")).andExpect(redirectedUrl("/login")); // a guest signs in first
+		User customer = customer();
+		mvc.perform(get("/cart").with(as(customer))).andExpect(status().isOk());
+		mvc.perform(get("/cart/sign-in").with(as(customer))).andExpect(redirectedUrl("/cart"));
+	}
+
 	// ---------------------------------------------------------------- htmx: fragments, count, cart bar and toasts out of band
 
 	@Test
@@ -570,6 +595,25 @@ class CartPageTest {
 		User owner = users.findByEmailIgnoreCase("sunrise-misal@fixtures.zaika.test").orElseThrow();
 		assertThat(squash(mvc.perform(get("/r/sunrise-misal").with(as(owner))).andReturn().getResponse()
 			.getContentAsString())).doesNotContain("class=\"cart-bar\"");
+	}
+
+	@Test
+	void anHtmxAddThatFailsAnswersWithAnErrorToastNotAPage() throws Exception {
+		MenuItem thali = dish(rassa, "Fish Thali", "500");
+		MockHttpSession session = new MockHttpSession();
+		thali.setArchived(true); // taken off the menu while the page was open
+		thali = items.save(thali);
+
+		MvcResult gone = mvc.perform(post("/cart/items/" + thali.getId()).header("HX-Request", "true")
+			.param("quantity", "1").session(session).with(csrf())).andExpect(status().isNotFound())
+			.andExpect(header().string("HX-Retarget", "#toasts")).andExpect(header().string("HX-Reswap", "beforeend"))
+			.andReturn();
+		assertThat(body(gone)).startsWith("<div class=\"toast toast-error\" role=\"alert\">")
+			.contains("That’s no longer available. Refresh the page to see what’s changed.").doesNotContain("<html");
+
+		// an expired CSRF token: Spring Security's 403 goes through Boot's /error (see ErrorPagesTest)
+		mvc.perform(post("/cart/items/" + thali.getId()).header("HX-Request", "true").param("quantity", "1")
+			.session(session)).andExpect(status().isForbidden());
 	}
 
 	@Test

@@ -3,6 +3,7 @@ package com.zaika.order;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +44,9 @@ public class Order extends BaseEntity {
 
 	/** Most a cancel or reject reason may hold. */
 	public static final int MAX_REASON = 500;
+
+	/** How long an online order waits for its payment before it is cancelled. */
+	public static final Duration PAY_WITHIN = Duration.ofMinutes(15);
 
 	private static final SecureRandom OTP_RANDOM = new SecureRandom();
 
@@ -205,7 +209,6 @@ public class Order extends BaseEntity {
 
 	/** Moves to {@code target} and stamps its timestamp. Only {@link OrderWorkflow} calls this. */
 	void moveTo(OrderStatus target, LocalDateTime at) {
-		status = target;
 		switch (target) {
 			case PENDING_PAYMENT -> throw new IllegalArgumentException("No order goes back to awaiting payment");
 			case PLACED -> placedAt = at;
@@ -217,6 +220,12 @@ public class Order extends BaseEntity {
 			case CANCELLED -> cancelledAt = at;
 			case REJECTED -> rejectedAt = at;
 		}
+		status = target; // only once the move is known to be possible
+	}
+
+	/** When an unpaid online order is cancelled automatically: {@link #PAY_WITHIN} after checkout. */
+	public LocalDateTime payBy() {
+		return getCreatedAt().plus(PAY_WITHIN);
 	}
 
 	void recordCancellation(String reason, OrderActor.Kind by) {

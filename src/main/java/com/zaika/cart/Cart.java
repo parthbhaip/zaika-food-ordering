@@ -81,8 +81,7 @@ public class Cart extends BaseEntity implements CartContents {
 	public void put(MenuItem menuItem, int quantity) {
 		Optional<CartItem> line = find(menuItem.getId());
 		if (line.isPresent()) {
-			line.get().setQuantity(quantity);
-			line.get().setUnitPrice(menuItem.getPrice());
+			line.get().setQuantity(quantity); // keeps the price they saw: a change still shows on the cart page
 		}
 		else {
 			items.add(new CartItem(this, menuItem, quantity));

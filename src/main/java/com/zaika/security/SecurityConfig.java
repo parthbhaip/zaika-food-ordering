@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,6 +21,10 @@ import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
+import org.springframework.security.authorization.AuthenticatedAuthorizationManager;
+import org.springframework.security.authorization.AuthorityAuthorizationManager;
+import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.authorization.AuthorizationManagers;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.RememberMeAuthenticationProvider;
@@ -28,6 +33,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
@@ -57,7 +64,11 @@ public class SecurityConfig {
 
 	static final String[] PUBLIC_PAGES = { "/", "/about", "/contact", "/terms", "/privacy", "/refund-policy", "/error",
 			"/login", "/register", "/forgot-password", "/reset-password", "/restaurants/**", "/r/**", "/search/**",
-			"/cart/**", "/partner-with-us/**" };
+			"/partner-with-us/**" };
+
+	/** The cart is for guests and customers; staff accounts have none (CartController checks it again). */
+	static final AuthorizationManager<RequestAuthorizationContext> GUEST_OR_CUSTOMER = AuthorizationManagers.anyOf(
+			AuthenticatedAuthorizationManager.anonymous(), AuthorityAuthorizationManager.hasRole(Role.CUSTOMER.name()));
 
 	static final String[] STATIC_ASSETS = { "/css/**", "/js/**", "/img/**", "/fonts/**", "/webjars/**", "/favicon.ico",
 			"/uploads/**", "/placeholder/**" };
@@ -108,6 +119,7 @@ public class SecurityConfig {
 			UserService userService, LoginSuccessHandler successHandler, Clock clock, Environment env,
 			@Value("${app.remember-me-key:}") String rememberMeKey) throws Exception {
 		boolean dev = env.acceptsProfiles(Profiles.of("dev"));
+		LoginUrlAuthenticationEntryPoint toLogin = new LoginUrlAuthenticationEntryPoint("/login");
 		String key = rememberMeKey.isBlank() ? randomKey() : rememberMeKey;
 
 		// A sign-in lock (too many wrong passwords) rejects even the right password, before it is checked, so
@@ -135,8 +147,9 @@ public class SecurityConfig {
 				// error pages render for everyone, so anonymous 404s and crashes show the branded page
 				auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 					.requestMatchers(STATIC_ASSETS).permitAll()
-					// inside the public /cart/**: the cart page's "Sign in to apply a coupon" link, back to the cart
-					.requestMatchers("/cart/sign-in").authenticated()
+					// the cart page's "Sign in to apply a coupon" link: sign-in leads back to the cart
+					.requestMatchers("/cart/sign-in").hasRole(Role.CUSTOMER.name())
+					.requestMatchers("/cart/**").access(GUEST_OR_CUSTOMER)
 					.requestMatchers(PUBLIC_PAGES).permitAll();
 				if (dev) {
 					auth.requestMatchers("/dev/**").permitAll();
@@ -144,6 +157,16 @@ public class SecurityConfig {
 				AREAS.forEach((prefix, role) -> auth.requestMatchers(prefix + "/**").hasRole(role.name()));
 				auth.anyRequest().authenticated();
 			})
+			// htmx would follow the redirect and swap the whole login page into its target (a tracking poll, say):
+			// htmx requests get 401 and HX-Redirect, which sends the browser itself to the login page
+			.exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, denied) -> {
+				if (request.getHeader("HX-Request") == null) {
+					toLogin.commence(request, response, denied);
+					return;
+				}
+				response.setHeader("HX-Redirect", request.getContextPath() + "/login");
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			}))
 			.formLogin(form -> form
 				.loginPage("/login")
 				.usernameParameter("email")

@@ -426,6 +426,19 @@ class PaymentPageTest {
 		assertThat(order(code)).containsEntry("status", "PLACED").containsEntry("payment_status", "PAID");
 	}
 
+	@Test
+	void anUnpaidCouponOrderShowsItsCouponAndDiscountOnThePaymentPage() throws Exception {
+		coupons.save(new Coupon("PAYSHOW25", "₹25 off.", CouponType.FLAT, new BigDecimal("25"),
+				MutableClock.DEFAULT_NOW.minusDays(1)));
+		User me = orders.customer();
+		carts.setQuantity(new CartOwner.Customer(me.getId()), thali.getId(), 1, false);
+		assertThat(couponService.apply(me.getId(), "PAYSHOW25").applied()).isTrue();
+		String code = checkOutOnline(me);
+
+		assertThat(html(get("/pay/" + code).with(as(me))))
+			.contains("<div class=\"bill-row bill-discount\"><dt>Coupon PAYSHOW25</dt><dd>−₹25.00</dd></div>");
+	}
+
 	// ---------------------------------------------------------------- cancelling and expiry
 
 	@Test

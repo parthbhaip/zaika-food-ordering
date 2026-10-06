@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -23,6 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -123,6 +125,39 @@ class ErrorPagesTest {
 			.andExpect(content().string(allOf(
 					containsString(">503<"),
 					containsString("Something got burnt in our kitchen"))));
+	}
+
+	@Test
+	void htmxRequestsGetAnErrorToastForTheToastStackInsteadOfAPage() throws Exception {
+		assertToast(mvc.perform(get("/probe/missing-dish").header("HX-Request", "true")).andExpect(status().isNotFound()),
+				"That’s no longer available. Refresh the page to see what’s changed.");
+		assertToast(mvc.perform(get("/probe/someone-elses-order").header("HX-Request", "true"))
+			.andExpect(status().isForbidden()), "That didn’t go through. Refresh the page and try again.");
+		// Boot's error dispatch: Spring Security's 403 (an expired CSRF token), other client errors, crashes
+		assertToast(mvc.perform(htmxErrorForward(403, "/cart/items/5")).andExpect(status().isForbidden()),
+				"That didn’t go through. Refresh the page and try again.");
+		assertToast(mvc.perform(htmxErrorForward(400, "/cart/items/5")).andExpect(status().isBadRequest()),
+				"That didn’t go through. Refresh the page and try again.");
+		assertToast(mvc.perform(htmxErrorForward(500, "/orders/ZK-26-000001/track"))
+			.andExpect(status().isInternalServerError()), "Something went wrong on our side. Please try again in a moment.");
+		// without the header: the branded page, as before
+		mvc.perform(errorForward(404, "/r/gone")).andExpect(view().name("error/404"))
+			.andExpect(header().doesNotExist("HX-Retarget"));
+	}
+
+	private static void assertToast(ResultActions result, String message) throws Exception {
+		result.andExpect(header().string("HX-Retarget", "#toasts"))
+			.andExpect(header().string("HX-Reswap", "beforeend"))
+			.andExpect(view().name("fragments/flash :: htmx-error"))
+			.andExpect(content().string(allOf(containsString("class=\"toast toast-error\" role=\"alert\""),
+					containsString(message), not(containsString("<html")))));
+	}
+
+	/** Boot's error dispatch of an htmx request: htmx sends no Accept header of its own. */
+	private static MockHttpServletRequestBuilder htmxErrorForward(int status, String originalUri) {
+		return get("/error").header("HX-Request", "true")
+			.requestAttr(RequestDispatcher.ERROR_STATUS_CODE, status)
+			.requestAttr(RequestDispatcher.ERROR_REQUEST_URI, originalUri);
 	}
 
 	@Test

@@ -182,12 +182,12 @@ class CartController {
 	}
 
 	/**
-	 * Guests reach this through sign-in (it needs an account, see SecurityConfig), so they come back to their cart,
-	 * now merged into the account. Staff have no cart and go home.
+	 * Guests reach this through sign-in (it needs a customer account, see SecurityConfig), so they come back to their
+	 * cart, now merged into the account.
 	 */
 	@GetMapping("/cart/sign-in")
-	String signInForCart(HttpServletRequest request) {
-		return CartOwner.of(request, false) == null ? "redirect:/" : "redirect:/cart";
+	String signInForCart() {
+		return "redirect:/cart";
 	}
 
 	/** The bill box after a coupon change (htmx); the whole page if the cart was emptied meanwhile. */

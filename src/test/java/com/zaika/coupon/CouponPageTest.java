@@ -350,7 +350,7 @@ class CouponPageTest {
 		mvc.perform(post("/cart/coupon").param("code", "ANYCODE").with(as(owner)).with(csrf()))
 			.andExpect(status().isForbidden());
 		mvc.perform(post("/cart/coupon/remove").with(as(owner)).with(csrf())).andExpect(status().isForbidden());
-		mvc.perform(get("/cart/sign-in").with(as(owner))).andExpect(redirectedUrl("/"));
+		mvc.perform(get("/cart/sign-in").with(as(owner))).andExpect(status().isForbidden());
 
 		mvc.perform(post("/cart/coupon").param("code", "ANYCODE").with(as(customerWith(thali, 1))))
 			.andExpect(status().isForbidden());

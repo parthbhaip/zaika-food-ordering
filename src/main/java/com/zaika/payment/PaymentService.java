@@ -1,9 +1,9 @@
 package com.zaika.payment;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -21,11 +21,12 @@ import com.zaika.order.OrderRepository;
 import com.zaika.order.OrderStatus;
 import com.zaika.order.OrderWorkflow;
 import com.zaika.order.PaymentMethod;
+import com.zaika.order.PaymentReceipts;
 
 /**
  * Online payment for orders that checkout left at PENDING_PAYMENT. The customer pays through the
  * {@link PaymentGateway} (success: PLACED and PAID; decline: the order keeps waiting, payment FAILED), switches to
- * cash on delivery (PLACED straight away), or cancels. An order not paid within {@link #PAY_WITHIN} is cancelled by
+ * cash on delivery (PLACED straight away), or cancels. An order not paid within {@link Order#PAY_WITHIN} is cancelled by
  * the system, by {@link #expireUnpaid()} every minute, and also on the spot whenever its payment page is used after
  * the deadline. A cancelled or expired order gives its coupon use back.
  *
@@ -33,10 +34,7 @@ import com.zaika.order.PaymentMethod;
  * Customers only ever see their own orders: anyone else's code is a 404.
  */
 @Service
-public class PaymentService {
-
-	/** How long an online order waits for its payment. */
-	public static final Duration PAY_WITHIN = Duration.ofMinutes(15);
+public class PaymentService implements PaymentReceipts {
 
 	static final String EXPIRED_REASON = "Not paid within 15 minutes";
 
@@ -127,7 +125,7 @@ public class PaymentService {
 	}
 
 	/**
-	 * Cancels every order still unpaid {@link #PAY_WITHIN} after checkout. Each order gets its own transaction and
+	 * Cancels every order still unpaid {@link Order#PAY_WITHIN} after checkout. Each order gets its own transaction and
 	 * row lock, so one failure does not stop the rest and a payment arriving at the same moment wins or loses cleanly.
 	 * Runs every minute ({@code app.payments.expiry-cron}; "-" switches it off, as the tests do).
 	 *
@@ -136,7 +134,7 @@ public class PaymentService {
 	@Scheduled(cron = "${app.payments.expiry-cron}")
 	public int expireUnpaid() {
 		List<Long> due = orders.findIdsByStatusCreatedUpTo(OrderStatus.PENDING_PAYMENT,
-				LocalDateTime.now(clock).minus(PAY_WITHIN));
+				LocalDateTime.now(clock).minus(Order.PAY_WITHIN));
 		int expired = 0;
 		for (Long id : due) {
 			try {
@@ -150,14 +148,21 @@ public class PaymentService {
 			}
 		}
 		if (expired > 0) {
-			log.info("Cancelled {} unpaid order(s) after {} minutes", expired, PAY_WITHIN.toMinutes());
+			log.info("Cancelled {} unpaid order(s) after {} minutes", expired, Order.PAY_WITHIN.toMinutes());
 		}
 		return expired;
 	}
 
 	/** When an unpaid order is cancelled automatically. */
 	public LocalDateTime deadline(Order order) {
-		return order.getCreatedAt().plus(PAY_WITHIN);
+		return order.payBy();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<Receipt> paidWith(long orderId) {
+		return payments.findFirstByOrderIdAndStatusOrderByIdDesc(orderId, Payment.Status.SUCCEEDED)
+			.map(payment -> new Receipt(payment.getInstrument(), payment.getGatewayReference()));
 	}
 
 	/** Still awaiting an online payment, after expiring it if its time is up. */

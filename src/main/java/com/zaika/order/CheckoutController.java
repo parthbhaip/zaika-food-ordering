@@ -82,7 +82,9 @@ class CheckoutController {
 				errors.rejectValue("newAddress." + v.getPropertyPath(), "invalid", v.getMessage());
 			}
 		}
-		if (errors.hasErrors()) {
+		// a total that is not a number only comes from a tampered request: no field to mark, so it goes on as a
+		// changed total (left empty, CheckoutService answers with the current one)
+		if (errors.getErrorCount() > errors.getFieldErrorCount("expectedTotal")) {
 			model.addAttribute("checkoutError", "Your order was not placed. Fix the fields marked below.");
 			return show(me, form, model, redirect);
 		}

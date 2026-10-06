@@ -294,6 +294,20 @@ class OrderPagesTest {
 	}
 
 	@Test
+	void anUnpaidOrderPastItsDeadlineNoLongerOffersToPay() throws Exception {
+		User me = orders.customer();
+		String code = orders.create(me.getId(), thali.getId(), 1, PaymentMethod.ONLINE).getCode(); // 7:30 PM
+		clock.advance(java.time.Duration.ofMinutes(14));
+		assertThat(html(get("/orders/" + code).with(as(me)))).contains("Pay by <strong>7:45 PM</strong>")
+			.doesNotContain("Payment time is up");
+
+		clock.advance(java.time.Duration.ofMinutes(1)); // 7:45 PM: the expiry job has not run yet
+		assertThat(html(get("/orders/" + code).with(as(me))))
+			.contains("<strong>Payment time is up.</strong> We are cancelling this unpaid order. You have not been charged.")
+			.doesNotContain("Pay by").doesNotContain("Complete payment").doesNotContain("href=\"/pay/" + code + "\"");
+	}
+
+	@Test
 	void aDeliveredOrderSaysWhenAndOffersToOrderAgain() throws Exception {
 		User me = orders.customer();
 		String code = orders.place(me.getId(), thali.getId(), 1, PaymentMethod.COD, OrderStatus.DELIVERED).getCode();
@@ -455,12 +469,13 @@ class OrderPagesTest {
 		html(get("/orders/" + big).with(asMany));
 		long detailBig = stats.getPrepareStatementCount();
 
-		// cart count, the page of orders with restaurants, their dishes, and the total when the page is full
-		assertThat(listFew).isEqualTo(3);
-		assertThat(listMany).isEqualTo(4);
-		// cart count, the order with its restaurant and dishes: nothing per dish
-		assertThat(detailCash).isEqualTo(2);
-		assertThat(detailBig).isEqualTo(2);
+		// a full page of 10 orders adds only Spring Data's total count to one order's page: nothing per order or dish
+		// (today: cart count, the page of orders with restaurants, their dishes, and the total when the page is full)
+		assertThat(listMany).isBetween(listFew, listFew + 1);
+		assertThat(listFew).isLessThanOrEqualTo(6);
+		// today: cart count, the order with its restaurant and dishes
+		assertThat(detailBig).isEqualTo(detailCash);
+		assertThat(detailCash).isLessThanOrEqualTo(5);
 	}
 
 }

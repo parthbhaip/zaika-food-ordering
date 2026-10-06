@@ -1,5 +1,6 @@
 package com.zaika.order;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
@@ -8,9 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zaika.common.NotFoundException;
-import com.zaika.payment.Payment;
-import com.zaika.payment.PaymentRepository;
-import com.zaika.payment.PaymentService;
+import com.zaika.order.PaymentReceipts.Receipt;
 
 /**
  * What a customer sees of their own orders: the paginated history and one order's details. Only ever the signed-in
@@ -24,11 +23,14 @@ public class OrderHistoryService {
 
 	private final OrderRepository orders;
 
-	private final PaymentRepository payments;
+	private final PaymentReceipts payments;
 
-	OrderHistoryService(OrderRepository orders, PaymentRepository payments) {
+	private final Clock clock;
+
+	OrderHistoryService(OrderRepository orders, PaymentReceipts payments, Clock clock) {
 		this.orders = orders;
 		this.payments = payments;
+		this.clock = clock;
 	}
 
 	/**
@@ -50,15 +52,14 @@ public class OrderHistoryService {
 	public Detail detail(long customerId, String code) {
 		Order order = orders.findByCodeAndCustomerId(code, customerId)
 			.orElseThrow(() -> new NotFoundException("Order " + code + " for customer " + customerId));
-		Payment payment = order.getPaymentMethod() == PaymentMethod.ONLINE
-				? payments.findFirstByOrderIdAndStatusOrderByIdDesc(order.getId(), Payment.Status.SUCCEEDED)
-					.orElse(null)
+		Receipt payment = order.getPaymentMethod() == PaymentMethod.ONLINE
+				? payments.paidWith(order.getId()).orElse(null)
 				: null;
-		return new Detail(order, payment);
+		return new Detail(order, payment, LocalDateTime.now(clock));
 	}
 
-	/** An order page's data. {@code payment} is the successful online payment, or null. */
-	public record Detail(Order order, Payment payment) {
+	/** An order page's data, as of {@code now}. {@code payment} is the successful online payment, or null. */
+	public record Detail(Order order, Receipt payment, LocalDateTime now) {
 
 		/** Still waiting for an online payment: the page offers to finish it. */
 		public boolean awaitingPayment() {
@@ -67,7 +68,12 @@ public class OrderHistoryService {
 
 		/** When an unpaid order is cancelled automatically. */
 		public LocalDateTime payBy() {
-			return order.getCreatedAt().plus(PaymentService.PAY_WITHIN);
+			return order.payBy();
+		}
+
+		/** Awaiting payment past its deadline: the expiry job cancels it any moment, so paying is no longer offered. */
+		public boolean paymentTimeUp() {
+			return awaitingPayment() && !now.isBefore(payBy());
 		}
 
 		/** On its way through the kitchen and to the door. */

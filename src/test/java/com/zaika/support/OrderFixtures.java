@@ -85,7 +85,11 @@ public class OrderFixtures {
 		});
 	}
 
-	/** {@link #create} then walks the order to {@code target} the way the people involved would. */
+	/**
+	 * {@link #create} then walks the order to {@code target} the way the people involved would. CANCELLED is
+	 * cancelled by the customer before it was placed (never paid); see {@link #placeThenCancel} for one cancelled
+	 * after it reached the kitchen.
+	 */
 	public Order place(long customerId, long menuItemId, int quantity, PaymentMethod method, OrderStatus target) {
 		Order created = create(customerId, menuItemId, quantity, method);
 		User rider = target == OrderStatus.OUT_FOR_DELIVERY || target == OrderStatus.DELIVERED ? rider() : null;
@@ -119,6 +123,16 @@ public class OrderFixtures {
 					}
 				}
 			}
+			return order;
+		});
+	}
+
+	/** An order placed (PLACED) and then cancelled by its customer, the way a customer cancels from tracking. */
+	public Order placeThenCancel(long customerId, long menuItemId, int quantity, PaymentMethod method) {
+		Order placed = place(customerId, menuItemId, quantity, method, OrderStatus.PLACED);
+		return tx.execute(status -> {
+			Order order = orders.findById(placed.getId()).orElseThrow();
+			workflow.transition(order, OrderStatus.CANCELLED, OrderActor.customer(customerId), "Ordered by mistake");
 			return order;
 		});
 	}

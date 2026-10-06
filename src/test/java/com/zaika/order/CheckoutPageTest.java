@@ -1,6 +1,10 @@
 package com.zaika.order;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -34,6 +38,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -129,6 +134,9 @@ class CheckoutPageTest {
 
 	@Autowired
 	MutableClock clock;
+
+	@MockitoSpyBean
+	OrderWorkflow workflow;
 
 	Restaurant kitchen; // ₹30 delivery, prep 20 min, open 11:00-23:00
 
@@ -588,6 +596,41 @@ class CheckoutPageTest {
 	}
 
 	@Test
+	void aNewAddressIsRefusedWhenTheAddressBookIsFull() throws Exception {
+		User me = customerWith(thali, 1);
+		for (int i = 1; i < AddressService.MAX_ADDRESSES; i++) {
+			addresses.create(me.getId(), address("Flat " + i + ", Shree Apartments", "Tarabai Park"));
+		}
+		String[] page = openCheckout(me);
+
+		String html = squash(mvc.perform(placeAs(me, page, "addressId", "0", "newAddress.house", "Office 12",
+				"newAddress.street", "Station Road", "newAddress.city", "Kolhapur", "newAddress.pincode", "416001"))
+			.andExpect(status().isOk()).andExpect(view().name(CheckoutController.VIEW)).andReturn().getResponse()
+			.getContentAsString());
+
+		assertThat(html).contains("Your address book is full (" + AddressService.MAX_ADDRESSES
+				+ " addresses). Pick a saved address, or delete one to add another.");
+		assertThat(orderCount(me)).isZero();
+		assertThat(addresses.list(me.getId())).hasSize(AddressService.MAX_ADDRESSES);
+		assertThat(cartCount(me)).isEqualTo(1);
+	}
+
+	@Test
+	void aTotalThatIsNotANumberIsTreatedLikeAChangedTotal() throws Exception {
+		User me = customerWith(thali, 1);
+		String[] page = openCheckout(me);
+
+		String html = squash(mvc.perform(placeAs(me, new String[] { page[0], "297.50abc" })).andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString());
+
+		assertThat(html).contains("Your total is now ₹" + page[1] + ". Check the bill, then place your order again.")
+			.contains("name=\"expectedTotal\" value=\"" + page[1] + "\"").doesNotContain("Fix the fields marked below");
+		assertThat(orderCount(me)).isZero();
+		mvc.perform(placeAs(me, page)).andExpect(status().isFound());
+		assertThat(orderCount(me)).isEqualTo(1);
+	}
+
+	@Test
 	void aFailureLateInTheTransactionUndoesTheCouponUseAndTheNewAddress() throws Exception {
 		Restaurant late = fixtures.restaurant("checkout-late", "Late Kitchen").deliveryFee(30).save();
 		var menu = categories.findByRestaurantIdOrderBySortOrderAscIdAsc(late.getId()).get(0);
@@ -597,11 +640,16 @@ class CheckoutPageTest {
 		User me = customerWith(dish, 1);
 		couponService.apply(me.getId(), "LATE20");
 		String[] page = openCheckout(me);
+		// fails after the coupon use and the new address were written, while the order is being placed
+		doThrow(new CheckoutException("We could not reach the kitchen just now. Please place your order again.", false))
+			.when(workflow).transition(any(), eq(OrderStatus.PLACED), any());
 
-		mvc.perform(placeAs(me, new String[] { page[0], "1.00" }, "addressId", "0", "newAddress.house", "Office 12",
+		String html = squash(mvc.perform(placeAs(me, page, "addressId", "0", "newAddress.house", "Office 12",
 				"newAddress.street", "Station Road", "newAddress.city", "Kolhapur", "newAddress.pincode", "416001"))
-			.andExpect(status().isOk());
+			.andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
 
+		verify(workflow).transition(any(), eq(OrderStatus.PLACED), any());
+		assertThat(html).contains("We could not reach the kitchen just now. Please place your order again.");
 		assertThat(orderCount(me)).isZero();
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM coupon_redemptions WHERE coupon_id = ?", Long.class,
 				coupon.getId())).isZero();

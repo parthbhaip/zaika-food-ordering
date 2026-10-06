@@ -252,7 +252,9 @@ class CouponServiceTest {
 		Coupon coupon = coupon(CouponType.PERCENT, "50", c -> c.setFirstOrderOnly(true));
 		long me = customerWith(thali, 1);
 		orders.create(me, misal.getId(), 1, PaymentMethod.ONLINE); // never paid
-		orders.place(me, misal.getId(), 1, PaymentMethod.COD, OrderStatus.CANCELLED);
+		orders.place(me, misal.getId(), 1, PaymentMethod.ONLINE, OrderStatus.CANCELLED); // cancelled before paying
+		assertThat(orders.placeThenCancel(me, misal.getId(), 1, PaymentMethod.COD).timestampOf(OrderStatus.PLACED))
+			.isNotNull(); // reached the kitchen, then cancelled
 		orders.place(me, misal.getId(), 1, PaymentMethod.COD, OrderStatus.REJECTED);
 
 		assertThat(service.apply(me, coupon.getCode()).applied()).isTrue();

@@ -13,7 +13,7 @@
 		<form class="checkout" th:object="${form}" th:action="@{/checkout}" action="/checkout" method="post" novalidate
 			th:with="r=${cart.restaurant}">
 			<input type="hidden" th:field="*{idempotencyKey}">
-			<input type="hidden" th:field="*{expectedTotal}">
+			<input type="hidden" name="expectedTotal" th:value="*{expectedTotal}"><!--/* never the rejected input */-->
 
 			<header class="checkout-head">
 				<a class="checkout-back" th:href="@{/cart}" href="/cart"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>Back to cart</a>

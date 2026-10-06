@@ -205,6 +205,14 @@ class OrderWorkflowTest {
 		assertThat(order.getStatus()).isEqualTo(OrderStatus.READY_FOR_PICKUP);
 	}
 
+	@Test
+	void aRefusedMoveBackToAwaitingPaymentLeavesTheStatusAlone() {
+		Order order = orderAt(OrderStatus.PLACED);
+		assertThatThrownBy(() -> order.moveTo(OrderStatus.PENDING_PAYMENT, NOW))
+			.isInstanceOf(IllegalArgumentException.class);
+		assertThat(order.getStatus()).isEqualTo(OrderStatus.PLACED);
+	}
+
 	@ParameterizedTest
 	@EnumSource(value = OrderStatus.class, names = { "CANCELLED", "REJECTED" })
 	void cancellingOrRejectingNeedsAReasonAndRecordsWho(OrderStatus target) {

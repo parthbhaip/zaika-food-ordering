@@ -63,7 +63,8 @@ public class GuestCart implements CartContents, Serializable {
 	@Override
 	public synchronized void put(MenuItem item, int quantity) {
 		restaurantId = item.getRestaurant().getId();
-		lines.put(item.getId(), new Line(quantity, item.getPrice()));
+		Line line = lines.get(item.getId()); // keeps the price they saw: a change still shows on the cart page
+		lines.put(item.getId(), new Line(quantity, line == null ? item.getPrice() : line.price()));
 	}
 
 	@Override

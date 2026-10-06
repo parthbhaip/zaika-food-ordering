@@ -114,7 +114,7 @@ public class OrderTrackingService {
 
 		/** Who ended a cancelled or rejected order, as a sentence; null otherwise. */
 		public String endedBy() {
-			return new OrderHistoryService.Detail(order, null).endedBy();
+			return new OrderHistoryService.Detail(order, null, now).endedBy();
 		}
 
 		/** The rider's first name, or null before one is assigned. */
