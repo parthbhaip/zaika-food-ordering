@@ -128,7 +128,7 @@ How this file works
   - `Coupon` entity + migration: code, description, type (PERCENT, FLAT), value, max discount, min order, valid from/until, total limit, per-user limit, first-order-only, optional restaurant, active.
   - Apply/remove in the cart with a specific message for each failure reason. Seeder adds 3 demo coupons. Tests for every rule.
 
-- [ ] T23 Order domain and workflow
+- [x] T23 Order domain and workflow
   - `Order`: code, customer, restaurant, rider (nullable), status, address snapshot, `OrderItem` snapshots (name, price, qty, veg), price breakdown snapshot, coupon code, payment method (COD, ONLINE), payment status (PENDING, PAID, FAILED, REFUND_PENDING, REFUNDED), 4-digit delivery OTP, estimated delivery time, a timestamp per status, cancel reason and actor, `@Version`.
   - Statuses: PENDING_PAYMENT, PLACED, ACCEPTED, PREPARING, READY_FOR_PICKUP, OUT_FOR_DELIVERY, DELIVERED, CANCELLED, REJECTED.
   - `OrderWorkflow.transition(order, target, actor)` enforces allowed transitions and which role may make each one. Unit tests for every allowed and every forbidden transition.

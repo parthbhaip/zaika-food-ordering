@@ -16,6 +16,8 @@ import com.zaika.cart.CartRepository;
 import com.zaika.cart.CartService;
 import com.zaika.cart.CartView;
 import com.zaika.common.Formatters;
+import com.zaika.order.OrderRepository;
+import com.zaika.order.OrderStatus;
 import com.zaika.user.UserRepository;
 
 /**
@@ -40,12 +42,15 @@ public class CouponService {
 
 	private final UserRepository users;
 
+	private final OrderRepository orders;
+
 	private final Formatters fmt;
 
 	private final Clock clock;
 
 	CouponService(CouponRepository coupons, CouponRedemptionRepository redemptions, CartRepository carts,
-			CartService cartService, UserRepository users, Formatters fmt, Clock clock) {
+			CartService cartService, UserRepository users, OrderRepository orders, Formatters fmt, Clock clock) {
+		this.orders = orders;
 		this.coupons = coupons;
 		this.redemptions = redemptions;
 		this.carts = carts;
@@ -180,9 +185,9 @@ public class CouponService {
 				coupon.getCode() + " applied. You save " + fmt.money(discount) + " on this order.");
 	}
 
-	// ponytail: orders arrive in T23; until then no customer has placed one. T23 answers this from OrderRepository.
+	/** Placed an order before that was not cancelled or rejected (an unpaid online order does not count). */
 	private boolean hasOrdered(long userId) {
-		return false;
+		return orders.existsByCustomerIdAndStatusIn(userId, OrderStatus.PLACED_AND_LIVE);
 	}
 
 	/** What the customer reads for each problem. {@code coupon} is {@code null} until one was found. */

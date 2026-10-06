@@ -68,6 +68,11 @@ public class Address extends BaseEntity {
 
 	/** One line for lists and checkout: "Flat 4B, Rajarampuri 5th Lane, near Ganesh Mandir, Kolhapur 416008". */
 	public String getOneLine() {
+		return oneLine(house, street, landmark, city, pincode);
+	}
+
+	/** The one-line form of any address (also used by an order's address snapshot); {@code landmark} may be null. */
+	public static String oneLine(String house, String street, String landmark, String city, String pincode) {
 		return Stream.of(house, street, landmark == null ? null : "near " + landmark, city + " " + pincode)
 			.filter(Objects::nonNull)
 			.collect(Collectors.joining(", "));

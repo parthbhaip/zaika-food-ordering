@@ -29,8 +29,11 @@ import com.zaika.catalog.Restaurant;
 import com.zaika.coupon.CouponService.CartCoupon;
 import com.zaika.coupon.CouponService.CouponOffer;
 import com.zaika.coupon.CouponService.CouponResult;
+import com.zaika.order.OrderStatus;
+import com.zaika.order.PaymentMethod;
 import com.zaika.support.CatalogFixtures;
 import com.zaika.support.MutableClock;
+import com.zaika.support.OrderFixtures;
 import com.zaika.user.Role;
 import com.zaika.user.User;
 import com.zaika.user.UserRepository;
@@ -72,6 +75,9 @@ class CouponServiceTest {
 
 	@Autowired
 	MutableClock clock;
+
+	@Autowired
+	OrderFixtures orders;
 
 	@Autowired
 	JdbcTemplate jdbc;
@@ -227,10 +233,33 @@ class CouponServiceTest {
 
 	@Test
 	void aFirstOrderCouponWorksForACustomerWhoHasNotOrdered() {
-		// No orders exist before T23, so every customer is on their first order; the "ordered before" refusal is
-		// covered in CouponTest.aFirstOrderCouponIsOnlyForCustomersWhoNeverOrdered.
 		Coupon coupon = coupon(CouponType.PERCENT, "50", c -> c.setFirstOrderOnly(true));
 		assertThat(service.apply(customerWith(thali, 1), coupon.getCode()).applied()).isTrue();
+	}
+
+	@Test
+	void aFirstOrderCouponIsRefusedOnceACustomerHasOrdered() {
+		Coupon coupon = coupon(CouponType.PERCENT, "50", c -> c.setFirstOrderOnly(true));
+		long me = customerWith(thali, 1);
+		orders.place(me, misal.getId(), 1, PaymentMethod.COD, OrderStatus.DELIVERED);
+
+		assertRejected(service.apply(me, coupon.getCode()), CouponProblem.FIRST_ORDER_ONLY,
+				coupon.getCode() + " is for your first order on Zaika.");
+	}
+
+	@Test
+	void ordersThatNeverWentThroughStillLeaveTheFirstOrderAhead() {
+		Coupon coupon = coupon(CouponType.PERCENT, "50", c -> c.setFirstOrderOnly(true));
+		long me = customerWith(thali, 1);
+		orders.create(me, misal.getId(), 1, PaymentMethod.ONLINE); // never paid
+		orders.place(me, misal.getId(), 1, PaymentMethod.COD, OrderStatus.CANCELLED);
+		orders.place(me, misal.getId(), 1, PaymentMethod.COD, OrderStatus.REJECTED);
+
+		assertThat(service.apply(me, coupon.getCode()).applied()).isTrue();
+
+		orders.place(me, misal.getId(), 1, PaymentMethod.COD, OrderStatus.PLACED);
+		assertRejected(service.apply(me, coupon.getCode()), CouponProblem.FIRST_ORDER_ONLY,
+				coupon.getCode() + " is for your first order on Zaika.");
 	}
 
 	@Test
