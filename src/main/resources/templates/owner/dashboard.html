@@ -2,14 +2,15 @@
 <html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
 <head><title>Restaurant dashboard | Zaika</title></head>
 <body>
-<!--/* The owner's home. "restaurant" is the signed-in owner's own restaurant (cuisines loaded) or null. */-->
+<!--/* The owner's home. "dashboard" (owner.OwnerDashboardService.Dashboard) is the signed-in owner's own restaurant with
+     today's numbers, latest orders and the 7-day chart, or null for an owner account without a restaurant. */-->
 <main id="main" class="owner-page">
 	<div class="container owner-container">
-		<th:block th:if="${restaurant == null}">
+		<th:block th:if="${dashboard == null}">
 			<div th:replace="~{fragments/ui :: emptyState('store', 'No restaurant on this account', 'This partner account has no restaurant linked to it. Write to partners@zaika.test and we will sort it out.', 'Contact us', '/contact')}"></div>
 		</th:block>
 
-		<th:block th:if="${restaurant != null}" th:with="r=${restaurant}">
+		<th:block th:if="${dashboard != null}" th:with="d=${dashboard}, r=${dashboard.restaurant}">
 			<header class="owner-head">
 				<img class="owner-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/x.svg" alt="" width="64" height="64">
 				<div class="owner-head-text">
@@ -24,6 +25,80 @@
 			</header>
 
 			<div th:replace="~{fragments/owner :: statusBanner(${r})}"></div>
+
+			<th:block th:if="${r.status.name() == 'APPROVED'}">
+				<section th:replace="~{owner/dashboard :: accepting(${d.accepting})}"></section>
+			</th:block>
+
+			<section class="owner-today" aria-labelledby="owner-today-title">
+				<h2 id="owner-today-title" class="owner-section-title">Today <span class="owner-today-date" th:text="|· ${d.chart.bars[6].longLabel}|">· Sunday 4 Oct</span></h2>
+				<dl class="owner-stats">
+					<div class="card owner-stat">
+						<dt>Orders</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.count(d.today.orders)}">12</dd>
+					</div>
+					<div class="card owner-stat">
+						<dt>Revenue</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.price(d.today.revenue)}">₹5,240</dd>
+					</div>
+					<div class="card owner-stat">
+						<dt>Average order</dt>
+						<dd class="owner-stat-value" th:text="${d.today.orders == 0} ? '–' : ${@fmt.price(d.today.averageOrderValue())}">₹436.67</dd>
+						<dd class="visually-hidden" th:if="${d.today.orders == 0}">No orders yet today</dd>
+					</div>
+					<div class="card owner-stat" th:classappend="${d.pending > 0} ? 'is-waiting'">
+						<dt>Waiting to accept</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.count(d.pending)}">2</dd>
+					</div>
+				</dl>
+				<p class="owner-stats-note">Revenue is the food value of your orders, before coupons, fees and GST. Cancelled and rejected orders don't count.</p>
+			</section>
+
+			<div class="owner-panels">
+				<section class="card owner-chart" aria-labelledby="owner-chart-title" th:with="c=${d.chart}">
+					<div class="owner-card-head">
+						<h2 id="owner-chart-title" class="owner-section-title">Last 7 days</h2>
+						<p class="owner-chart-total"><strong th:text="${@fmt.price(c.total)}">₹18,450</strong> in sales</p>
+					</div>
+					<p class="owner-chart-empty" th:if="${c.empty}">No sales in the last 7 days yet. Your first orders will show up here.</p>
+					<div class="revenue-chart" aria-hidden="true">
+						<div class="revenue-chart-axis">
+							<span th:each="t : ${c.ticks}" th:text="${@fmt.price(t.amount)}">₹2,000</span>
+						</div>
+						<svg class="revenue-chart-plot" th:attr="viewBox=|0 0 ${c.width} ${c.height}|" viewBox="0 0 700 200" preserveAspectRatio="none" focusable="false" xmlns="http://www.w3.org/2000/svg">
+							<line th:each="t : ${c.ticks}" class="revenue-chart-grid" x1="0" th:x2="${c.width}" th:y1="${c.height - t.percent * c.height / 100}" th:y2="${c.height - t.percent * c.height / 100}" vector-effect="non-scaling-stroke"></line>
+							<th:block th:each="b : ${c.bars}"><rect th:if="${b.height > 0}" class="revenue-chart-bar" th:classappend="${b.today} ? 'is-today'" th:x="${b.x}" th:y="${b.y}" th:width="${b.width}" th:height="${b.height}"></rect></th:block>
+						</svg>
+						<ol class="revenue-chart-days">
+							<li th:each="b : ${c.bars}" th:classappend="${b.today} ? 'is-today'" th:title="|${b.longLabel}: ${@fmt.price(b.amount)}|"><span th:text="${b.label}">Mon</span><span th:text="${b.date}">28 Sep</span></li>
+						</ol>
+					</div>
+					<table class="visually-hidden">
+						<caption>Sales by day, last 7 days</caption>
+						<thead><tr><th scope="col">Day</th><th scope="col">Sales</th></tr></thead>
+						<tbody>
+							<tr th:each="b : ${c.bars}"><th scope="row" th:text="${b.today ? 'Today, ' + b.longLabel : b.longLabel}">Sunday 4 Oct</th><td th:text="${@fmt.price(b.amount)}">₹1,240</td></tr>
+						</tbody>
+					</table>
+				</section>
+
+				<section class="card owner-latest" aria-labelledby="owner-latest-title">
+					<h2 id="owner-latest-title" class="owner-section-title">Latest orders</h2>
+					<p class="owner-latest-empty" th:if="${d.latest.isEmpty()}">No orders yet. When customers order from you, the newest show up here.</p>
+					<ol class="owner-orders" th:unless="${d.latest.isEmpty()}" aria-label="Latest orders, newest first">
+						<li class="owner-order" th:each="o : ${d.latest}">
+							<div class="owner-order-main">
+								<p class="owner-order-code"><span th:text="${o.code}">ZK-26-000123</span> <span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Placed</span></p>
+								<p class="owner-order-items"><th:block th:each="i, s : ${o.items}" th:text="|${i.quantity} × ${i.name}${s.last ? '' : ', '}|">2 × Mutton Thali, </th:block></p>
+							</div>
+							<div class="owner-order-side">
+								<span class="price" th:text="${@fmt.price(o.bill.itemTotal)}">₹540</span>
+								<time th:with="at=${o.timestampOf(T(com.zaika.order.OrderStatus).PLACED)}" th:datetime="${at}" th:title="${@fmt.dateTime(at)}" th:text="${@fmt.relative(at)}">12 min ago</time>
+							</div>
+						</li>
+					</ol>
+				</section>
+			</div>
 
 			<section class="card owner-listing" aria-labelledby="owner-listing-title">
 				<h2 id="owner-listing-title" class="owner-section-title">Your listing</h2>
@@ -70,5 +145,30 @@
 		</th:block>
 	</div>
 </main>
+
+<!--/* The accepting-orders switch: a one-button form (works without JavaScript); htmx swaps the card in place. The
+     button is a role="switch" whose aria-checked is the current state; pressing it sends the opposite. */-->
+<section th:fragment="accepting(a)" id="owner-accepting" class="card owner-accepting" th:classappend="${a.on} ? 'is-on' : 'is-paused'" aria-labelledby="owner-accepting-title">
+	<form class="owner-accepting-form" method="post" th:action="@{/owner/accepting}" action="/owner/accepting"
+		th:hx-post="@{/owner/accepting}" hx-target="#owner-accepting" hx-swap="outerHTML">
+		<input type="hidden" name="accepting" th:value="${!a.on}" value="false">
+		<div class="owner-accepting-text">
+			<h2 id="owner-accepting-title" class="owner-section-title">Accepting orders</h2>
+			<p id="owner-accepting-help" class="owner-accepting-help">
+				<th:block th:if="${a.on and a.openNow}"><strong>On.</strong> New orders come in as customers place them.</th:block>
+				<th:block th:if="${a.on and !a.openNow}"><strong>On, but you're outside your hours.</strong> Customers can order again when you open at <th:block th:text="${@fmt.timeOfDay(a.opensAt)}">11:00 AM</th:block>.</th:block>
+				<th:block th:unless="${a.on}"><strong>Paused.</strong> Customers can see your menu but can't order until you turn this back on.</th:block>
+			</p>
+		</div>
+		<button id="owner-accepting-switch" class="switch" type="submit" role="switch" th:aria-checked="${a.on}" aria-checked="true"
+			aria-labelledby="owner-accepting-title" aria-describedby="owner-accepting-help"></button>
+	</form>
+</section>
+
+<!--/* htmx answer to the switch: the card plus the toast, out of band. Model: accepting, toastKind, toastMessage. */-->
+<th:block th:fragment="accepting-update">
+	<section th:replace="~{owner/dashboard :: accepting(${accepting})}"></section>
+	<div hx-swap-oob="beforeend:#toasts"><div th:replace="~{fragments/flash :: toast(${toastKind}, ${toastMessage})}"></div></div>
+</th:block>
 </body>
 </html>

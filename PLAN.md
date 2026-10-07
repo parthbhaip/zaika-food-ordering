@@ -159,7 +159,7 @@ How this file works
   - `/partner-with-us/restaurant`: one sectioned form creating the owner account and a PENDING restaurant (details, cuisines, timings, fees).
   - Owner dashboard shows a status banner for pending / rejected (with reason) / suspended. Tests.
 
-- [ ] T29 Owner dashboard `/owner`
+- [x] T29 Owner dashboard `/owner`
   - Accepting-orders toggle; today's orders, revenue, average order value, pending count; latest orders.
   - 7-day revenue bar chart rendered as server-side SVG built in Java (no chart library). Tests.
 

@@ -1,5 +1,6 @@
 package com.zaika.order;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -47,6 +48,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select o from Order o where o.id = :id")
 	Optional<Order> findForUpdate(long id);
+
+	/** A restaurant's sale: when the order was placed and its food value (item total). */
+	record Sale(LocalDateTime placedAt, BigDecimal itemTotal) {
+	}
+
+	/** The restaurant's orders in {@code statuses} placed at or after {@code from} (idx_orders_restaurant_placed). */
+	@Query("""
+			select new com.zaika.order.OrderRepository$Sale(o.placedAt, o.itemTotal) from Order o
+			where o.restaurant.id = :restaurantId and o.placedAt >= :from and o.status in :statuses""")
+	List<Sale> findSales(long restaurantId, LocalDateTime from, Collection<OrderStatus> statuses);
+
+	/** Uses {@code idx_orders_restaurant_status_created}. */
+	long countByRestaurantIdAndStatus(long restaurantId, OrderStatus status);
+
+	/** The restaurant's five latest placed orders, newest first (idx_orders_restaurant_placed); dishes not loaded. */
+	List<Order> findTop5ByRestaurantIdAndPlacedAtNotNullOrderByPlacedAtDescIdDesc(long restaurantId);
 
 	/** Ids of orders in {@code status} created at or before {@code cutoff}, oldest first (idx_orders_status_created). */
 	@Query("select o.id from Order o where o.status = :status and o.createdAt <= :cutoff order by o.createdAt, o.id")
