@@ -65,21 +65,8 @@ public class RestaurantOnboardingService {
 				form.getPassword(), Role.RESTAURANT_OWNER);
 		Restaurant restaurant = new Restaurant(owner, uniqueSlug(form.getRestaurantName(), form.getArea()),
 				form.getRestaurantName());
-		restaurant.setTagline(form.getTagline());
-		restaurant.setDescription(form.getDescription());
-		restaurant.setCuisines(chosen);
-		restaurant.setPureVeg(form.isPureVeg());
-		restaurant.setPhone(form.getRestaurantPhone());
-		restaurant.setAddress(form.getAddress());
-		restaurant.setArea(form.getArea());
-		restaurant.setCity(form.getCity());
-		restaurant.setPincode(form.getPincode());
+		RestaurantProfileService.applyDetails(restaurant, form, chosen);
 		restaurant.setLogoPath(logoPath);
-		restaurant.setHours(form.getOpensAt(), form.getClosesAt());
-		restaurant.setAvgPrepMinutes(form.getAvgPrepMinutes());
-		restaurant.setCostForTwo(form.getCostForTwo());
-		restaurant.setMinimumOrder(form.getMinimumOrder());
-		restaurant.setDeliveryFee(form.getDeliveryFee());
 		return restaurants.save(restaurant);
 	}
 

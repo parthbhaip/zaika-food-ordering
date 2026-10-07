@@ -103,7 +103,10 @@
 			</div>
 
 			<section class="card owner-listing" aria-labelledby="owner-listing-title">
-				<h2 id="owner-listing-title" class="owner-section-title">Your listing</h2>
+				<div class="owner-card-head">
+					<h2 id="owner-listing-title" class="owner-section-title">Your listing</h2>
+					<a class="btn btn-ghost btn-sm" th:href="@{/owner/restaurant}" href="/owner/restaurant"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Edit<span class="visually-hidden"> your listing</span></a>
+				</div>
 				<p class="owner-listing-tagline" th:if="${r.tagline != null}" th:text="${r.tagline}">Slow-cooked Kolhapuri mutton since 1998</p>
 				<dl class="owner-facts">
 					<div>
@@ -142,7 +145,7 @@
 						<dd th:text="${@fmt.phone(r.phone)}">+91 98765 43210</dd>
 					</div>
 				</dl>
-				<p class="owner-listing-help" th:if="${r.status.name() != 'APPROVED'}">Need to change something before you go live? Write to <a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+				<p class="owner-listing-help">Change your details, photos, hours and fees in your <a th:href="@{/owner/restaurant}" href="/owner/restaurant">restaurant profile</a>.</p>
 			</section>
 		</th:block>
 	</div>

@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.zaika.config.AppProperties;
@@ -75,6 +77,41 @@ public class StorageService {
 		catch (IOException ex) {
 			throw new UncheckedIOException("Could not save an uploaded image", ex);
 		}
+	}
+
+	/**
+	 * {@link #store}s the image inside the current transaction: if the transaction does not commit, the file is removed
+	 * again, so a failed save leaves no stray file. Call it from a {@code @Transactional} method.
+	 *
+	 * @throws InvalidImageException as {@link #store} does
+	 */
+	public String storeForTransaction(ImageKind kind, MultipartFile file) {
+		String path = store(kind, file);
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCompletion(int status) {
+				if (status != STATUS_COMMITTED) {
+					delete(path);
+				}
+			}
+		});
+		return path;
+	}
+
+	/**
+	 * Deletes a stored image once the current transaction has committed, never while a row may still point at it
+	 * (a rollback keeps it). Null is ignored. Call it from a {@code @Transactional} method.
+	 */
+	public void deleteAfterCommit(String storedPath) {
+		if (storedPath == null) {
+			return;
+		}
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				delete(storedPath);
+			}
+		});
 	}
 
 	/**

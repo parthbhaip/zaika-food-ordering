@@ -167,7 +167,7 @@ How this file works
   - Categories CRUD + reorder. Items CRUD with image upload, price, veg, bestseller, spice level; availability switch inline (htmx).
   - Items that were ever ordered are archived, not deleted. Another owner's items -> 403/404. Tests.
 
-- [ ] T31 Owner restaurant profile `/owner/restaurant`
+- [x] T31 Owner restaurant profile `/owner/restaurant`
   - Edit details, cuisines, timings, fees, minimum order; logo and cover upload with preview. Tests.
 
 - [ ] T32 Owner live orders `/owner/orders`

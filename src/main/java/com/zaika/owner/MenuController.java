@@ -53,7 +53,7 @@ class MenuController {
 				redirect.addFlashAttribute("flashSuccess", "“" + category.getName() + "” added. Now add its dishes.");
 				return "redirect:/owner/menu#category-" + category.getId();
 			}
-			catch (MenuRuleException ex) {
+			catch (OwnerRuleException ex) {
 				result.rejectValue("name", "rule", ex.getMessage());
 			}
 		}
@@ -69,7 +69,7 @@ class MenuController {
 				redirect.addFlashAttribute("flashSuccess", "Category renamed to “" + category.getName() + "”.");
 				return "redirect:/owner/menu#category-" + id;
 			}
-			catch (MenuRuleException ex) {
+			catch (OwnerRuleException ex) {
 				result.rejectValue("name", "rule", ex.getMessage());
 			}
 		}
@@ -93,7 +93,7 @@ class MenuController {
 			redirect.addFlashAttribute("flashSuccess", "“" + category.getName() + "” deleted.");
 			return "redirect:/owner/menu";
 		}
-		catch (MenuRuleException ex) {
+		catch (OwnerRuleException ex) {
 			redirect.addFlashAttribute("flashError", ex.getMessage());
 			return "redirect:/owner/menu#category-" + id;
 		}
@@ -131,7 +131,7 @@ class MenuController {
 				redirect.addFlashAttribute("flashSuccess", "“" + item.getName() + "” is on your menu.");
 				return "redirect:/owner/menu#dish-" + item.getId();
 			}
-			catch (MenuRuleException ex) {
+			catch (OwnerRuleException ex) {
 				result.rejectValue(ex.getField(), "rule", ex.getMessage());
 			}
 		}
@@ -154,7 +154,7 @@ class MenuController {
 				redirect.addFlashAttribute("flashSuccess", "“" + item.getName() + "” saved.");
 				return "redirect:/owner/menu#dish-" + id;
 			}
-			catch (MenuRuleException ex) {
+			catch (OwnerRuleException ex) {
 				result.rejectValue(ex.getField(), "rule", ex.getMessage());
 			}
 		}

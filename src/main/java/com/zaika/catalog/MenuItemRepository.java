@@ -33,6 +33,9 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
 	@Query("select coalesce(max(i.sortOrder), 0) from MenuItem i where i.restaurant.id = :restaurantId")
 	int maxSortOrder(Long restaurantId);
 
+	/** The restaurant's non-veg dishes that are still on the menu (sold-out ones included), in menu order. */
+	List<MenuItem> findByRestaurantIdAndArchivedFalseAndVegFalseOrderBySortOrderAscIdAsc(Long restaurantId);
+
 	/** Every item a customer may see (archived ones hidden, sold-out ones included), in menu order. */
 	List<MenuItem> findByRestaurantIdAndArchivedFalseOrderBySortOrderAscIdAsc(Long restaurantId);
 

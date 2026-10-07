@@ -92,7 +92,8 @@
 			<th:block sec:authorize="hasRole('RESTAURANT_OWNER')">
 				<a th:href="@{/owner}" href="/owner"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Restaurant dashboard</a>
 				<a th:href="@{/owner/orders}" href="/owner/orders"><svg th:replace="~{fragments/icon :: icon('bell')}"></svg>Live orders</a>
-				<a th:href="@{/owner/menu}" href="/owner/menu"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Menu</a>
+				<a th:href="@{/owner/menu}" href="/owner/menu"><svg th:replace="~{fragments/icon :: icon('dish')}"></svg>Menu</a>
+				<a th:href="@{/owner/restaurant}" href="/owner/restaurant"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Restaurant profile</a>
 			</th:block>
 			<th:block sec:authorize="hasRole('DELIVERY_PARTNER')">
 				<a th:href="@{/partner}" href="/partner"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg>Rider dashboard</a>

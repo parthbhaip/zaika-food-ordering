@@ -30,10 +30,11 @@
 	</div>
 </th:block>
 
-<!--/* The owner panel's sections, on every owner page. current: 'dashboard' or 'menu'. */-->
+<!--/* The owner panel's sections, on every owner page. current: 'dashboard', 'menu' or 'restaurant'. */-->
 <nav th:fragment="nav(current)" class="tabs owner-nav" aria-label="Restaurant panel">
 	<a class="tab" th:href="@{/owner}" href="/owner" th:aria-current="${current == 'dashboard'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Dashboard</a>
 	<a class="tab" th:href="@{/owner/menu}" href="/owner/menu" th:aria-current="${current == 'menu'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('dish')}"></svg>Menu</a>
+	<a class="tab" th:href="@{/owner/restaurant}" href="/owner/restaurant" th:aria-current="${current == 'restaurant'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Restaurant</a>
 </nav>
 
 <!--/* The status as a badge: Under review / Live / Not approved / Suspended. */-->

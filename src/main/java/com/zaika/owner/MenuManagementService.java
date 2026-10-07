@@ -7,8 +7,6 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zaika.catalog.MenuCategory;
 import com.zaika.catalog.MenuCategoryRepository;
@@ -129,7 +127,7 @@ public class MenuManagementService {
 	/**
 	 * Deletes an empty category. One that still holds dishes is refused; one whose only dishes are archived is
 	 * archived itself.
-	 * @throws MenuRuleException if dishes are still listed in it
+	 * @throws OwnerRuleException if dishes are still listed in it
 	 */
 	@Transactional
 	public MenuCategory deleteCategory(long ownerId, long categoryId) {
@@ -137,7 +135,7 @@ public class MenuManagementService {
 		MenuCategory category = categoryOf(restaurant, categoryId);
 		long dishes = items.countByCategoryIdAndArchivedFalse(category.getId());
 		if (dishes > 0) {
-			throw new MenuRuleException(null, "Move or delete the " + (dishes == 1 ? "dish" : dishes + " dishes")
+			throw new OwnerRuleException(null, "Move or delete the " + (dishes == 1 ? "dish" : dishes + " dishes")
 					+ " in “" + category.getName() + "” first, then delete the category.");
 		}
 		if (items.existsByCategoryId(category.getId())) {
@@ -153,7 +151,7 @@ public class MenuManagementService {
 
 	/**
 	 * Adds a dish (and its photo, if one is attached) at the end of its category.
-	 * @throws MenuRuleException for a non-veg dish in a pure-veg kitchen or an unusable photo
+	 * @throws OwnerRuleException for a non-veg dish in a pure-veg kitchen or an unusable photo
 	 */
 	@Transactional
 	public MenuItem addDish(long ownerId, MenuItemForm form) {
@@ -162,14 +160,14 @@ public class MenuManagementService {
 		MenuItem item = new MenuItem(category, form.getName(), form.getPrice(), form.getVeg());
 		item.setSortOrder(items.maxSortOrder(restaurant.getId()) + 1);
 		apply(item, form);
-		item.setImagePath(form.hasImage() ? storeAfterCommit(form) : null);
+		item.setImagePath(form.hasImage() ? storePhoto(form) : null);
 		return items.save(item);
 	}
 
 	/**
 	 * Saves the dish's new details; a new category moves it to the end of that category. A new photo replaces the
 	 * old one, which is deleted once the change is saved.
-	 * @throws MenuRuleException for a non-veg dish in a pure-veg kitchen or an unusable photo
+	 * @throws OwnerRuleException for a non-veg dish in a pure-veg kitchen or an unusable photo
 	 */
 	@Transactional
 	public MenuItem updateDish(long ownerId, long itemId, MenuItemForm form) {
@@ -186,8 +184,8 @@ public class MenuManagementService {
 		apply(item, form);
 		if (form.hasImage() || form.isRemoveImage()) {
 			String old = item.getImagePath();
-			item.setImagePath(form.hasImage() ? storeAfterCommit(form) : null);
-			deleteAfterCommit(old);
+			item.setImagePath(form.hasImage() ? storePhoto(form) : null);
+			storage.deleteAfterCommit(old);
 		}
 		return item;
 	}
@@ -214,7 +212,7 @@ public class MenuManagementService {
 			return new Removed(item.getName(), true);
 		}
 		items.delete(item);
-		deleteAfterCommit(item.getImagePath());
+		storage.deleteAfterCommit(item.getImagePath());
 		return new Removed(item.getName(), false);
 	}
 
@@ -243,7 +241,7 @@ public class MenuManagementService {
 		boolean taken = liveCategories(restaurant).stream()
 			.anyMatch(c -> !c.equals(self) && c.getName().equalsIgnoreCase(name));
 		if (taken) {
-			throw new MenuRuleException("name", "You already have a category called “" + name + "”.");
+			throw new OwnerRuleException("name", "You already have a category called “" + name + "”.");
 		}
 	}
 
@@ -251,9 +249,9 @@ public class MenuManagementService {
 	private MenuCategory checkDish(Restaurant restaurant, MenuItemForm form) {
 		MenuCategory category = categories.findByIdAndRestaurantIdAndArchivedFalse(form.getCategoryId(),
 				restaurant.getId())
-			.orElseThrow(() -> new MenuRuleException("categoryId", "Choose one of your categories."));
+			.orElseThrow(() -> new OwnerRuleException("categoryId", "Choose one of your categories."));
 		if (restaurant.isPureVeg() && !form.getVeg()) {
-			throw new MenuRuleException("veg", restaurant.getName()
+			throw new OwnerRuleException("veg", restaurant.getName()
 					+ " is listed as pure veg, so every dish must be veg.");
 		}
 		return category;
@@ -267,36 +265,13 @@ public class MenuManagementService {
 	}
 
 	/** Stores the attached photo; if the transaction then rolls back, the file is removed again. */
-	private String storeAfterCommit(MenuItemForm form) {
-		String path;
+	private String storePhoto(MenuItemForm form) {
 		try {
-			path = storage.store(ImageKind.DISH, form.getImage());
+			return storage.storeForTransaction(ImageKind.DISH, form.getImage());
 		}
 		catch (InvalidImageException ex) {
-			throw new MenuRuleException("image", ex.getMessage());
+			throw new OwnerRuleException("image", ex.getMessage());
 		}
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCompletion(int status) {
-				if (status != STATUS_COMMITTED) {
-					storage.delete(path);
-				}
-			}
-		});
-		return path;
-	}
-
-	/** Deletes a photo file once the transaction has committed (never while the row may still point at it). */
-	private void deleteAfterCommit(String path) {
-		if (path == null) {
-			return;
-		}
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCommit() {
-				storage.delete(path);
-			}
-		});
 	}
 
 	// ------------------------------------------------------------------------------------------- results
