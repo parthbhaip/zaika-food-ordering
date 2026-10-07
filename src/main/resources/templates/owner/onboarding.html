@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Register your restaurant | Zaika</title></head>
+<body>
+<!--/* Restaurant sign-up, bound to owner.RestaurantSignupForm as "form"; "cuisines" (all, by name), "prepMinutes" and
+     "maxCuisines" come from RestaurantOnboardingController. Errors re-render this page with typed values kept
+     (passwords and the logo file cannot be kept). */-->
+<main id="main" class="auth-page onboarding-page">
+	<div class="container onboarding">
+		<header class="onboarding-head">
+			<a class="checkout-back" th:href="@{/partner-with-us}" href="/partner-with-us"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>Partner with us</a>
+			<h1 id="onboarding-title">Register your restaurant</h1>
+			<p class="auth-lede">Four short sections, about 5 minutes. Our partner team reviews every kitchen before it goes live, usually within 2 working days.</p>
+		</header>
+
+		<div class="alert alert-error onboarding-alert" role="alert" th:if="${#fields.hasErrors('${form.*}')}">
+			<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+			<p><strong>A few details need another look.</strong> Fix the fields marked below and send the form again.<th:block th:if="${form.hasLogo()}"> Attach your logo again too.</th:block></p>
+		</div>
+
+		<form class="onboarding-form" th:action="@{/partner-with-us/restaurant}" action="/partner-with-us/restaurant" method="post"
+			enctype="multipart/form-data" th:object="${form}" novalidate aria-labelledby="onboarding-title">
+
+			<fieldset class="card onboarding-step">
+				<legend class="checkout-step-title"><span class="checkout-step-no" aria-hidden="true">1</span>About you</legend>
+				<p class="onboarding-step-intro">You'll sign in with this email and password to run your restaurant.</p>
+				<div class="onboarding-grid">
+					<div th:replace="~{fragments/form :: field('ownerName', 'Your full name', 'text', null, 'name')}"></div>
+					<th:block th:with="inputmode='tel'">
+						<div th:replace="~{fragments/form :: field('ownerPhone', 'Your mobile number', 'tel', 'Our partner team calls this number about your sign-up.', 'tel-national')}"></div>
+					</th:block>
+				</div>
+				<div th:replace="~{fragments/form :: field('email', 'Email', 'email', 'Your sign-in. Order alerts and review updates land here too.', 'email')}"></div>
+				<div class="onboarding-grid">
+					<div th:replace="~{fragments/form :: password('password', 'Password', 'At least 8 characters, with a letter and a digit.', 'new-password')}"></div>
+					<div th:replace="~{fragments/form :: password('confirmPassword', 'Confirm password', null, 'new-password')}"></div>
+				</div>
+			</fieldset>
+
+			<fieldset class="card onboarding-step">
+				<legend class="checkout-step-title"><span class="checkout-step-no" aria-hidden="true">2</span>Your restaurant</legend>
+				<div th:replace="~{fragments/form :: field('restaurantName', 'Restaurant name', 'text', 'Exactly as on your signboard.', 'organization')}"></div>
+				<div th:replace="~{fragments/form :: field('tagline', 'Tagline (optional)', 'text', 'One line under your name, like “Slow-cooked Kolhapuri mutton since 1998”.', 'off')}"></div>
+				<div class="field" th:with="invalid=${#fields.hasErrors('description')}" th:classappend="${invalid} ? 'has-error'">
+					<label class="field-label" for="description">About your kitchen (optional)</label>
+					<textarea class="textarea" id="description" name="description" rows="3" maxlength="1000" th:text="*{description}"
+						th:aria-invalid="${invalid} ? 'true'"
+						th:aria-describedby="${invalid} ? 'description-error description-help' : 'description-help'"></textarea>
+					<p class="field-help" id="description-help">What you're known for, in a few sentences. Up to 1000 characters.</p>
+					<p class="field-error" th:if="${invalid}" id="description-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:errors="*{description}">Keep the description under 1000 characters.</span></p>
+				</div>
+
+				<fieldset class="field onboarding-cuisines" th:with="invalid=${#fields.hasErrors('cuisineIds')}" th:classappend="${invalid} ? 'has-error'"
+					th:aria-describedby="${invalid} ? 'cuisineIds-error cuisineIds-help' : 'cuisineIds-help'">
+					<legend class="field-label">Cuisines</legend>
+					<p class="field-help" id="cuisineIds-help" th:text="|Pick up to ${maxCuisines}. Customers find you by these.|">Pick up to 3. Customers find you by these.</p>
+					<div class="chip-row">
+						<label class="choice-chip" th:each="c : ${cuisines}">
+							<input class="checkbox" type="checkbox" name="cuisineIds" th:id="|cuisine-${c.id}|" th:value="${c.id}"
+								th:checked="${form.cuisineIds.contains(c.id)}">
+							<span th:text="${c.name}">South Indian</span>
+						</label>
+					</div>
+					<p class="field-error" th:if="${invalid}" id="cuisineIds-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('cuisineIds'), ' ')}">Pick between 1 and 3 cuisines.</span></p>
+				</fieldset>
+
+				<div class="field">
+					<label class="check"><input class="switch" type="checkbox" role="switch" id="pureVeg" name="pureVeg" value="true" th:checked="*{pureVeg}"><span class="check-text">Pure veg kitchen <small>No egg, meat or fish is cooked here. You'll get the green Pure veg badge.</small></span></label>
+				</div>
+
+				<div class="field" th:with="invalid=${#fields.hasErrors('logo')}" th:classappend="${invalid} ? 'has-error'">
+					<label class="field-label" for="logo">Logo (optional)</label>
+					<input class="file-input" type="file" id="logo" name="logo" accept="image/jpeg,image/png,image/webp"
+						th:aria-invalid="${invalid} ? 'true'"
+						th:aria-describedby="${invalid} ? 'logo-error logo-help' : 'logo-help'">
+					<p class="field-help" id="logo-help">A square JPG, PNG or WebP image, up to 2 MB. You can add it later too.</p>
+					<p class="field-error" th:if="${invalid}" id="logo-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('logo'), ' ')}">Choose a JPG, PNG or WebP image.</span></p>
+				</div>
+			</fieldset>
+
+			<fieldset class="card onboarding-step">
+				<legend class="checkout-step-title"><span class="checkout-step-no" aria-hidden="true">3</span>Location and contact</legend>
+				<th:block th:with="inputmode='tel'">
+					<div th:replace="~{fragments/form :: field('restaurantPhone', 'Restaurant phone', 'tel', 'Customers and riders call this number about orders.', 'off')}"></div>
+				</th:block>
+				<div th:replace="~{fragments/form :: field('address', 'Shop and street', 'text', 'Shop number, building and road, like “12, Laxmi Complex, Mahadwar Road”.', 'off')}"></div>
+				<div class="onboarding-grid onboarding-grid-3">
+					<div th:replace="~{fragments/form :: field('area', 'Area', 'text', null, 'off')}"></div>
+					<div th:replace="~{fragments/form :: field('city', 'City', 'text', null, 'off')}"></div>
+					<th:block th:with="inputmode='numeric'">
+						<div th:replace="~{fragments/form :: field('pincode', 'PIN code', 'text', null, 'off')}"></div>
+					</th:block>
+				</div>
+			</fieldset>
+
+			<fieldset class="card onboarding-step">
+				<legend class="checkout-step-title"><span class="checkout-step-no" aria-hidden="true">4</span>Hours and fees</legend>
+				<div class="onboarding-grid">
+					<div th:replace="~{fragments/form :: field('opensAt', 'Opens at', 'time', null, 'off')}"></div>
+					<div th:replace="~{fragments/form :: field('closesAt', 'Closes at', 'time', null, 'off')}"></div>
+				</div>
+				<p class="field-help onboarding-hours-help">Open past midnight? Set 6:00 PM to 2:00 AM and it just works. The same time for both means open 24 hours.</p>
+				<div class="field" th:with="invalid=${#fields.hasErrors('avgPrepMinutes')}" th:classappend="${invalid} ? 'has-error'">
+					<label class="field-label" for="avgPrepMinutes">Usual preparation time</label>
+					<div class="select-wrap">
+						<select class="select" id="avgPrepMinutes" name="avgPrepMinutes" th:aria-invalid="${invalid} ? 'true'"
+							th:aria-describedby="${invalid} ? 'avgPrepMinutes-error avgPrepMinutes-help' : 'avgPrepMinutes-help'">
+							<option th:each="m : ${prepMinutes}" th:value="${m}" th:text="|${m} min|" th:selected="${m == form.avgPrepMinutes}">20 min</option>
+						</select>
+					</div>
+					<p class="field-help" id="avgPrepMinutes-help">How long a typical order takes in your kitchen. Customers see it plus the ride as the delivery time.</p>
+					<p class="field-error" th:if="${invalid}" id="avgPrepMinutes-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('avgPrepMinutes'), ' ')}">Choose a preparation time.</span></p>
+				</div>
+				<div class="onboarding-grid onboarding-grid-3" th:with="inputmode='decimal'">
+					<div th:replace="~{fragments/form :: field('costForTwo', 'Cost for two (₹)', 'text', 'Shown as “₹400 for two”.', 'off')}"></div>
+					<div th:replace="~{fragments/form :: field('minimumOrder', 'Minimum order (₹)', 'text', '0 for no minimum.', 'off')}"></div>
+					<div th:replace="~{fragments/form :: field('deliveryFee', 'Delivery fee (₹)', 'text', 'Free above ₹499 for customers.', 'off')}"></div>
+				</div>
+			</fieldset>
+
+			<div class="card onboarding-submit">
+				<div class="field" th:with="invalid=${#fields.hasErrors('acceptTerms')}" th:classappend="${invalid} ? 'has-error'">
+					<label class="check"><input class="checkbox" type="checkbox" id="acceptTerms" name="acceptTerms" value="true"
+						th:checked="*{acceptTerms}" th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? 'acceptTerms-error'"><span class="check-text">I run this restaurant and agree to the <a th:href="@{/terms}" href="/terms" target="_blank" rel="noopener">Terms of use</a> and <a th:href="@{/privacy}" href="/privacy" target="_blank" rel="noopener">Privacy policy</a></span></label>
+					<p class="field-error" th:if="${invalid}" id="acceptTerms-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('acceptTerms'), ' ')}">Please accept the partner terms to register.</span></p>
+				</div>
+				<button type="submit" class="btn btn-primary btn-lg btn-block">Submit for review</button>
+				<p class="auth-switch">Already a partner? <a th:href="@{/login}" href="/login">Sign in</a></p>
+			</div>
+		</form>
+
+		<aside class="auth-aside onboarding-aside" aria-labelledby="onboarding-next-title">
+			<h2 id="onboarding-next-title">What happens next</h2>
+			<ol class="auth-perks onboarding-next">
+				<li><svg th:replace="~{fragments/icon :: icon('check')}"></svg><span>You're signed in to your restaurant dashboard straight away.</span></li>
+				<li><svg th:replace="~{fragments/icon :: icon('clock')}"></svg><span>Our partner team reviews your details, usually within 2 working days.</span></li>
+				<li><svg th:replace="~{fragments/icon :: icon('store')}"></svg><span>Once approved, customers can find you and start ordering.</span></li>
+			</ol>
+			<p>Questions? Write to <a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+		</aside>
+	</div>
+</main>
+</body>
+</html>

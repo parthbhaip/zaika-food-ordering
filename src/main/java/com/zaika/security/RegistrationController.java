@@ -4,14 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -22,7 +15,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.zaika.user.EmailTakenException;
 import com.zaika.user.RegistrationForm;
-import com.zaika.user.Role;
 import com.zaika.user.User;
 import com.zaika.user.UserService;
 
@@ -35,23 +27,17 @@ class RegistrationController {
 
 	private final UserService userService;
 
-	private final ZaikaUserDetailsService userDetails;
+	private final NewAccountSignIn newAccountSignIn;
 
-	private final LoginSuccessHandler afterSignIn;
-
-	private final SecurityContextRepository contextRepository = new HttpSessionSecurityContextRepository();
-
-	RegistrationController(UserService userService, ZaikaUserDetailsService userDetails,
-			LoginSuccessHandler afterSignIn) {
+	RegistrationController(UserService userService, NewAccountSignIn newAccountSignIn) {
 		this.userService = userService;
-		this.userDetails = userDetails;
-		this.afterSignIn = afterSignIn;
+		this.newAccountSignIn = newAccountSignIn;
 	}
 
 	@GetMapping("/register")
 	String form(Authentication authentication, Model model) {
-		if (signedIn(authentication)) {
-			return "redirect:" + LoginSuccessHandler.landingPage(LoginSuccessHandler.roleOf(authentication));
+		if (NewAccountSignIn.signedIn(authentication)) {
+			return "redirect:" + NewAccountSignIn.landingPage(authentication);
 		}
 		model.addAttribute("form", new RegistrationForm());
 		return "auth/register";
@@ -61,8 +47,8 @@ class RegistrationController {
 	String register(@Valid @ModelAttribute("form") RegistrationForm form, BindingResult result,
 			Authentication authentication, HttpServletRequest request, HttpServletResponse response,
 			RedirectAttributes redirect) {
-		if (signedIn(authentication)) {
-			return "redirect:" + LoginSuccessHandler.landingPage(LoginSuccessHandler.roleOf(authentication));
+		if (NewAccountSignIn.signedIn(authentication)) {
+			return "redirect:" + NewAccountSignIn.landingPage(authentication);
 		}
 		form.checkPasswords(result);
 		if (result.hasErrors()) {
@@ -76,36 +62,9 @@ class RegistrationController {
 			result.rejectValue("email", "taken", "This email already has a Zaika account. Sign in instead.");
 			return "auth/register";
 		}
-		Authentication signedIn = signIn(user, request, response);
-		String cartNotice = afterSignIn.mergeGuestCart(request, signedIn);
 		redirect.addFlashAttribute("flashSuccess",
-				"Welcome to Zaika, " + user.getName().split("\\s+")[0] + "! Your account is ready.");
-		if (cartNotice != null) {
-			redirect.addFlashAttribute("flashInfo", cartNotice);
-		}
-		return "redirect:" + afterSignIn.targetUrl(request, response, Role.CUSTOMER);
-	}
-
-	private static boolean signedIn(Authentication authentication) {
-		return authentication != null && authentication.isAuthenticated();
-	}
-
-	/**
-	 * Signs the new account in as the login form would: new session id (no fixation, session attributes such as a
-	 * guest cart kept), fresh CSRF token, context saved in the session.
-	 */
-	private Authentication signIn(User user, HttpServletRequest request, HttpServletResponse response) {
-		UserDetails details = userDetails.loadUserByUsername(user.getEmail());
-		request.getSession();
-		request.changeSessionId();
-		new HttpSessionCsrfTokenRepository().saveToken(null, request, response);
-		Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(details, null,
-				details.getAuthorities());
-		SecurityContext context = SecurityContextHolder.createEmptyContext();
-		context.setAuthentication(authentication);
-		SecurityContextHolder.setContext(context);
-		contextRepository.saveContext(context, request, response);
-		return authentication;
+				"Welcome to Zaika, " + user.getName().split("\s+")[0] + "! Your account is ready.");
+		return "redirect:" + newAccountSignIn.signIn(user, request, response, redirect);
 	}
 
 }

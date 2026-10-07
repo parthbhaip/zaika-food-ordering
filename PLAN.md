@@ -154,7 +154,7 @@ How this file works
 
 ## Phase 4 - Restaurant owner panel
 
-- [ ] T28 Partner landing and restaurant onboarding
+- [x] T28 Partner landing and restaurant onboarding
   - `/partner-with-us`: benefits, steps, CTAs for restaurants and riders.
   - `/partner-with-us/restaurant`: one sectioned form creating the owner account and a PENDING restaurant (details, cuisines, timings, fees).
   - Owner dashboard shows a status banner for pending / rejected (with reason) / suspended. Tests.

@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/** Content pages with no model: About, Contact and the legal pages. */
+/** Content pages with no model: About, Contact, the legal pages and "Partner with us". */
 @Configuration(proxyBeanMethods = false)
 class WebConfig implements WebMvcConfigurer {
 
@@ -15,6 +15,7 @@ class WebConfig implements WebMvcConfigurer {
 		registry.addViewController("/terms").setViewName("pages/terms");
 		registry.addViewController("/privacy").setViewName("pages/privacy");
 		registry.addViewController("/refund-policy").setViewName("pages/refund-policy");
+		registry.addViewController("/partner-with-us").setViewName("pages/partner");
 	}
 
 }

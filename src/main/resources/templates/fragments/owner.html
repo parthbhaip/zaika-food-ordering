@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Owner panel pieces. statusBanner(r): the review status of the owner's restaurant for every owner page,
+       <div th:replace="~{fragments/owner :: statusBanner(${restaurant})}"></div>
+     Pending, rejected (with the reason) and suspended (with the reason) show a banner; approved shows nothing. */-->
+<th:block th:fragment="statusBanner(r)">
+	<div class="alert alert-warning owner-status" role="status" th:if="${r.status.name() == 'PENDING'}">
+		<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+		<div>
+			<p><strong>Waiting for review.</strong> Our partner team is checking <th:block th:text="${r.name}">Rassa Darbar</th:block>'s details, usually within 2 working days.</p>
+			<p>Customers can't see your restaurant until it's approved. Questions? Write to <a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+		</div>
+	</div>
+	<div class="alert alert-error owner-status" role="status" th:if="${r.status.name() == 'REJECTED'}">
+		<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+		<div>
+			<p><strong>We couldn't approve <th:block th:text="${r.name}">Rassa Darbar</th:block>.</strong></p>
+			<p class="owner-status-reason">Reason: <th:block th:text="${r.statusReason}">The FSSAI licence number does not match the restaurant name.</th:block></p>
+			<p>Fix what's listed above, then write to <a href="mailto:partners@zaika.test">partners@zaika.test</a> and we'll review it again.</p>
+		</div>
+	</div>
+	<div class="alert alert-error owner-status" role="status" th:if="${r.status.name() == 'SUSPENDED'}">
+		<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+		<div>
+			<p><strong><th:block th:text="${r.name}">Rassa Darbar</th:block> is suspended.</strong> Customers can't see or order from it right now.</p>
+			<p class="owner-status-reason">Reason: <th:block th:text="${r.statusReason}">Repeated late deliveries this week.</th:block></p>
+			<p>To get back online, write to <a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+		</div>
+	</div>
+</th:block>
+
+<!--/* The status as a badge: Under review / Live / Not approved / Suspended. */-->
+<span th:fragment="statusBadge(r)" class="badge badge-dot"
+	th:classappend="${r.status.name() == 'APPROVED'} ? 'badge-success' : (${r.status.name() == 'PENDING'} ? 'badge-warning' : 'badge-danger')"
+	th:text="${r.status.name() == 'APPROVED'} ? 'Live on Zaika' : (${r.status.name() == 'PENDING'} ? 'Under review' : (${r.status.name() == 'REJECTED'} ? 'Not approved' : 'Suspended'))">Under review</span>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Partner with us | Zaika</title></head>
+<body>
+<main id="main" class="page">
+	<section class="page-hero">
+		<div class="container page-hero-inner">
+			<p class="eyebrow">Partner with Zaika</p>
+			<h1>Cook or ride with Kolhapur's local delivery app</h1>
+			<p class="lede">Restaurants reach new regulars across the city. Riders earn on their own hours. One app, run from Kolhapur, for Kolhapur.</p>
+		</div>
+	</section>
+
+	<section class="container page-section" aria-labelledby="partner-paths-title">
+		<h2 id="partner-paths-title" class="section-title">Pick your way in</h2>
+		<div class="partner-band">
+			<div class="partner-card partner-card-dark">
+				<span class="partner-card-icon"><svg th:replace="~{fragments/icon :: icon('store')}"></svg></span>
+				<h3>List your restaurant</h3>
+				<p>Put your menu in front of hungry customers from Rajarampuri to Rankala. Takes about 5 minutes to sign up.</p>
+				<a class="btn btn-primary" th:href="@{/partner-with-us/restaurant}" href="/partner-with-us/restaurant">Register your restaurant</a>
+			</div>
+			<div class="partner-card partner-card-light">
+				<span class="partner-card-icon"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+				<h3>Ride with Zaika</h3>
+				<p>Bike, scooter or bicycle. Go online when it suits you and see what a delivery pays before you take it.</p>
+				<a class="btn btn-primary" th:href="@{/partner-with-us/rider}" href="/partner-with-us/rider">Become a delivery partner</a>
+			</div>
+		</div>
+	</section>
+
+	<section class="container page-section" aria-labelledby="partner-restaurants-title">
+		<h2 id="partner-restaurants-title" class="section-title">Why restaurants choose Zaika</h2>
+		<ul class="feature-grid">
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('bell')}"></svg></span>
+				<h3>Orders on one screen</h3>
+				<p>New orders appear on your live board. Accept with a prep time, mark it ready, and the rider is already on the way.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg></span>
+				<h3>Your menu, your prices</h3>
+				<p>Add dishes with photos, mark bestsellers, and switch an item off the moment it sells out. Changes show instantly.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg></span>
+				<h3>Clear daily numbers</h3>
+				<p>Today's orders, revenue and average order value on your dashboard, with reports you can download any time.</p>
+			</li>
+		</ul>
+	</section>
+
+	<section class="container page-section" aria-labelledby="partner-riders-title">
+		<h2 id="partner-riders-title" class="section-title">Why riders ride with us</h2>
+		<ul class="feature-grid">
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('clock')}"></svg></span>
+				<h3>Your hours</h3>
+				<p>Tap online when you're free, offline when you're done. No shifts to book and no minimum hours.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('cash')}"></svg></span>
+				<h3>Pay you can see</h3>
+				<p>Every delivery shows its payout before you claim it: a base amount plus a share of the delivery fee.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('location')}"></svg></span>
+				<h3>Short city runs</h3>
+				<p>Pick-ups and drops stay inside Kolhapur, so you spend your time riding, not crossing the district.</p>
+			</li>
+		</ul>
+	</section>
+
+	<section class="container page-section" aria-labelledby="partner-steps-title">
+		<h2 id="partner-steps-title" class="section-title">How joining works</h2>
+		<ol class="feature-grid steps">
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg></span>
+				<h3>Sign up online</h3>
+				<p>Create your partner account and tell us about your kitchen or your vehicle. No paperwork at this stage.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('check')}"></svg></span>
+				<h3>We review it</h3>
+				<p>Our partner team checks your details, usually within 2 working days. Your dashboard shows the status all along.</p>
+			</li>
+			<li class="feature">
+				<span class="feature-icon"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+				<h3>Start taking orders</h3>
+				<p>Once approved, your restaurant goes live for customers, or you can go online and claim your first delivery.</p>
+			</li>
+		</ol>
+	</section>
+
+	<section class="container page-section">
+		<div class="cta-band">
+			<div>
+				<h2>Questions before you sign up?</h2>
+				<p>Write to partners@zaika.test and our partner team will get back to you within a working day.</p>
+			</div>
+			<div class="cta-band-actions">
+				<a class="btn btn-primary btn-lg" th:href="@{/partner-with-us/restaurant}" href="/partner-with-us/restaurant">Register your restaurant</a>
+				<a class="btn btn-secondary btn-lg" href="mailto:partners@zaika.test">Email the partner team</a>
+			</div>
+		</div>
+	</section>
+</main>
+</body>
+</html>

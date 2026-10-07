@@ -43,11 +43,21 @@ public class UserService {
 	 * @throws EmailTakenException if the email (in any letter case) already has an account
 	 */
 	public User registerCustomer(RegistrationForm form) {
-		if (users.existsByEmailIgnoreCase(form.getEmail())) {
+		return registerAccount(form.getName(), form.getEmail(), form.getPhone(), form.getPassword(), Role.CUSTOMER);
+	}
+
+	/**
+	 * Creates an account of any role from validated sign-up input (name trimmed, email normalized, password hashed).
+	 * Partner sign-ups call it inside their own transaction, so the account and their restaurant or rider profile are
+	 * saved together; a taken email then rolls both back.
+	 *
+	 * @throws EmailTakenException if the email (in any letter case) already has an account
+	 */
+	public User registerAccount(String name, String email, String phone, String rawPassword, Role role) {
+		if (users.existsByEmailIgnoreCase(email)) {
 			throw new EmailTakenException();
 		}
-		User user = new User(form.getName().strip(), form.getEmail(), form.getPhone(),
-				passwordEncoder.encode(form.getPassword()), Role.CUSTOMER);
+		User user = new User(name.strip(), email, phone, passwordEncoder.encode(rawPassword), role);
 		try {
 			return users.saveAndFlush(user);
 		}

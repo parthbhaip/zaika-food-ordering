@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Restaurant dashboard | Zaika</title></head>
+<body>
+<!--/* The owner's home. "restaurant" is the signed-in owner's own restaurant (cuisines loaded) or null. */-->
+<main id="main" class="owner-page">
+	<div class="container owner-container">
+		<th:block th:if="${restaurant == null}">
+			<div th:replace="~{fragments/ui :: emptyState('store', 'No restaurant on this account', 'This partner account has no restaurant linked to it. Write to partners@zaika.test and we will sort it out.', 'Contact us', '/contact')}"></div>
+		</th:block>
+
+		<th:block th:if="${restaurant != null}" th:with="r=${restaurant}">
+			<header class="owner-head">
+				<img class="owner-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/x.svg" alt="" width="64" height="64">
+				<div class="owner-head-text">
+					<p class="eyebrow">Restaurant dashboard</p>
+					<h1 class="owner-title" th:text="${r.name}">Rassa Darbar</h1>
+					<p class="owner-head-meta">
+						<span th:replace="~{fragments/owner :: statusBadge(${r})}"></span>
+						<span th:text="|${r.area}, ${r.city}|">Rajarampuri, Kolhapur</span>
+					</p>
+				</div>
+				<a class="btn btn-secondary owner-head-action" th:if="${r.status.name() == 'APPROVED'}" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar">View your page</a>
+			</header>
+
+			<div th:replace="~{fragments/owner :: statusBanner(${r})}"></div>
+
+			<section class="card owner-listing" aria-labelledby="owner-listing-title">
+				<h2 id="owner-listing-title" class="owner-section-title">Your listing</h2>
+				<p class="owner-listing-tagline" th:if="${r.tagline != null}" th:text="${r.tagline}">Slow-cooked Kolhapuri mutton since 1998</p>
+				<dl class="owner-facts">
+					<div>
+						<dt>Cuisines</dt>
+						<dd>
+							<span th:text="${#strings.listJoin(r.cuisines.![name], ', ')}">Kolhapuri, Thali</span>
+							<span class="badge badge-success" th:if="${r.pureVeg}">Pure veg</span>
+						</dd>
+					</div>
+					<div>
+						<dt>Hours</dt>
+						<dd th:text="${r.opensAt == r.closesAt} ? 'Open 24 hours' : |${@fmt.timeOfDay(r.opensAt)} to ${@fmt.timeOfDay(r.closesAt)}|">11:00 AM to 11:00 PM</dd>
+					</div>
+					<div>
+						<dt>Preparation time</dt>
+						<dd th:text="|About ${r.avgPrepMinutes} min (customers see ${r.deliveryMinutes} min with the ride)|">About 20 min</dd>
+					</div>
+					<div>
+						<dt>Cost for two</dt>
+						<dd th:text="${@fmt.price(r.costForTwo)}">₹400</dd>
+					</div>
+					<div>
+						<dt>Minimum order</dt>
+						<dd th:text="${r.minimumOrder.signum() == 0} ? 'No minimum' : ${@fmt.price(r.minimumOrder)}">No minimum</dd>
+					</div>
+					<div>
+						<dt>Delivery fee</dt>
+						<dd th:text="${r.deliveryFee.signum() == 0} ? 'Free delivery' : |${@fmt.price(r.deliveryFee)}, free above ₹499|">₹30</dd>
+					</div>
+					<div>
+						<dt>Address</dt>
+						<dd th:text="|${r.address}, ${r.area}, ${r.city} ${r.pincode}|">12, Main Road, Rajarampuri, Kolhapur 416008</dd>
+					</div>
+					<div>
+						<dt>Phone</dt>
+						<dd th:text="${@fmt.phone(r.phone)}">+91 98765 43210</dd>
+					</div>
+				</dl>
+				<p class="owner-listing-help" th:if="${r.status.name() != 'APPROVED'}">Need to change something before you go live? Write to <a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+			</section>
+		</th:block>
+	</div>
+</main>
+</body>
+</html>

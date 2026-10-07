@@ -19,6 +19,12 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, J
 	/** The owner's own restaurant (an owner has at most one). */
 	Optional<Restaurant> findByOwnerId(Long ownerId);
 
+	/** The owner's own restaurant with its cuisines (one query), for the owner panel. */
+	@EntityGraph(attributePaths = "cuisines")
+	Optional<Restaurant> findWithCuisinesByOwnerId(Long ownerId);
+
+	boolean existsBySlug(String slug);
+
 	/**
 	 * Loads the cuisines of a page of restaurants in one query. Called inside the transaction that loaded the page,
 	 * it fills the cuisine collections of those same managed instances (a fetch join cannot be paged in SQL).
