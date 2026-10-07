@@ -13,7 +13,7 @@ import jakarta.validation.constraints.Size;
 
 import com.zaika.common.BaseEntity;
 
-/** A section of a restaurant's menu ("Starters", "Thalis"), shown in ascending sort order. */
+/** A section of a restaurant's menu ("Starters", "Thalis"), shown in ascending sort order unless archived. */
 @Entity
 @Table(name = "menu_categories")
 public class MenuCategory extends BaseEntity {
@@ -29,6 +29,10 @@ public class MenuCategory extends BaseEntity {
 
 	@Column(name = "sort_order", nullable = false)
 	private int sortOrder;
+
+	/** Deleted by the owner while archived dishes still point at it: hidden everywhere, kept for those dishes. */
+	@Column(nullable = false)
+	private boolean archived;
 
 	protected MenuCategory() {
 	}
@@ -57,6 +61,14 @@ public class MenuCategory extends BaseEntity {
 
 	public void setSortOrder(int sortOrder) {
 		this.sortOrder = sortOrder;
+	}
+
+	public boolean isArchived() {
+		return archived;
+	}
+
+	public void setArchived(boolean archived) {
+		this.archived = archived;
 	}
 
 }

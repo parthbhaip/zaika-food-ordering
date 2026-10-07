@@ -17,6 +17,10 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+	/** Whether the dish is on any order, whatever its status (idx_order_items_menu_item). Such dishes are archived. */
+	@Query("select count(i) > 0 from OrderItem i where i.menuItem.id = :menuItemId")
+	boolean wasEverOrdered(long menuItemId);
+
 	/** Uses {@code idx_orders_customer_status}. */
 	boolean existsByCustomerIdAndStatusIn(long customerId, Collection<OrderStatus> statuses);
 

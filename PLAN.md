@@ -163,7 +163,7 @@ How this file works
   - Accepting-orders toggle; today's orders, revenue, average order value, pending count; latest orders.
   - 7-day revenue bar chart rendered as server-side SVG built in Java (no chart library). Tests.
 
-- [ ] T30 Owner menu management `/owner/menu`
+- [x] T30 Owner menu management `/owner/menu`
   - Categories CRUD + reorder. Items CRUD with image upload, price, veg, bestseller, spice level; availability switch inline (htmx).
   - Items that were ever ordered are archived, not deleted. Another owner's items -> 403/404. Tests.
 

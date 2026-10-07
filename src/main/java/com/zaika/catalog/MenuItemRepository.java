@@ -20,6 +20,19 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
 	@EntityGraph(attributePaths = "restaurant")
 	List<MenuItem> findWithRestaurantByIdIn(Collection<Long> ids);
 
+	/** The restaurant's dish with this id, archived ones excluded; another restaurant's id finds nothing. */
+	Optional<MenuItem> findByIdAndRestaurantIdAndArchivedFalse(Long id, Long restaurantId);
+
+	/** Dishes in the category that are not archived (uses idx_menu_items_category). */
+	long countByCategoryIdAndArchivedFalse(Long categoryId);
+
+	/** Whether any dish (archived or not) still points at the category. */
+	boolean existsByCategoryId(Long categoryId);
+
+	/** The highest sort order in use at the restaurant (0 without dishes). */
+	@Query("select coalesce(max(i.sortOrder), 0) from MenuItem i where i.restaurant.id = :restaurantId")
+	int maxSortOrder(Long restaurantId);
+
 	/** Every item a customer may see (archived ones hidden, sold-out ones included), in menu order. */
 	List<MenuItem> findByRestaurantIdAndArchivedFalseOrderBySortOrderAscIdAsc(Long restaurantId);
 

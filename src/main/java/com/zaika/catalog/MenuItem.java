@@ -101,6 +101,17 @@ public class MenuItem extends BaseEntity {
 		return category;
 	}
 
+	/**
+	 * Moves the dish to another category of the same restaurant.
+	 * @throws IllegalArgumentException if the category belongs to another restaurant
+	 */
+	public void moveTo(MenuCategory target) {
+		if (!target.getRestaurant().equals(restaurant)) {
+			throw new IllegalArgumentException("Category " + target.getId() + " belongs to another restaurant");
+		}
+		this.category = target;
+	}
+
 	public String getName() {
 		return name;
 	}

@@ -11,6 +11,8 @@
 		</th:block>
 
 		<th:block th:if="${dashboard != null}" th:with="d=${dashboard}, r=${dashboard.restaurant}">
+			<nav th:replace="~{fragments/owner :: nav('dashboard')}"></nav>
+
 			<header class="owner-head">
 				<img class="owner-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/x.svg" alt="" width="64" height="64">
 				<div class="owner-head-text">

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Menu | Zaika</title></head>
+<body>
+<!--/* The owner's menu. Model: "menu" (owner.MenuManagementService.Menu: the restaurant and its live categories with
+     their live dishes), "newCategory" and "renameForm" (owner.CategoryForm), "renaming" (the category id whose rename
+     failed validation, shown open with the error; null otherwise). Every action is a plain form; the stock switch
+     also swaps its dish row through htmx. */-->
+<main id="main" class="owner-page">
+	<div class="container owner-container" th:with="m=${menu}, r=${menu.restaurant}">
+		<nav th:replace="~{fragments/owner :: nav('menu')}"></nav>
+
+		<header class="owner-head menu-admin-head">
+			<div class="owner-head-text">
+				<p class="eyebrow" th:text="${r.name}">Rassa Darbar</p>
+				<h1 class="owner-title">Your menu</h1>
+				<p class="owner-head-meta" th:if="${!m.sections.isEmpty()}">
+					<span th:text="|${m.dishCount()} ${m.dishCount() == 1 ? 'dish' : 'dishes'} in ${m.sections.size()} ${m.sections.size() == 1 ? 'category' : 'categories'}|">24 dishes in 5 categories</span>
+					<span class="badge" th:if="${m.soldOutCount() > 0}" th:text="|${m.soldOutCount()} sold out|">2 sold out</span>
+				</p>
+			</div>
+			<a class="btn btn-primary owner-head-action" th:if="${!m.sections.isEmpty()}" th:href="@{/owner/menu/items/new}" href="/owner/menu/items/new"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg>Add a dish</a>
+		</header>
+
+		<div th:replace="~{fragments/owner :: statusBanner(${r})}"></div>
+
+		<p class="menu-admin-note" th:if="${r.pureVeg}"><span th:replace="~{fragments/ui :: veg(true)}"></span>Pure veg kitchen: every dish you add is listed as veg.</p>
+
+		<div class="card menu-admin-empty" th:if="${m.sections.isEmpty()}">
+			<div th:replace="~{fragments/ui :: emptyState('dish', 'Start your menu', 'Add a category first, like Starters, Thalis or Desserts. Then add the dishes that go in it.', null, null)}"></div>
+		</div>
+
+		<section class="card menu-admin-category" th:each="s, it : ${m.sections}" th:id="|category-${s.category.id}|"
+			th:with="c=${s.category}, renamingThis=${renaming == s.category.id}" th:aria-labelledby="|category-${s.category.id}-title|">
+			<div class="menu-admin-category-head">
+				<div class="menu-admin-category-text">
+					<h2 class="owner-section-title" th:id="|category-${c.id}-title|" th:text="${c.name}">Starters</h2>
+					<p class="menu-admin-count">
+						<th:block th:text="${s.items.isEmpty()} ? 'No dishes yet' : |${s.items.size()} ${s.items.size() == 1 ? 'dish' : 'dishes'}|">5 dishes</th:block><th:block th:if="${s.soldOutCount() > 0}" th:text="| · ${s.soldOutCount()} sold out|"> · 1 sold out</th:block>
+					</p>
+				</div>
+				<div class="menu-admin-category-actions">
+					<form method="post" th:action="@{/owner/menu/categories/{id}/move(id=${c.id})}" action="/owner/menu/categories/1/move">
+						<input type="hidden" name="direction" value="UP">
+						<button type="submit" class="btn btn-ghost btn-sm btn-icon menu-admin-up" th:disabled="${it.first}" th:aria-label="|Move ${c.name} up|" aria-label="Move Starters up"><svg th:replace="~{fragments/icon :: icon('chevron-down')}"></svg></button>
+					</form>
+					<form method="post" th:action="@{/owner/menu/categories/{id}/move(id=${c.id})}" action="/owner/menu/categories/1/move">
+						<input type="hidden" name="direction" value="DOWN">
+						<button type="submit" class="btn btn-ghost btn-sm btn-icon" th:disabled="${it.last}" th:aria-label="|Move ${c.name} down|" aria-label="Move Starters down"><svg th:replace="~{fragments/icon :: icon('chevron-down')}"></svg></button>
+					</form>
+					<details class="menu-admin-pop-wrap" data-menu th:open="${renamingThis}">
+						<summary class="btn btn-ghost btn-sm"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Rename<span class="visually-hidden" th:text="| ${c.name}|"> Starters</span></summary>
+						<form class="menu-admin-pop menu-admin-rename" method="post" th:action="@{/owner/menu/categories/{id}/rename(id=${c.id})}" action="/owner/menu/categories/1/rename" novalidate
+							th:with="invalid=${renamingThis and #fields.hasErrors('${renameForm.name}')}">
+							<div class="field" th:classappend="${invalid} ? 'has-error'">
+								<label class="field-label" th:for="|rename-${c.id}|" for="rename-1">Category name</label>
+								<input class="input" type="text" th:id="|rename-${c.id}|" name="name" maxlength="60" autocomplete="off"
+									th:value="${renamingThis} ? ${renameForm.name} : ${c.name}"
+									th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? |rename-${c.id}-error|">
+								<p class="field-error" th:if="${invalid}" th:id="|rename-${c.id}-error|"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('${renameForm.name}'), ' ')}">Give the category a name, like Starters.</span></p>
+							</div>
+							<button type="submit" class="btn btn-primary btn-sm">Save name</button>
+						</form>
+					</details>
+					<details class="confirm menu-admin-pop-wrap" data-menu>
+						<summary class="btn btn-ghost btn-sm"><svg th:replace="~{fragments/icon :: icon('trash')}"></svg>Delete<span class="visually-hidden" th:text="| ${c.name}|"> Starters</span></summary>
+						<div class="confirm-panel menu-admin-pop">
+							<th:block th:if="${s.items.isEmpty()}">
+								<p th:text="|Delete the “${c.name}” category?|">Delete the “Starters” category?</p>
+								<form method="post" th:action="@{/owner/menu/categories/{id}/delete(id=${c.id})}" action="/owner/menu/categories/1/delete">
+									<button type="submit" class="btn btn-danger btn-sm">Yes, delete</button>
+								</form>
+							</th:block>
+							<p th:unless="${s.items.isEmpty()}" class="menu-admin-pop-text" th:text="|“${c.name}” still has ${s.items.size()} ${s.items.size() == 1 ? 'dish' : 'dishes'}. Move them to another category or delete them first.|">“Starters” still has 5 dishes. Move them to another category or delete them first.</p>
+						</div>
+					</details>
+				</div>
+			</div>
+
+			<ul class="menu-admin-dishes" th:unless="${s.items.isEmpty()}" th:aria-label="|Dishes in ${c.name}|">
+				<th:block th:each="item : ${s.items}">
+					<li th:replace="~{owner/menu :: dish(${item})}"></li>
+				</th:block>
+			</ul>
+			<a class="btn btn-secondary btn-sm menu-admin-add" th:href="@{/owner/menu/items/new(category=${c.id})}" href="/owner/menu/items/new?category=1"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg>Add a dish<span class="visually-hidden" th:text="| to ${c.name}|"> to Starters</span></a>
+		</section>
+
+		<section class="card menu-admin-new" aria-labelledby="new-category-title">
+			<h2 id="new-category-title" class="owner-section-title" th:text="${m.sections.isEmpty()} ? 'Add your first category' : 'Add a category'">Add a category</h2>
+			<form class="menu-admin-new-form" method="post" th:action="@{/owner/menu/categories}" action="/owner/menu/categories" th:object="${newCategory}" novalidate>
+				<div th:replace="~{fragments/form :: field('name', 'Category name', 'text', 'Like Starters, Thalis, Biryani or Desserts. Customers see categories in this order.', 'off')}"></div>
+				<button type="submit" class="btn btn-secondary"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg>Add category</button>
+			</form>
+		</section>
+	</div>
+</main>
+
+<!--/* One dish row: photo, veg mark, name, tags and price, the stock switch, Edit and Delete. The stock switch is a
+     one-button form (its aria-checked is the current state; pressing it sends the opposite); htmx swaps the whole
+     row, and the switch keeps focus because its id stays the same. */-->
+<li th:fragment="dish(item)" class="menu-admin-dish" th:classappend="${item.available} ? '' : 'is-unavailable'" th:id="|dish-${item.id}|">
+	<img class="menu-admin-dish-img" th:with="src=${@img.dish(item)}" th:src="@{${src}}" src="/placeholder/dish/mutton-thali.svg" alt="" width="64" height="64" loading="lazy">
+	<div class="menu-admin-dish-info">
+		<p class="menu-admin-dish-name"><span th:replace="~{fragments/ui :: veg(${item.veg})}"></span><span th:text="${item.name}">Mutton Thali</span></p>
+		<p class="menu-admin-dish-meta">
+			<span th:replace="~{fragments/ui :: price(${item.price})}"></span>
+			<span th:if="${item.bestseller}" class="badge badge-bestseller"><svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>Bestseller</span>
+			<span th:if="${item.spiceLevel > 0}" class="badge" th:classappend="${item.spiceLevel == 3} ? 'badge-danger' : 'badge-warning'"
+				th:text="${item.spiceLevel == 1 ? 'Mild spice' : (item.spiceLevel == 2 ? 'Spicy' : 'Very spicy')}">Spicy</span>
+		</p>
+	</div>
+	<form class="menu-admin-stock" method="post" th:action="@{/owner/menu/items/{id}/availability(id=${item.id})}" action="/owner/menu/items/1/availability"
+		th:hx-post="@{/owner/menu/items/{id}/availability(id=${item.id})}" th:hx-target="|#dish-${item.id}|" hx-swap="outerHTML">
+		<input type="hidden" name="available" th:value="${!item.available}" value="false">
+		<button class="switch" type="submit" role="switch" th:id="|stock-${item.id}|" th:aria-checked="${item.available}" aria-checked="true"
+			th:aria-label="|${item.name} in stock|" aria-label="Mutton Thali in stock"></button>
+		<span class="menu-admin-stock-label" aria-hidden="true" th:text="${item.available} ? 'In stock' : 'Sold out'">In stock</span>
+	</form>
+	<div class="menu-admin-dish-actions">
+		<a class="btn btn-ghost btn-sm" th:href="@{/owner/menu/items/{id}(id=${item.id})}" href="/owner/menu/items/1"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Edit<span class="visually-hidden" th:text="| ${item.name}|"> Mutton Thali</span></a>
+		<details class="confirm" data-menu>
+			<summary class="btn btn-ghost btn-sm"><svg th:replace="~{fragments/icon :: icon('trash')}"></svg>Delete<span class="visually-hidden" th:text="| ${item.name}|"> Mutton Thali</span></summary>
+			<div class="confirm-panel">
+				<p th:text="|Delete “${item.name}”?|">Delete “Mutton Thali”?</p>
+				<p class="menu-admin-pop-text">It leaves your menu and customers' carts. Past orders keep showing it.</p>
+				<form method="post" th:action="@{/owner/menu/items/{id}/delete(id=${item.id})}" action="/owner/menu/items/1/delete">
+					<button type="submit" class="btn btn-danger btn-sm">Yes, delete</button>
+				</form>
+			</div>
+		</details>
+	</div>
+</li>
+
+<!--/* htmx answer to the stock switch: the dish row plus the toast, out of band. Model: item, toastKind, toastMessage. */-->
+<th:block th:fragment="dish-update">
+	<li th:replace="~{owner/menu :: dish(${item})}"></li>
+	<div hx-swap-oob="beforeend:#toasts"><div th:replace="~{fragments/flash :: toast(${toastKind}, ${toastMessage})}"></div></div>
+</th:block>
+</body>
+</html>

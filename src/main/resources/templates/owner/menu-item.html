@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${page.item == null} ? 'Add a dish | Zaika' : 'Edit dish | Zaika'">Add a dish | Zaika</title></head>
+<body>
+<!--/* Add or edit a dish. Model: "page" (owner.MenuManagementService.DishPage: restaurant, categories, and the dish
+     when editing), "form" (owner.MenuItemForm), "spiceLabels". The form uploads a photo, so it posts to this page's own
+     URL. Errors re-render it with the typed values kept (a chosen photo has to be attached again). */-->
+<main id="main" class="owner-page">
+	<div class="container owner-container menu-dish" th:with="p=${page}, r=${page.restaurant}, editing=${page.item != null},
+			formUrl=${page.item == null ? '/owner/menu/items/new' : '/owner/menu/items/' + page.item.id}">
+		<nav th:replace="~{fragments/owner :: nav('menu')}"></nav>
+
+		<header class="menu-dish-head">
+			<a class="checkout-back" th:href="@{/owner/menu}" href="/owner/menu"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>Back to menu</a>
+			<h1 id="dish-form-title" class="owner-title" th:text="${editing} ? |Edit ${p.item.name}| : 'Add a dish'">Add a dish</h1>
+		</header>
+
+		<div th:replace="~{fragments/owner :: statusBanner(${r})}"></div>
+
+		<div class="alert alert-error" role="alert" th:if="${#fields.hasErrors('${form.*}')}">
+			<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+			<p><strong>A few details need another look.</strong> Fix the fields marked below and save again.<th:block th:if="${form.hasImage()}"> Attach the photo again too.</th:block></p>
+		</div>
+
+		<form class="card menu-dish-form" th:action="@{${formUrl}}" action="/owner/menu/items/new" method="post"
+			enctype="multipart/form-data" th:object="${form}" novalidate aria-labelledby="dish-form-title">
+
+			<div class="field" th:with="invalid=${#fields.hasErrors('categoryId')}" th:classappend="${invalid} ? 'has-error'">
+				<label class="field-label" for="categoryId">Category</label>
+				<div class="select-wrap">
+					<select class="select" id="categoryId" name="categoryId" th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? 'categoryId-error'">
+						<option th:each="c : ${p.categories}" th:value="${c.id}" th:text="${c.name}" th:selected="${c.id == form.categoryId}">Starters</option>
+					</select>
+				</div>
+				<p class="field-error" th:if="${invalid}" id="categoryId-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('categoryId'), ' ')}">Choose a category.</span></p>
+			</div>
+
+			<div th:replace="~{fragments/form :: field('name', 'Dish name', 'text', null, 'off')}"></div>
+
+			<div class="field" th:with="invalid=${#fields.hasErrors('description')}" th:classappend="${invalid} ? 'has-error'">
+				<label class="field-label" for="description">Description <span class="optional">(optional)</span></label>
+				<textarea class="textarea" id="description" name="description" rows="3" maxlength="300" th:text="*{description}"
+					th:aria-invalid="${invalid} ? 'true'"
+					th:aria-describedby="${invalid} ? 'description-error description-help' : 'description-help'"></textarea>
+				<p class="field-help" id="description-help">What's in it and how it's served, in a line or two. Up to 300 characters.</p>
+				<p class="field-error" th:if="${invalid}" id="description-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('description'), ' ')}">Keep the description under 300 characters.</span></p>
+			</div>
+
+			<div class="menu-dish-grid">
+				<th:block th:with="inputmode='decimal'">
+					<div th:replace="~{fragments/form :: field('price', 'Price (₹)', 'text', 'What customers pay for one, like 180.', 'off')}"></div>
+				</th:block>
+				<div class="field" th:with="invalid=${#fields.hasErrors('spiceLevel')}" th:classappend="${invalid} ? 'has-error'">
+					<label class="field-label" for="spiceLevel">Spice level</label>
+					<div class="select-wrap">
+						<select class="select" id="spiceLevel" name="spiceLevel" th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? 'spiceLevel-error'">
+							<option th:each="label, s : ${spiceLabels}" th:value="${s.index}" th:text="${label}" th:selected="${s.index == form.spiceLevel}">Not spicy</option>
+						</select>
+					</div>
+					<p class="field-error" th:if="${invalid}" id="spiceLevel-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('spiceLevel'), ' ')}">Choose a spice level.</span></p>
+				</div>
+			</div>
+
+			<fieldset class="field choice-field" th:with="invalid=${#fields.hasErrors('veg')}" th:classappend="${invalid} ? 'has-error'"
+				th:aria-describedby="${invalid} ? 'veg-error'">
+				<legend class="field-label">Veg or non-veg</legend>
+				<th:block th:if="${r.pureVeg}">
+					<input type="hidden" name="veg" value="true">
+					<p class="menu-admin-note"><span th:replace="~{fragments/ui :: veg(true)}"></span>Veg. <th:block th:text="${r.name}">Rassa Darbar</th:block> is a pure veg kitchen.</p>
+				</th:block>
+				<div class="choice-row" th:unless="${r.pureVeg}">
+					<label class="choice"><input class="radio" type="radio" th:field="*{veg}" value="true"><span th:replace="~{fragments/ui :: veg(true)}"></span><span aria-hidden="true">Veg</span></label>
+					<label class="choice"><input class="radio" type="radio" th:field="*{veg}" value="false"><span th:replace="~{fragments/ui :: veg(false)}"></span><span aria-hidden="true">Non-veg</span></label>
+				</div>
+				<p class="field-error" th:if="${invalid}" id="veg-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('veg'), ' ')}">Choose veg or non-veg.</span></p>
+			</fieldset>
+
+			<div class="field">
+				<label class="check"><input class="switch" type="checkbox" role="switch" th:field="*{available}"><span class="check-text">In stock <small>Turn it off when the dish runs out. Customers see it as sold out until you turn it back on.</small></span></label>
+				<label class="check"><input class="switch" type="checkbox" role="switch" th:field="*{bestseller}"><span class="check-text">Bestseller <small>Adds a Bestseller tag. Keep it for your few most-loved dishes.</small></span></label>
+			</div>
+
+			<div class="field" th:with="invalid=${#fields.hasErrors('image')}" th:classappend="${invalid} ? 'has-error'">
+				<label class="field-label" for="image">Photo <span class="optional">(optional)</span></label>
+				<div class="menu-dish-photo" th:if="${editing and p.item.imagePath != null}">
+					<img th:with="src=${@img.dish(p.item)}" th:src="@{${src}}" src="/placeholder/dish/mutton-thali.svg" th:alt="|Current photo of ${p.item.name}|" alt="Current photo" width="96" height="96">
+					<label class="check"><input class="checkbox" type="checkbox" th:field="*{removeImage}"><span class="check-text">Remove this photo <small>Customers see a simple drawing instead.</small></span></label>
+				</div>
+				<input class="file-input" type="file" id="image" name="image" accept="image/jpeg,image/png,image/webp"
+					th:aria-invalid="${invalid} ? 'true'"
+					th:aria-describedby="${invalid} ? 'image-error image-help' : 'image-help'">
+				<p class="field-help" id="image-help" th:text="${editing and p.item.imagePath != null} ? 'Choose a new photo to replace this one. A square JPG, PNG or WebP image, up to 2 MB.' : 'A square JPG, PNG or WebP image, up to 2 MB. Dishes with photos get more orders.'">A square JPG, PNG or WebP image, up to 2 MB.</p>
+				<p class="field-error" th:if="${invalid}" id="image-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('image'), ' ')}">Choose a JPG, PNG or WebP image.</span></p>
+			</div>
+
+			<div class="menu-dish-actions">
+				<button type="submit" class="btn btn-primary" th:text="${editing} ? 'Save changes' : 'Add to menu'">Add to menu</button>
+				<a class="btn btn-ghost" th:href="@{/owner/menu}" href="/owner/menu">Cancel</a>
+			</div>
+		</form>
+	</div>
+</main>
+</body>
+</html>
