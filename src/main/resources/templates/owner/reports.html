@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Reports | Zaika</title></head>
+<body>
+<!--/* /owner/reports: the kitchen's order history for a range of days. A plain GET form (quick ranges, from, to,
+     status) drives a revenue summary and the top five dishes for the range, then a paginated orders table (narrowed by
+     the status) and a CSV download of the same orders.
+     Model: report (owner.OwnerReportsService.Report, null for an owner account without a restaurant), filter
+     (owner.ReportFilter, normalized), statuses. */-->
+<main id="main" class="owner-page">
+	<div class="container owner-container">
+		<th:block th:if="${report == null}">
+			<div th:replace="~{fragments/ui :: emptyState('store', 'No restaurant on this account', 'This partner account has no restaurant linked to it. Write to partners@zaika.test and we will sort it out.', 'Contact us', '/contact')}"></div>
+		</th:block>
+
+		<th:block th:if="${report != null}" th:with="r=${report.restaurant}, s=${report.summary}, page=${report.orders},
+				period=|${@fmt.date(filter.from.atStartOfDay())} – ${@fmt.date(filter.to.atStartOfDay())}|">
+			<nav th:replace="~{fragments/owner :: nav('reports')}"></nav>
+
+			<header class="owner-head-text">
+				<p class="eyebrow" th:text="${r.name}">Rassa Darbar</p>
+				<h1 class="owner-title">Orders and reports</h1>
+				<p class="owner-board-lede">Every order that reached your kitchen, by the day it was placed.</p>
+			</header>
+
+			<div th:replace="~{fragments/owner :: statusBanner(${r})}"></div>
+
+			<section class="card report-filters" aria-labelledby="report-filters-title">
+				<h2 id="report-filters-title" class="visually-hidden">Choose a period</h2>
+				<nav class="chip-row" aria-label="Quick ranges">
+					<a th:each="p : ${filter.presets()}" class="chip" th:with="href=${p.url}" th:href="@{${href}}" href="/owner/reports"
+						th:aria-current="${p.active} ? 'true'" th:text="${p.label}">Last 30 days</a>
+				</nav>
+				<form class="report-form" method="get" th:action="@{/owner/reports}" action="/owner/reports">
+					<div class="field">
+						<label class="field-label" for="report-from">From</label>
+						<input class="input" id="report-from" name="from" type="date" th:value="${filter.from}" value="2026-09-05">
+					</div>
+					<div class="field">
+						<label class="field-label" for="report-to">To</label>
+						<input class="input" id="report-to" name="to" type="date" th:value="${filter.to}" value="2026-10-04">
+					</div>
+					<div class="field">
+						<label class="field-label" for="report-status">Status</label>
+						<div class="select-wrap">
+							<select class="select" id="report-status" name="status">
+								<option value="">All statuses</option>
+								<option th:each="st : ${statuses}" th:value="${T(com.zaika.owner.ReportFilter).slug(st)}"
+									th:selected="${st == filter.statusOption}" th:text="${st.label}" value="delivered">Delivered</option>
+							</select>
+						</div>
+					</div>
+					<button class="btn btn-primary report-submit" type="submit">Show report</button>
+				</form>
+			</section>
+
+			<section class="report-summary" aria-labelledby="report-summary-title">
+				<div class="owner-card-head">
+					<h2 id="report-summary-title" class="owner-section-title">Sales <span class="owner-today-date" th:text="|· ${period}|">· 5 Sep 2026 – 4 Oct 2026</span></h2>
+					<p class="report-days" th:text="${filter.days() == 1} ? '1 day' : |${filter.days()} days|">30 days</p>
+				</div>
+				<dl class="owner-stats">
+					<div class="card owner-stat">
+						<dt>Revenue</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.price(s.revenue)}">₹48,250</dd>
+					</div>
+					<div class="card owner-stat">
+						<dt>Orders</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.count(s.orders)}">112</dd>
+					</div>
+					<div class="card owner-stat">
+						<dt>Average order</dt>
+						<dd class="owner-stat-value" th:text="${s.orders == 0} ? '–' : ${@fmt.price(s.averageOrderValue())}">₹430.80</dd>
+						<dd class="visually-hidden" th:if="${s.orders == 0}">No orders in this period</dd>
+					</div>
+					<div class="card owner-stat">
+						<dt>Cancelled or rejected</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.count(s.missed)}">3</dd>
+						<dd class="report-stat-note" th:text="${s.missed == 0} ? 'None missed' : |${@fmt.price(s.missedValue)} of food|">₹1,240 of food</dd>
+					</div>
+				</dl>
+				<p class="owner-stats-note">Revenue is the food value of your orders, before coupons, fees and GST. Cancelled and rejected orders don't count.</p>
+			</section>
+
+			<section class="card report-top" aria-labelledby="report-top-title">
+				<div class="owner-card-head">
+					<h2 id="report-top-title" class="owner-section-title">Top dishes</h2>
+					<p class="report-days">By plates sold</p>
+				</div>
+				<p class="report-empty" th:if="${report.topDishes.isEmpty()}">No dishes sold in this period yet.</p>
+				<ol class="report-dishes" th:unless="${report.topDishes.isEmpty()}">
+					<li class="report-dish" th:each="d, it : ${report.topDishes}">
+						<span class="report-dish-rank" aria-hidden="true" th:text="${it.count}">1</span>
+						<span th:replace="~{fragments/ui :: veg(${d.veg})}"></span>
+						<span class="report-dish-name" th:text="${d.name}">Tambda Rassa Thali</span>
+						<span class="report-dish-qty" th:text="|${@fmt.count(d.quantity)} sold|">48 sold</span>
+						<span class="price report-dish-sales" th:text="${@fmt.price(d.sales)}">₹14,400</span>
+					</li>
+				</ol>
+			</section>
+
+			<section class="report-orders" aria-labelledby="report-orders-title">
+				<div class="owner-card-head">
+					<h2 id="report-orders-title" class="owner-section-title">Orders
+						<span class="badge badge-primary" th:if="${filter.statusOption != null}" th:text="${filter.statusOption.label}">Delivered</span></h2>
+					<a class="btn btn-secondary btn-sm" th:if="${page.totalElements > 0}" th:with="csv=${filter.csvUrl()}" th:href="@{${csv}}" href="/owner/reports/orders.csv" download>
+						<svg th:replace="~{fragments/icon :: icon('download')}"></svg>Download CSV</a>
+				</div>
+				<div th:if="${page.totalElements == 0}" class="card"
+					th:with="hint=${filter.statusOption == null} ? 'Try a longer range. Orders show up here once customers place them.' : |No ${#strings.toLowerCase(filter.statusOption.label)} orders between these dates. Try another status or a longer range.|">
+					<div th:replace="~{fragments/ui :: emptyState('receipt', 'No orders in this period', ${hint}, null, null)}"></div>
+				</div>
+				<th:block th:if="${page.hasContent()}">
+					<p class="report-count" th:with="first=${page.number * page.size + 1}, last=${page.number * page.size + page.numberOfElements}"
+						th:text="${page.totalElements == 1} ? 'One order' : |Showing ${@fmt.count(first)}–${@fmt.count(last)} of ${@fmt.count(page.totalElements)} orders, newest first|">Showing 1–20 of 57 orders, newest first</p>
+					<div class="table-wrap">
+						<table class="table report-table">
+							<caption class="visually-hidden" th:text="|Orders placed ${period}|">Orders placed 5 Sep 2026 – 4 Oct 2026</caption>
+							<thead>
+								<tr>
+									<th scope="col">Order</th>
+									<th scope="col">Placed</th>
+									<th scope="col">Customer</th>
+									<th scope="col">Dishes</th>
+									<th scope="col">Payment</th>
+									<th scope="col">Status</th>
+									<th scope="col" class="num">Food value</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="o : ${page.content}" th:with="at=${o.timestampOf(T(com.zaika.order.OrderStatus).PLACED)}">
+									<th scope="row"><a th:href="@{/owner/orders/{code}(code=${o.code})}" href="/owner/orders/ZK-26-000123" th:text="${o.code}">ZK-26-000123</a></th>
+									<td><time th:datetime="${at}" th:text="${@fmt.dateTime(at)}">4 Oct 2026, 7:30 PM</time></td>
+									<td class="report-customer" th:text="${o.customer.name}">Riya Shinde</td>
+									<td class="report-items"><th:block th:each="i, it : ${o.items}" th:text="|${i.quantity} × ${i.name}${it.last ? '' : ', '}|">2 × Mutton Thali</th:block></td>
+									<td th:text="${o.paymentMethod.name() == 'COD'} ? 'Cash' : |Online · ${o.paymentStatus.label}|">Cash</td>
+									<td><span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Delivered</span></td>
+									<td class="num" th:text="${@fmt.money(o.bill.itemTotal)}">₹540.00</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<nav th:replace="~{fragments/pagination :: pagination(${page}, ${filter.url()})}"></nav>
+				</th:block>
+			</section>
+		</th:block>
+	</div>
+</main>
+</body>
+</html>

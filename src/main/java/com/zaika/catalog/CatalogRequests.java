@@ -3,13 +3,13 @@ package com.zaika.catalog;
 import jakarta.servlet.http.HttpServletRequest;
 
 /** Small helpers shared by the catalog pages: the requested URL (for canonical redirects) and search text. */
-final class CatalogRequests {
+public final class CatalogRequests {
 
 	private CatalogRequests() {
 	}
 
 	/** The requested URL. {@code %20} and {@code +} both mean a space in a query, so they compare equal. */
-	static String currentUrl(HttpServletRequest request) {
+	public static String currentUrl(HttpServletRequest request) {
 		String query = request.getQueryString();
 		return request.getRequestURI() + (query == null ? "" : "?" + query.replace("%20", "+"));
 	}

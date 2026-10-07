@@ -81,6 +81,53 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 	@EntityGraph(attributePaths = { "restaurant", "customer", "rider", "items" })
 	Optional<Order> findTicketByCodeAndRestaurantOwnerId(String code, long ownerId);
 
+	/**
+	 * A page of the restaurant's orders in {@code statuses} placed in [{@code from}, {@code to}), newest first, with
+	 * their customer (idx_orders_restaurant_placed): the owner's report table. Dishes not loaded.
+	 */
+	@EntityGraph(attributePaths = "customer")
+	@Query(value = """
+			select o from Order o where o.restaurant.id = :restaurantId and o.status in :statuses
+			and o.placedAt >= :from and o.placedAt < :to order by o.placedAt desc, o.id desc""", countQuery = """
+			select count(o) from Order o where o.restaurant.id = :restaurantId and o.status in :statuses
+			and o.placedAt >= :from and o.placedAt < :to""")
+	Page<Order> findReport(long restaurantId, Collection<OrderStatus> statuses, LocalDateTime from, LocalDateTime to,
+			Pageable pageable);
+
+	/** Every order of {@link #findReport} with customer and dishes, in one query: the owner's CSV export. */
+	@EntityGraph(attributePaths = { "customer", "items" })
+	@Query("""
+			select o from Order o where o.restaurant.id = :restaurantId and o.status in :statuses
+			and o.placedAt >= :from and o.placedAt < :to order by o.placedAt desc, o.id desc""")
+	List<Order> findReportRows(long restaurantId, Collection<OrderStatus> statuses, LocalDateTime from,
+			LocalDateTime to);
+
+	/** How many orders of one status a restaurant had, and their food value. */
+	record StatusTotal(OrderStatus status, Long orders, BigDecimal itemTotal) {
+	}
+
+	/** The restaurant's orders placed in [{@code from}, {@code to}), counted per status. */
+	@Query("""
+			select new com.zaika.order.OrderRepository$StatusTotal(o.status, count(o), sum(o.itemTotal)) from Order o
+			where o.restaurant.id = :restaurantId and o.placedAt >= :from and o.placedAt < :to group by o.status""")
+	List<StatusTotal> totalsByStatus(long restaurantId, LocalDateTime from, LocalDateTime to);
+
+	/** A dish as sold: how many and for how much. */
+	record DishSales(String name, Boolean veg, Long quantity, BigDecimal sales) {
+	}
+
+	/**
+	 * The restaurant's best-selling dishes (by quantity, then value) in orders in {@code statuses} placed in
+	 * [{@code from}, {@code to}). Dishes are grouped by the name on the order.
+	 */
+	@Query("""
+			select new com.zaika.order.OrderRepository$DishSales(i.name, i.veg, sum(i.quantity), sum(i.unitPrice * i.quantity))
+			from Order o join o.items i
+			where o.restaurant.id = :restaurantId and o.status in :statuses and o.placedAt >= :from and o.placedAt < :to
+			group by i.name, i.veg order by sum(i.quantity) desc, sum(i.unitPrice * i.quantity) desc, i.name""")
+	List<DishSales> findTopDishes(long restaurantId, Collection<OrderStatus> statuses, LocalDateTime from,
+			LocalDateTime to, Pageable pageable);
+
 	/** Ids of orders in {@code status} created at or before {@code cutoff}, oldest first (idx_orders_status_created). */
 	@Query("select o.id from Order o where o.status = :status and o.createdAt <= :cutoff order by o.createdAt, o.id")
 	List<Long> findIdsByStatusCreatedUpTo(OrderStatus status, LocalDateTime cutoff);

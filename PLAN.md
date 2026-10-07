@@ -175,7 +175,7 @@ How this file works
   - Accept with prep-time choice (10/15/20/30/45 min, updates ETA), Reject with reason, Mark preparing, Mark ready - all through OrderWorkflow.
   - Print-friendly order ticket view. Tests.
 
-- [ ] T33 Owner history and reports `/owner/reports`
+- [x] T33 Owner history and reports `/owner/reports`
   - Date range and status filters, paginated table, CSV export generated in Java, top 5 items, revenue summary. Tests.
 
 ## Phase 5 - Delivery partner (rider) panel

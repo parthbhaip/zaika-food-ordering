@@ -3031,6 +3031,58 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.ticket { padding: 0; border: 0; box-shadow: none; }
 }
 
+/* Reports (/owner/reports): period form, sales summary, top dishes, orders table */
+.report-filters { display: grid; gap: var(--space-4); padding: var(--space-4) var(--space-5); }
+.report-form { display: grid; gap: var(--space-3); align-items: end; }
+.report-form .field + .field { margin-top: 0; }
+.report-summary,
+.report-orders { display: grid; gap: var(--space-3); min-width: 0; }
+.report-days,
+.report-count { color: var(--color-text-muted); font-size: var(--text-sm); }
+.report-stat-note { color: var(--color-text-muted); font-size: var(--text-sm); }
+.report-orders .owner-section-title .badge { margin-left: var(--space-1); vertical-align: middle; }
+.report-top { display: grid; gap: var(--space-4); padding: var(--space-5); }
+.report-empty { color: var(--color-text-muted); font-size: var(--text-sm); }
+.report-dishes { display: grid; margin: 0; padding: 0; list-style: none; }
+.report-dish {
+	display: grid;
+	grid-template-columns: 28px auto minmax(0, 1fr) auto;
+	grid-template-areas: "rank mark name sales" "rank . qty qty";
+	align-items: center;
+	column-gap: var(--space-3);
+	row-gap: 2px;
+	padding-block: var(--space-3);
+	border-top: 1px solid var(--color-line);
+}
+.report-dish:first-child { border-top: 0; padding-top: 0; }
+.report-dish-rank {
+	grid-area: rank;
+	display: inline-grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	border-radius: var(--radius-pill);
+	background: var(--color-primary-tint);
+	color: var(--color-primary-hover);
+	font-size: var(--text-sm);
+	font-weight: var(--weight-bold);
+}
+.report-dish .veg-mark { grid-area: mark; }
+.report-dish-name { grid-area: name; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.report-dish-qty { grid-area: qty; color: var(--color-text-muted); font-size: var(--text-sm); }
+.report-dish-sales { grid-area: sales; font-variant-numeric: tabular-nums; }
+.report-table .report-items { min-width: 220px; max-width: 360px; white-space: normal; }
+.report-table .report-customer { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 640px) {
+	.report-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.report-dish { grid-template-columns: 28px auto minmax(0, 1fr) auto auto; grid-template-areas: "rank mark name qty sales"; }
+	.report-dish-qty { justify-self: end; }
+}
+@media (min-width: 960px) {
+	.report-form { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
+	.report-filters { padding: var(--space-5) var(--space-6); }
+}
+
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */
 .error-body {
 	min-height: 100vh;
