@@ -69,6 +69,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 	/** The restaurant's five latest placed orders, newest first (idx_orders_restaurant_placed); dishes not loaded. */
 	List<Order> findTop5ByRestaurantIdAndPlacedAtNotNullOrderByPlacedAtDescIdDesc(long restaurantId);
 
+	/**
+	 * The restaurant's orders in {@code statuses} with their customer, rider and dishes, oldest placed first, in one
+	 * query (idx_orders_restaurant_status_created): the owner's live orders board.
+	 */
+	@EntityGraph(attributePaths = { "customer", "rider", "items" })
+	List<Order> findByRestaurantIdAndStatusInOrderByPlacedAtAscIdAsc(long restaurantId,
+			Collection<OrderStatus> statuses);
+
+	/** One order of the owner's restaurant with everything its kitchen ticket prints; another kitchen's finds nothing. */
+	@EntityGraph(attributePaths = { "restaurant", "customer", "rider", "items" })
+	Optional<Order> findTicketByCodeAndRestaurantOwnerId(String code, long ownerId);
+
 	/** Ids of orders in {@code status} created at or before {@code cutoff}, oldest first (idx_orders_status_created). */
 	@Query("select o.id from Order o where o.status = :status and o.createdAt <= :cutoff order by o.createdAt, o.id")
 	List<Long> findIdsByStatusCreatedUpTo(OrderStatus status, LocalDateTime cutoff);

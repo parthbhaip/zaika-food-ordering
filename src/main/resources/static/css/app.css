@@ -2721,6 +2721,7 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 .owner-stat-value { font-size: var(--text-xl); font-weight: var(--weight-extrabold); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .owner-stat.is-waiting { border-color: var(--color-primary); background: var(--color-primary-tint); }
 .owner-stat.is-waiting .owner-stat-value { color: var(--color-primary-hover); }
+.owner-stat-link { font-size: var(--text-sm); font-weight: var(--weight-semibold); }
 .owner-stats-note { color: var(--color-text-muted); font-size: var(--text-xs); }
 
 .owner-panels { display: grid; gap: var(--space-5); }
@@ -2916,6 +2917,118 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.profile-head { grid-template-columns: minmax(0, 1fr) auto; }
 	.profile-head .btn { justify-self: end; }
 	.profile-photos { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+}
+
+/* Live orders (/owner/orders): New / Preparing / Ready columns of order cards. Phones: one column after another;
+   from 960px the three sit side by side. New orders are tinted and outlined in the primary colour. */
+.owner-board-page { max-width: calc(var(--content-max) + 2 * var(--gutter)); }
+.owner-board-lede { color: var(--color-text-secondary); font-size: var(--text-sm); }
+.owner-board { display: grid; gap: var(--space-5); align-items: start; }
+.board-col { display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
+.board-col-title { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-lg); font-weight: var(--weight-bold); }
+.board-count {
+	display: inline-grid;
+	place-items: center;
+	min-width: 28px;
+	height: 28px;
+	padding-inline: var(--space-2);
+	border-radius: var(--radius-pill);
+	background: var(--color-surface-muted);
+	color: var(--color-text-secondary);
+	font-size: var(--text-sm);
+	font-variant-numeric: tabular-nums;
+}
+.board-count.is-waiting { background: var(--color-primary); color: var(--color-on-primary); }
+.board-col-empty {
+	padding: var(--space-5) var(--space-4);
+	border: 1px dashed var(--color-line-strong);
+	border-radius: var(--radius-md);
+	color: var(--color-text-muted);
+	font-size: var(--text-sm);
+	text-align: center;
+}
+.board-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+
+.board-order { display: grid; gap: var(--space-3); padding: var(--space-4); min-width: 0; scroll-margin-top: calc(var(--header-height) + var(--space-4)); }
+.board-order.is-new { border-color: var(--color-primary); background: var(--color-primary-tint); box-shadow: var(--shadow-md); }
+.board-order-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.board-order-code { font-size: var(--text-md); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+.board-order-code a { color: var(--color-ink); text-decoration: none; }
+.board-order-code a:hover { color: var(--color-link); text-decoration: underline; }
+.board-order-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); color: var(--color-text-secondary); font-size: var(--text-sm); }
+.board-order-items { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.board-order-items li { display: flex; align-items: baseline; gap: var(--space-2); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.board-order-items .veg-mark { flex-shrink: 0; align-self: center; }
+.board-order-qty { flex-shrink: 0; color: var(--color-primary-hover); font-variant-numeric: tabular-nums; }
+.board-order-note {
+	display: flex;
+	gap: var(--space-2);
+	padding: var(--space-2) var(--space-3);
+	border-radius: var(--radius-sm);
+	background: var(--color-warning-tint);
+	color: var(--color-warning-ink);
+	font-size: var(--text-sm);
+	overflow-wrap: anywhere;
+}
+.board-order-note .icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; }
+.board-order-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); color: var(--color-text-secondary); font-size: var(--text-sm); }
+.board-order-total strong { color: var(--color-ink); font-size: var(--text-md); font-variant-numeric: tabular-nums; }
+.board-order-pay { font-weight: var(--weight-semibold); }
+.board-order-eta { display: flex; align-items: center; gap: var(--space-2); color: var(--color-text-secondary); font-size: var(--text-sm); }
+.board-order-eta .icon { flex-shrink: 0; width: 18px; height: 18px; }
+.board-order-eta strong { color: var(--color-ink); }
+.board-order-eta.is-late,
+.board-order-eta.is-late strong { color: var(--color-danger); font-weight: var(--weight-semibold); }
+.board-order-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.board-accept { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.board-prep { min-height: 36px; padding-block: var(--space-1); font-size: var(--text-sm); }
+/* the reject form opens inside the card, under the buttons, instead of floating */
+.board-reject { flex-basis: 100%; }
+.board-reject > summary { width: fit-content; }
+.board-reject .confirm-panel { position: static; width: auto; max-width: none; margin-top: var(--space-2); box-shadow: none; font-weight: var(--weight-regular); }
+.board-reject .field + .field { margin-top: 0; }
+.board-reject .btn { justify-self: start; }
+.board-reject-help { color: var(--color-text-muted); font-size: var(--text-xs); }
+@media (min-width: 960px) {
+	.owner-board { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Kitchen ticket (/owner/orders/{code}): a narrow receipt-like card; printed, only the ticket shows */
+.ticket-page { display: grid; gap: var(--space-4); max-width: calc(480px + 2 * var(--gutter)); }
+.ticket-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); }
+[data-print][hidden] { display: none; }
+.ticket { display: grid; gap: var(--space-5); padding: var(--space-5); }
+.ticket-head { display: grid; justify-items: center; gap: var(--space-1); padding-bottom: var(--space-4); border-bottom: 2px dashed var(--color-line-strong); text-align: center; }
+.ticket-brand { color: var(--color-text-secondary); font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.ticket-code { font-size: var(--text-2xl); font-weight: var(--weight-extrabold); letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.ticket-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-4); margin: 0; }
+.ticket-facts > div { display: grid; gap: 2px; min-width: 0; }
+.ticket-facts dt { color: var(--color-text-muted); font-size: var(--text-xs); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: 0.04em; }
+.ticket-facts dd { margin: 0; font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.ticket-strong { font-size: var(--text-lg); font-weight: var(--weight-extrabold); }
+.ticket-note { display: grid; gap: var(--space-1); padding: var(--space-3); border: 1px solid var(--color-line-strong); border-radius: var(--radius-sm); overflow-wrap: anywhere; }
+.ticket-label { color: var(--color-text-muted); font-size: var(--text-xs); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: 0.04em; }
+.ticket-items { width: 100%; border-collapse: collapse; }
+.ticket-items th,
+.ticket-items td { padding: var(--space-2) 0; border-bottom: 1px solid var(--color-line); text-align: left; vertical-align: top; }
+.ticket-items thead th { color: var(--color-text-muted); font-size: var(--text-xs); font-weight: var(--weight-bold); text-transform: uppercase; letter-spacing: 0.04em; }
+.ticket-items tfoot th,
+.ticket-items tfoot td { border-bottom: 0; padding-top: var(--space-3); font-weight: var(--weight-bold); }
+.ticket-qty { width: 3.5em; font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; }
+.ticket-dish { display: flex; align-items: baseline; gap: var(--space-2); overflow-wrap: anywhere; }
+.ticket-dish .veg-mark { flex-shrink: 0; align-self: center; }
+.ticket-items .ticket-num { padding-left: var(--space-3); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ticket-ended { color: var(--color-danger); overflow-wrap: anywhere; }
+@media print {
+	.site-header,
+	.site-footer,
+	.skip-link,
+	.toast-stack,
+	.cart-bar,
+	.ticket-toolbar { display: none; }
+	.site,
+	.owner-page { padding: 0; background: var(--color-surface); }
+	.ticket { padding: 0; border: 0; box-shadow: none; }
 }
 
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */

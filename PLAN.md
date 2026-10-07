@@ -170,7 +170,7 @@ How this file works
 - [x] T31 Owner restaurant profile `/owner/restaurant`
   - Edit details, cuisines, timings, fees, minimum order; logo and cover upload with preview. Tests.
 
-- [ ] T32 Owner live orders `/owner/orders`
+- [x] T32 Owner live orders `/owner/orders`
   - Board with New / Preparing / Ready columns, new orders highlighted, htmx polling every 10 s.
   - Accept with prep-time choice (10/15/20/30/45 min, updates ETA), Reject with reason, Mark preparing, Mark ready - all through OrderWorkflow.
   - Print-friendly order ticket view. Tests.

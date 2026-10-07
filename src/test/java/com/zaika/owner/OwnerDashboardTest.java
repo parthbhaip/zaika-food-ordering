@@ -182,13 +182,13 @@ class OwnerDashboardTest {
 		assertThat(html).doesNotContain(oldest.getCode(), unpaid.getCode());
 		int previous = Integer.MAX_VALUE;
 		for (String code : codes) { // newest first: each code appears before the older one
-			int at = html.indexOf("<span>" + code + "</span>");
+			int at = html.indexOf(">" + code + "</a>");
 			assertThat(at).isPositive().isLessThan(previous);
 			previous = at;
 		}
 		assertThat(html)
-			.contains("<span>" + codes[4] + "</span> <span class=\"badge badge-primary\">Placed</span>")
-			.contains("<span>" + codes[3] + "</span> <span class=\"badge badge-primary\">Preparing</span>")
+			.contains("<a href=\"/owner/orders/" + codes[4] + "\">" + codes[4] + "</a> <span class=\"badge badge-primary\">Placed</span>")
+			.contains("<a href=\"/owner/orders/" + codes[3] + "\">" + codes[3] + "</a> <span class=\"badge badge-primary\">Preparing</span>")
 			.contains("5 × Mutton Thali")
 			.contains("<span class=\"price\">₹1,250</span>") // food value 5 x 250
 			.contains("title=\"4 Oct 2026, 7:25 PM\">5 min ago</time>");

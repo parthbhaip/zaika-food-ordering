@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Live orders | Zaika</title></head>
+<body>
+<!--/* /owner/orders: the kitchen's live orders in three columns, New / Preparing / Ready for pickup, oldest first.
+     The #owner-board section polls itself every 10 s with the version it shows (?v=); the server answers 204 until
+     something changed, then sends the new board and announces it in #board-announce. A new order's actions (accept
+     with a prep time, reject with a reason) are hx-preserve'd, so a poll never resets a half-filled form.
+     Model: board (owner.OwnerOrdersService.Board, null for an owner account without a restaurant), rejectForm,
+     rejecting (the code whose reject form is re-shown with errors), prepChoices, rejectReasons. */-->
+<main id="main" class="owner-page">
+	<div class="container owner-container owner-board-page">
+		<th:block th:if="${board == null}">
+			<div th:replace="~{fragments/ui :: emptyState('store', 'No restaurant on this account', 'This partner account has no restaurant linked to it. Write to partners@zaika.test and we will sort it out.', 'Contact us', '/contact')}"></div>
+		</th:block>
+
+		<th:block th:if="${board != null}" th:with="r=${board.restaurant}">
+			<nav th:replace="~{fragments/owner :: nav('orders')}"></nav>
+
+			<header class="owner-board-head">
+				<div class="owner-head-text">
+					<p class="eyebrow" th:text="${r.name}">Rassa Darbar</p>
+					<h1 class="owner-title">Live orders</h1>
+					<p class="owner-board-lede">This board refreshes on its own every 10 seconds. Oldest orders come first.
+						<noscript><a th:href="@{/owner/orders}" href="/owner/orders">Refresh now</a></noscript></p>
+				</div>
+			</header>
+
+			<div th:replace="~{fragments/owner :: statusBanner(${r})}"></div>
+
+			<div class="alert alert-warning" role="status" th:if="${r.status.name() == 'APPROVED' and !r.acceptingOrders}">
+				<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+				<p><strong>New orders are paused.</strong> Finish the ones below, then <a th:href="@{/owner}" href="/owner">turn orders back on</a> from your dashboard.</p>
+			</div>
+
+			<!--/* Changes found by polling are announced here (empty at first paint). */-->
+			<p id="board-announce" class="visually-hidden" role="status"></p>
+
+			<section th:replace="~{owner/orders :: board(${board})}"></section>
+		</th:block>
+	</div>
+</main>
+
+<!--/* The three columns. Polls itself; the kitchen's buttons swap it too (hx-target="#owner-board"). */-->
+<section th:fragment="board(b)" id="owner-board" class="owner-board" aria-label="Orders by stage"
+	th:hx-get="@{/owner/orders(v=${b.version()})}" hx-trigger="every 10s" hx-swap="outerHTML"
+	th:with="fresh=${b.fresh()}, cooking=${b.cooking()}, ready=${b.ready()}">
+	<section class="board-col board-col-new" aria-labelledby="board-new-title">
+		<h2 id="board-new-title" class="board-col-title">New <span class="board-count" th:classappend="${!fresh.isEmpty()} ? 'is-waiting'" th:text="${fresh.size()}">2</span></h2>
+		<p class="board-col-empty" th:if="${fresh.isEmpty()}">No new orders. They show up here as customers place them.</p>
+		<ol class="board-list" th:unless="${fresh.isEmpty()}" aria-label="New orders, oldest first">
+			<li th:each="o : ${fresh}"><article th:replace="~{owner/orders :: order(${b}, ${o})}"></article></li>
+		</ol>
+	</section>
+	<section class="board-col" aria-labelledby="board-cooking-title">
+		<h2 id="board-cooking-title" class="board-col-title">Preparing <span class="board-count" th:text="${cooking.size()}">3</span></h2>
+		<p class="board-col-empty" th:if="${cooking.isEmpty()}">Nothing on the stove. Accepted orders wait here until they're packed.</p>
+		<ol class="board-list" th:unless="${cooking.isEmpty()}" aria-label="Orders being prepared, oldest first">
+			<li th:each="o : ${cooking}"><article th:replace="~{owner/orders :: order(${b}, ${o})}"></article></li>
+		</ol>
+	</section>
+	<section class="board-col" aria-labelledby="board-ready-title">
+		<h2 id="board-ready-title" class="board-col-title">Ready for pickup <span class="board-count" th:text="${ready.size()}">1</span></h2>
+		<p class="board-col-empty" th:if="${ready.isEmpty()}">Nothing waiting for a rider.</p>
+		<ol class="board-list" th:unless="${ready.isEmpty()}" aria-label="Orders ready for pickup, oldest first">
+			<li th:each="o : ${ready}"><article th:replace="~{owner/orders :: order(${b}, ${o})}"></article></li>
+		</ol>
+	</section>
+</section>
+
+<!--/* One order card: code (links to its ticket), when it was placed, who for, dishes, kitchen note, food value and
+     payment, then what the kitchen does next. */-->
+<article th:fragment="order(b, o)" class="card board-order" th:classappend="${o.status.name() == 'PLACED'} ? 'is-new'"
+	th:id="|order-${o.code}|" th:aria-labelledby="|order-${o.code}-title|"
+	th:with="placed=${o.timestampOf(T(com.zaika.order.OrderStatus).PLACED)}, st=${o.status.name()}">
+	<header class="board-order-head">
+		<h3 class="board-order-code" th:id="|order-${o.code}-title|"><a th:href="@{/owner/orders/{code}(code=${o.code})}" href="/owner/orders/ZK-26-000123" th:text="${o.code}">ZK-26-000123</a></h3>
+		<span class="badge" th:classappend="${st == 'PLACED'} ? 'badge-primary badge-dot' : (${st == 'READY_FOR_PICKUP'} ? 'badge-success' : 'badge-warning')"
+			th:text="${st == 'PLACED'} ? 'New' : ${o.status.label}">New</span>
+	</header>
+	<p class="board-order-meta">
+		<time th:datetime="${placed}" th:text="|Placed ${@fmt.time(placed)}|">Placed 7:30 PM</time>
+		<span aria-hidden="true">·</span>
+		<span th:text="|For ${b.firstName(o)}|">For Riya</span>
+	</p>
+	<ul class="board-order-items" aria-label="Dishes">
+		<li th:each="i : ${o.items}"><span th:replace="~{fragments/ui :: veg(${i.veg})}"></span><span class="board-order-qty" th:text="|${i.quantity} ×|">2 ×</span><span th:text="${i.name}">Mutton Thali</span></li>
+	</ul>
+	<p class="board-order-note" th:if="${o.restaurantNote != null}"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span><span class="visually-hidden">Kitchen note: </span><th:block th:text="${o.restaurantNote}">Less spicy, please</th:block></span></p>
+	<p class="board-order-total">
+		<strong th:text="${@fmt.price(o.bill.itemTotal)}">₹540</strong>
+		<span th:text="|${o.itemCount} ${o.itemCount == 1 ? 'item' : 'items'}|">3 items</span>
+		<span class="board-order-pay" th:text="${o.paymentMethod.name() == 'COD'} ? 'Cash on delivery' : 'Paid online'">Cash on delivery</span>
+	</p>
+	<p class="board-order-eta" th:if="${st == 'ACCEPTED' or st == 'PREPARING'}" th:classappend="${b.late(o)} ? 'is-late'">
+		<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+		<span th:if="${!b.late(o)}">Ready by <strong th:text="${@fmt.time(b.readyBy(o))}">7:50 PM</strong></span>
+		<span th:if="${b.late(o)}">Running late: was due by <strong th:text="${@fmt.time(b.readyBy(o))}">7:50 PM</strong></span>
+	</p>
+	<p class="board-order-eta" th:if="${st == 'READY_FOR_PICKUP'}">
+		<svg th:replace="~{fragments/icon :: icon('bike')}"></svg>
+		<span th:if="${o.rider == null}">Waiting for a delivery partner</span>
+		<span th:if="${o.rider != null}" th:text="|${o.rider.name} is coming to pick it up|">Sagar Patil is coming to pick it up</span>
+	</p>
+
+	<!--/* New: accept with a preparation time, or reject with a reason. Preserved across polls (same id). */-->
+	<div class="board-order-actions" th:if="${st == 'PLACED'}" th:id="|new-actions-${o.code}|" hx-preserve="true"
+		th:with="mine=${rejecting == o.code}">
+		<form class="board-accept" method="post" th:action="@{/owner/orders/{code}/accept(code=${o.code})}" action="/owner/orders/ZK-26-000123/accept"
+			th:hx-post="@{/owner/orders/{code}/accept(code=${o.code})}" hx-target="#owner-board" hx-swap="outerHTML">
+			<label class="visually-hidden" th:for="|prep-${o.code}|" for="prep-ZK-26-000123" th:text="|Preparation time for ${o.code}|">Preparation time for ZK-26-000123</label>
+			<div class="select-wrap">
+				<select class="select board-prep" name="prepMinutes" th:id="|prep-${o.code}|" id="prep-ZK-26-000123">
+					<option th:each="m : ${prepChoices}" th:value="${m}" th:text="|Ready in ${m} min|" th:selected="${m == b.defaultPrep()}">Ready in 20 min</option>
+				</select>
+			</div>
+			<button type="submit" class="btn btn-primary btn-sm"><svg th:replace="~{fragments/icon :: icon('check')}"></svg>Accept<span class="visually-hidden" th:text="| ${o.code}|"> ZK-26-000123</span></button>
+		</form>
+		<details class="confirm board-reject" data-menu th:open="${mine}">
+			<summary class="btn btn-ghost btn-sm">Reject<span class="visually-hidden" th:text="| ${o.code}|"> ZK-26-000123</span></summary>
+			<form class="confirm-panel board-reject-form" method="post" th:action="@{/owner/orders/{code}/reject(code=${o.code})}" action="/owner/orders/ZK-26-000123/reject" novalidate
+				th:with="reasonError=${mine and #fields.hasErrors('${rejectForm.reason}')}, detailsError=${mine and #fields.hasErrors('${rejectForm.details}')}">
+				<div class="field" th:classappend="${reasonError} ? 'has-error'">
+					<label class="field-label" th:for="|reject-reason-${o.code}|" for="reject-reason-ZK-26-000123">Why can't you take it?</label>
+					<div class="select-wrap">
+						<select class="select" name="reason" th:id="|reject-reason-${o.code}|" th:aria-invalid="${reasonError} ? 'true'"
+							th:aria-describedby="${reasonError} ? |reject-reason-${o.code}-error|">
+							<option value="">Choose a reason</option>
+							<option th:each="reason : ${rejectReasons}" th:value="${reason}" th:text="${reason}" th:selected="${mine and reason == rejectForm.reason}">Kitchen is too busy right now</option>
+						</select>
+					</div>
+					<p class="field-error" th:if="${reasonError}" th:id="|reject-reason-${o.code}-error|"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('${rejectForm.reason}'), ' ')}">Choose a reason. The customer sees it.</span></p>
+				</div>
+				<div class="field" th:classappend="${detailsError} ? 'has-error'">
+					<label class="field-label" th:for="|reject-details-${o.code}|" for="reject-details-ZK-26-000123">Details <span class="optional">(needed for “Something else”)</span></label>
+					<input class="input" type="text" name="details" maxlength="200" autocomplete="off" th:id="|reject-details-${o.code}|"
+						th:value="${mine} ? ${rejectForm.details}" th:aria-invalid="${detailsError} ? 'true'"
+						th:aria-describedby="${detailsError} ? |reject-details-${o.code}-error|">
+					<p class="field-error" th:if="${detailsError}" th:id="|reject-details-${o.code}-error|"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('${rejectForm.details}'), ' ')}">Tell the customer why you can't take this order.</span></p>
+				</div>
+				<p class="board-reject-help">The customer sees your reason. A paid order is refunded in full.</p>
+				<button type="submit" class="btn btn-danger btn-sm">Reject order</button>
+			</form>
+		</details>
+	</div>
+
+	<form class="board-order-actions" th:if="${st == 'ACCEPTED'}" method="post" th:action="@{/owner/orders/{code}/preparing(code=${o.code})}" action="/owner/orders/ZK-26-000123/preparing"
+		th:hx-post="@{/owner/orders/{code}/preparing(code=${o.code})}" hx-target="#owner-board" hx-swap="outerHTML">
+		<button type="submit" class="btn btn-primary btn-sm">Start preparing<span class="visually-hidden" th:text="| ${o.code}|"> ZK-26-000123</span></button>
+		<a class="btn btn-ghost btn-sm" th:href="@{/owner/orders/{code}(code=${o.code})}" href="/owner/orders/ZK-26-000123"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg>Ticket<span class="visually-hidden" th:text="| for ${o.code}|"> for ZK-26-000123</span></a>
+	</form>
+	<form class="board-order-actions" th:if="${st == 'PREPARING'}" method="post" th:action="@{/owner/orders/{code}/ready(code=${o.code})}" action="/owner/orders/ZK-26-000123/ready"
+		th:hx-post="@{/owner/orders/{code}/ready(code=${o.code})}" hx-target="#owner-board" hx-swap="outerHTML">
+		<button type="submit" class="btn btn-primary btn-sm">Mark ready<span class="visually-hidden" th:text="| ${o.code}|"> ZK-26-000123</span></button>
+		<a class="btn btn-ghost btn-sm" th:href="@{/owner/orders/{code}(code=${o.code})}" href="/owner/orders/ZK-26-000123"><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg>Ticket<span class="visually-hidden" th:text="| for ${o.code}|"> for ZK-26-000123</span></a>
+	</form>
+</article>
+
+<!--/* htmx poll answer: the new board plus a short announcement. */-->
+<th:block th:fragment="board-poll">
+	<section th:replace="~{owner/orders :: board(${board})}"></section>
+	<p id="board-announce" hx-swap-oob="innerHTML" th:with="n=${board.fresh().size()}"
+		th:text="${n == 0} ? 'Orders updated.' : |Orders updated. ${n} new ${n == 1 ? 'order' : 'orders'} waiting to accept.|">Orders updated. 1 new order waiting to accept.</p>
+</th:block>
+
+<!--/* htmx answer to a kitchen button: the new board plus the toast, out of band. Model: board, toastKind, toastMessage. */-->
+<th:block th:fragment="board-update">
+	<section th:replace="~{owner/orders :: board(${board})}"></section>
+	<div hx-swap-oob="beforeend:#toasts"><div th:replace="~{fragments/flash :: toast(${toastKind}, ${toastMessage})}"></div></div>
+</th:block>
+</body>
+</html>

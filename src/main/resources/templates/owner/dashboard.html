@@ -51,6 +51,7 @@
 					<div class="card owner-stat" th:classappend="${d.pending > 0} ? 'is-waiting'">
 						<dt>Waiting to accept</dt>
 						<dd class="owner-stat-value" th:text="${@fmt.count(d.pending)}">2</dd>
+						<dd class="owner-stat-link"><a th:href="@{/owner/orders}" href="/owner/orders">Open live orders</a></dd>
 					</div>
 				</dl>
 				<p class="owner-stats-note">Revenue is the food value of your orders, before coupons, fees and GST. Cancelled and rejected orders don't count.</p>
@@ -85,12 +86,15 @@
 				</section>
 
 				<section class="card owner-latest" aria-labelledby="owner-latest-title">
-					<h2 id="owner-latest-title" class="owner-section-title">Latest orders</h2>
+					<div class="owner-card-head">
+						<h2 id="owner-latest-title" class="owner-section-title">Latest orders</h2>
+						<a class="btn btn-ghost btn-sm" th:href="@{/owner/orders}" href="/owner/orders"><svg th:replace="~{fragments/icon :: icon('bell')}"></svg>Live orders</a>
+					</div>
 					<p class="owner-latest-empty" th:if="${d.latest.isEmpty()}">No orders yet. When customers order from you, the newest show up here.</p>
 					<ol class="owner-orders" th:unless="${d.latest.isEmpty()}" aria-label="Latest orders, newest first">
 						<li class="owner-order" th:each="o : ${d.latest}">
 							<div class="owner-order-main">
-								<p class="owner-order-code"><span th:text="${o.code}">ZK-26-000123</span> <span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Placed</span></p>
+								<p class="owner-order-code"><a th:href="@{/owner/orders/{code}(code=${o.code})}" href="/owner/orders/ZK-26-000123" th:text="${o.code}">ZK-26-000123</a> <span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Placed</span></p>
 								<p class="owner-order-items"><th:block th:each="i, s : ${o.items}" th:text="|${i.quantity} × ${i.name}${s.last ? '' : ', '}|">2 × Mutton Thali, </th:block></p>
 							</div>
 							<div class="owner-order-side">

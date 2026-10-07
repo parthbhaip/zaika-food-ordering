@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${'Ticket ' + order.code + ' | Zaika'}">Ticket ZK-26-000123 | Zaika</title></head>
+<body>
+<!--/* /owner/orders/{code}: one order's kitchen ticket. On screen it is a card with a Print button (shown only when
+     JavaScript runs, js/print.js); printed, the site header, footer and buttons drop away and the ticket fills the page.
+     Model: order (restaurant, customer, rider and dishes loaded), readyBy (ETA minus the ride). */-->
+<main id="main" class="owner-page">
+	<div class="container ticket-page" th:with="r=${order.restaurant}, st=${order.status.name()}">
+		<div class="ticket-toolbar">
+			<a class="checkout-back" th:href="@{/owner/orders}" href="/owner/orders"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>Live orders</a>
+			<button type="button" class="btn btn-primary btn-sm" data-print hidden><svg th:replace="~{fragments/icon :: icon('receipt')}"></svg>Print ticket</button>
+		</div>
+
+		<article class="card ticket" aria-labelledby="ticket-title">
+			<header class="ticket-head">
+				<p class="ticket-brand" th:text="${r.name}">Rassa Darbar</p>
+				<h1 id="ticket-title" class="ticket-code" th:text="${order.code}">ZK-26-000123</h1>
+				<span class="badge" th:classappend="|badge-${order.status.tone}|" th:text="${order.status.label}">Preparing</span>
+			</header>
+
+			<dl class="ticket-facts">
+				<div>
+					<dt>Placed</dt>
+					<dd th:with="at=${order.timestampOf(T(com.zaika.order.OrderStatus).PLACED)}" th:text="${@fmt.dateTime(at)}">4 Oct 2026, 7:30 PM</dd>
+				</div>
+				<div th:if="${st == 'ACCEPTED' or st == 'PREPARING'}">
+					<dt>Ready by</dt>
+					<dd class="ticket-strong" th:text="${@fmt.time(readyBy)}">7:50 PM</dd>
+				</div>
+				<div th:if="${order.timestampOf(T(com.zaika.order.OrderStatus).READY_FOR_PICKUP) != null}">
+					<dt>Packed</dt>
+					<dd th:text="${@fmt.time(order.timestampOf(T(com.zaika.order.OrderStatus).READY_FOR_PICKUP))}">7:48 PM</dd>
+				</div>
+				<div>
+					<dt>Customer</dt>
+					<dd th:text="${order.customer.name}">Riya Shinde</dd>
+				</div>
+				<div>
+					<dt>Payment</dt>
+					<dd th:text="${order.paymentMethod.name() == 'COD'} ? 'Cash on delivery' : 'Paid online'">Cash on delivery</dd>
+				</div>
+				<div th:if="${order.rider != null}">
+					<dt>Delivery partner</dt>
+					<dd th:text="${order.rider.name}">Sagar Patil</dd>
+				</div>
+			</dl>
+
+			<div class="ticket-note" th:if="${order.restaurantNote != null}">
+				<p class="ticket-label">Kitchen note</p>
+				<p th:text="${order.restaurantNote}">Less spicy, please</p>
+			</div>
+
+			<table class="ticket-items">
+				<caption class="visually-hidden">Dishes on this order</caption>
+				<thead>
+					<tr><th scope="col">Qty</th><th scope="col">Dish</th><th scope="col" class="ticket-num">Amount</th></tr>
+				</thead>
+				<tbody>
+					<tr th:each="i : ${order.items}">
+						<td class="ticket-qty" th:text="|${i.quantity} ×|">2 ×</td>
+						<td><span class="ticket-dish"><span th:replace="~{fragments/ui :: veg(${i.veg})}"></span><span th:text="${i.name}">Mutton Thali</span></span></td>
+						<td class="ticket-num" th:text="${@fmt.money(i.lineTotal)}">₹500.00</td>
+					</tr>
+				</tbody>
+				<tfoot>
+					<tr>
+						<th scope="row" colspan="2" th:text="|Food total · ${order.itemCount} ${order.itemCount == 1 ? 'item' : 'items'}|">Food total · 3 items</th>
+						<td class="ticket-num" th:text="${@fmt.money(order.bill.itemTotal)}">₹560.00</td>
+					</tr>
+				</tfoot>
+			</table>
+
+			<p class="ticket-ended" th:if="${st == 'REJECTED' or st == 'CANCELLED'}">
+				<strong th:text="${st == 'REJECTED'} ? 'You rejected this order.' : 'This order was cancelled.'">You rejected this order.</strong>
+				<th:block th:if="${order.cancelReason != null}" th:text="|Reason: ${order.cancelReason}|">Reason: Some dishes are sold out</th:block>
+			</p>
+		</article>
+	</div>
+</main>
+</body>
+</html>
