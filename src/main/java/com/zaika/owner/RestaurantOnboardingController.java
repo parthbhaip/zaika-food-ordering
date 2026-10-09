@@ -94,8 +94,12 @@ class RestaurantOnboardingController {
 					"This email already has a Zaika account. Use another email for your restaurant.");
 			return page(model, options);
 		}
+		catch (RuntimeException ex) {
+			storage.delete(logoPath); // nothing was saved (e.g. the slug was taken meanwhile): no orphan file
+			throw ex;
+		}
 		User owner = restaurant.getOwner();
-		redirect.addFlashAttribute("flashSuccess", "Thanks, " + owner.getName().split("\s+")[0] + "! "
+		redirect.addFlashAttribute("flashSuccess", "Thanks, " + owner.firstName() + "! "
 				+ restaurant.getName() + " is registered and waiting for review.");
 		return "redirect:" + newAccountSignIn.signIn(owner, request, response, redirect);
 	}

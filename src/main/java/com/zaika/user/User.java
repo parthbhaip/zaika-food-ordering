@@ -103,6 +103,11 @@ public class User extends BaseEntity {
 		return digits;
 	}
 
+	/** The first word of the name, for greetings ("Thanks, Asha!"). Any whitespace separates words. */
+	public String firstName() {
+		return name.strip().split("\\s+")[0];
+	}
+
 	/** Name and mobile number from the profile form (already validated and normalized). */
 	void updateProfile(String name, String phone) {
 		this.name = name;

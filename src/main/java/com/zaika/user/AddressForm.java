@@ -90,7 +90,7 @@ public class AddressForm {
 	}
 
 	public void setPincode(String pincode) {
-		this.pincode = pincode == null ? null : pincode.replaceAll("\s", "");
+		this.pincode = pincode == null ? null : pincode.replaceAll("\\s", "");
 	}
 
 	public boolean isMakeDefault() {

@@ -2754,7 +2754,8 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 }
 .revenue-chart-plot { width: 100%; height: 180px; overflow: visible; }
 .revenue-chart-grid { stroke: var(--color-line); stroke-width: 1; }
-.revenue-chart-bar { fill: var(--color-primary); }
+.revenue-chart-bar { fill: var(--color-primary); fill-opacity: 0.75; }
+.revenue-chart-bar.is-today { fill: var(--color-primary-hover); fill-opacity: 1; }
 .revenue-chart-days {
 	grid-column: 2;
 	display: grid;
@@ -2924,6 +2925,7 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 .owner-board-page { max-width: calc(var(--content-max) + 2 * var(--gutter)); }
 .owner-board-lede { color: var(--color-text-secondary); font-size: var(--text-sm); }
 .owner-board { display: grid; gap: var(--space-5); align-items: start; }
+.owner-board-paused { grid-column: 1 / -1; }
 .board-col { display: grid; gap: var(--space-3); align-content: start; min-width: 0; }
 .board-col-title { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-lg); font-weight: var(--weight-bold); }
 .board-count {

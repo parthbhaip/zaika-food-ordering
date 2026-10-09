@@ -17,7 +17,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.zaika.catalog.MenuCategory;
 import com.zaika.catalog.MenuItem;
+import com.zaika.common.NotFoundException;
 import com.zaika.owner.MenuManagementService.DishPage;
+import com.zaika.owner.MenuManagementService.Menu;
 import com.zaika.owner.MenuManagementService.Removed;
 import com.zaika.security.CurrentUser;
 
@@ -191,7 +193,12 @@ class MenuController {
 
 	/** The menu page; {@code renaming} is the category whose rename form failed (shown open), or null. */
 	private String menuPage(CurrentUser me, Model model, Long renaming) {
-		model.addAttribute("menu", menu.menu(me.getId()));
+		Menu page = menu.menu(me.getId());
+		if (renaming != null && !page.hasCategory(renaming)) {
+			// a failed rename of another restaurant's (or an archived) category: 404, as a valid one would be
+			throw new NotFoundException("No category " + renaming + " at " + page.restaurant().getSlug());
+		}
+		model.addAttribute("menu", page);
 		if (!model.containsAttribute("newCategory")) {
 			model.addAttribute("newCategory", new CategoryForm());
 		}

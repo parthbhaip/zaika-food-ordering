@@ -12,6 +12,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
+import com.zaika.common.Requests;
+
 /**
  * {@code /restaurants}: the card grid with filters, search, sort and pages. A plain GET form drives it; with htmx the
  * same form swaps only the results ({@code HX-Request} gets the {@code htmx-results} fragment and an
@@ -49,7 +51,7 @@ class RestaurantListController {
 		if (htmx) {
 			response.setHeader("HX-Push-Url", canonical);
 		}
-		else if (!canonical.equals(CatalogRequests.currentUrl(request))) {
+		else if (!canonical.equals(Requests.currentUrl(request))) {
 			return "redirect:" + canonical;
 		}
 		model.addAttribute("page", page);

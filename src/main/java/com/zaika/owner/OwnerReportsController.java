@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.zaika.catalog.CatalogRequests;
 import com.zaika.common.Formatters;
 import com.zaika.common.NotFoundException;
+import com.zaika.common.Requests;
 import com.zaika.owner.OwnerReportsService.Export;
 import com.zaika.owner.OwnerReportsService.Report;
 import com.zaika.security.CurrentUser;
@@ -59,7 +59,7 @@ class OwnerReportsController {
 			}
 		}
 		String canonical = filter.url();
-		if (!canonical.equals(CatalogRequests.currentUrl(request))) {
+		if (!canonical.equals(Requests.currentUrl(request))) {
 			if (report != null && report.cut()) {
 				redirect.addFlashAttribute("flashInfo", "Reports cover up to a year at a time, so this one starts on "
 						+ fmt.date(filter.getFrom().atStartOfDay()) + ".");

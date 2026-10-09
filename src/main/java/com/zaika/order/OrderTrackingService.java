@@ -120,7 +120,7 @@ public class OrderTrackingService {
 		/** The rider's first name, or null before one is assigned. */
 		public String riderFirstName() {
 			User rider = order.getRider();
-			return rider == null ? null : rider.getName().strip().split("\\s+")[0];
+			return rider == null ? null : rider.firstName();
 		}
 
 		/**

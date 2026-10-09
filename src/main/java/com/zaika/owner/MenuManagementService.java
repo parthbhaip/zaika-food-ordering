@@ -5,8 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.zaika.catalog.MenuCategory;
 import com.zaika.catalog.MenuCategoryRepository;
@@ -41,13 +43,16 @@ public class MenuManagementService {
 
 	private final StorageService storage;
 
+	private final TransactionTemplate tx;
+
 	MenuManagementService(RestaurantRepository restaurants, MenuCategoryRepository categories,
-			MenuItemRepository items, OrderRepository orders, StorageService storage) {
+			MenuItemRepository items, OrderRepository orders, StorageService storage, TransactionTemplate tx) {
 		this.restaurants = restaurants;
 		this.categories = categories;
 		this.items = items;
 		this.orders = orders;
 		this.storage = storage;
+		this.tx = tx;
 	}
 
 	// ------------------------------------------------------------------------------------------- reading
@@ -200,20 +205,30 @@ public class MenuManagementService {
 
 	/**
 	 * Takes the dish off the menu: a dish that was ever ordered is archived (past orders still show it), any other
-	 * is deleted with its photo (and drops out of carts).
+	 * is deleted with its photo (and drops out of carts). An order placed between the check and the delete makes the
+	 * delete fail on the order_items foreign key; the dish is then archived in a fresh transaction instead.
 	 */
-	@Transactional
 	public Removed deleteDish(long ownerId, long itemId) {
-		MenuItem item = dishOf(restaurantOf(ownerId), itemId);
-		// ponytail: check-then-delete; an order placed in between makes the delete fail on the FK (a 500, nothing lost).
-		// Lock the dish row against checkout if that ever shows up.
-		if (orders.wasEverOrdered(item.getId())) {
-			item.setArchived(true);
-			return new Removed(item.getName(), true);
+		try {
+			return tx.execute(status -> {
+				MenuItem item = dishOf(restaurantOf(ownerId), itemId);
+				if (orders.wasEverOrdered(item.getId())) {
+					item.setArchived(true);
+					return new Removed(item.getName(), true);
+				}
+				items.delete(item);
+				items.flush();
+				storage.deleteAfterCommit(item.getImagePath());
+				return new Removed(item.getName(), false);
+			});
 		}
-		items.delete(item);
-		storage.deleteAfterCommit(item.getImagePath());
-		return new Removed(item.getName(), false);
+		catch (DataIntegrityViolationException ex) {
+			return tx.execute(status -> {
+				MenuItem item = dishOf(restaurantOf(ownerId), itemId);
+				item.setArchived(true);
+				return new Removed(item.getName(), true);
+			});
+		}
 	}
 
 	// ------------------------------------------------------------------------------------------- helpers
@@ -278,6 +293,11 @@ public class MenuManagementService {
 
 	/** The owner's menu: live categories in order, each with its live dishes. */
 	public record Menu(Restaurant restaurant, List<Section> sections) {
+
+		/** Whether {@code categoryId} is one of this menu's live categories. */
+		public boolean hasCategory(long categoryId) {
+			return sections.stream().anyMatch(s -> s.category().getId() == categoryId);
+		}
 
 		public long dishCount() {
 			return sections.stream().mapToLong(s -> s.items().size()).sum();

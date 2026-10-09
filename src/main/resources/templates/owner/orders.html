@@ -28,11 +28,6 @@
 
 			<div th:replace="~{fragments/owner :: statusBanner(${r})}"></div>
 
-			<div class="alert alert-warning" role="status" th:if="${r.status.name() == 'APPROVED' and !r.acceptingOrders}">
-				<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
-				<p><strong>New orders are paused.</strong> Finish the ones below, then <a th:href="@{/owner}" href="/owner">turn orders back on</a> from your dashboard.</p>
-			</div>
-
 			<!--/* Changes found by polling are announced here (empty at first paint). */-->
 			<p id="board-announce" class="visually-hidden" role="status"></p>
 
@@ -41,10 +36,15 @@
 	</div>
 </main>
 
-<!--/* The three columns. Polls itself; the kitchen's buttons swap it too (hx-target="#owner-board"). */-->
+<!--/* The three columns. Polls itself; the kitchen's buttons swap it too (hx-target="#owner-board"). The paused
+     reminder lives inside, so pausing or resuming from the dashboard shows up on the next poll. */-->
 <section th:fragment="board(b)" id="owner-board" class="owner-board" aria-label="Orders by stage"
 	th:hx-get="@{/owner/orders(v=${b.version()})}" hx-trigger="every 10s" hx-swap="outerHTML"
-	th:with="fresh=${b.fresh()}, cooking=${b.cooking()}, ready=${b.ready()}">
+	th:with="fresh=${b.fresh()}, cooking=${b.cooking()}, ready=${b.ready()}, r=${b.restaurant()}">
+	<div class="alert alert-warning owner-board-paused" role="status" th:if="${r.status.name() == 'APPROVED' and !r.acceptingOrders}">
+		<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+		<p><strong>New orders are paused.</strong> Finish the ones below, then <a th:href="@{/owner}" href="/owner">turn orders back on</a> from your dashboard.</p>
+	</div>
 	<section class="board-col board-col-new" aria-labelledby="board-new-title">
 		<h2 id="board-new-title" class="board-col-title">New <span class="board-count" th:classappend="${!fresh.isEmpty()} ? 'is-waiting'" th:text="${fresh.size()}">2</span></h2>
 		<p class="board-col-empty" th:if="${fresh.isEmpty()}">No new orders. They show up here as customers place them.</p>

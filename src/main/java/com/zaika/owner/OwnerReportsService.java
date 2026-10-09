@@ -129,14 +129,18 @@ public class OwnerReportsService {
 
 	/**
 	 * One CSV cell. Quoted when it holds a comma, quote or line break (quotes doubled). Text a spreadsheet would run
-	 * as a formula (starting with =, +, -, @, tab or carriage return) gets a leading apostrophe, so a dish or customer
-	 * name can never run code in the owner's spreadsheet. Null is an empty cell.
+	 * as a formula (starting with tab or carriage return, or with =, +, - or @ after any leading whitespace) gets a
+	 * leading apostrophe, so a dish or customer name can never run code in the owner's spreadsheet. Null is an empty
+	 * cell.
 	 */
 	static String cell(String value) {
 		if (value == null || value.isEmpty()) {
 			return "";
 		}
-		String text = "=+-@\t\r".indexOf(value.charAt(0)) >= 0 ? "'" + value : value;
+		String lead = value.stripLeading();
+		boolean formula = "\t\r".indexOf(value.charAt(0)) >= 0
+				|| !lead.isEmpty() && "=+-@".indexOf(lead.charAt(0)) >= 0;
+		String text = formula ? "'" + value : value;
 		return text.matches("(?s).*[\",\r\n].*") ? "\"" + text.replace("\"", "\"\"") + "\"" : text;
 	}
 

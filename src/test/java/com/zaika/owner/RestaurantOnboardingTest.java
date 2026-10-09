@@ -1,6 +1,9 @@
 package com.zaika.owner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
@@ -33,6 +36,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
@@ -57,7 +61,9 @@ import com.zaika.user.UserRepository;
 @SpringBootTest
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
-@TestPropertySource(properties = "spring.datasource.url=jdbc:h2:mem:onboarding;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
+@TestPropertySource(properties = { "spring.datasource.url=jdbc:h2:mem:onboarding;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+		// not the default 499, so the fee copy is proven to come from the setting
+		"app.free-delivery-threshold=599.00" })
 class RestaurantOnboardingTest {
 
 	static final String FORM = "/partner-with-us/restaurant";
@@ -85,7 +91,7 @@ class RestaurantOnboardingTest {
 	@Autowired
 	StorageService storage;
 
-	@Autowired
+	@MockitoSpyBean
 	RestaurantOnboardingService onboarding;
 
 	Cuisine kolhapuri;
@@ -146,7 +152,8 @@ class RestaurantOnboardingTest {
 					"type=\"time\" id=\"opensAt\" name=\"opensAt\" value=\"11:00\"",
 					"type=\"time\" id=\"closesAt\" name=\"closesAt\" value=\"23:00\"",
 					"<option value=\"20\" selected=\"selected\">20 min</option>", "id=\"costForTwo\"",
-					"id=\"minimumOrder\"", "id=\"deliveryFee\"", "id=\"acceptTerms\"", "Submit for review",
+					"id=\"minimumOrder\"", "id=\"deliveryFee\"", "Free above ₹599 for customers.",
+					"id=\"acceptTerms\"", "Submit for review",
 					"What happens next")
 			.containsPattern("id=\"city\" name=\"city\" value=\"Kolhapur\"")
 			.contains("name=\"cuisineIds\" id=\"cuisine-" + kolhapuri.getId() + "\" value=\"" + kolhapuri.getId() + "\"")
@@ -204,7 +211,7 @@ class RestaurantOnboardingTest {
 		assertThat(dashboard).contains("Thanks, Asha! Tambda Tadka House is registered and waiting for review.",
 				"<h1 class=\"owner-title\">Tambda Tadka House</h1>", "Under review", "Waiting for review.",
 				"Customers can't see your restaurant until it's approved.", "Kolhapuri, Thali", "6:00 PM to 2:00 AM",
-				"About 25 min", "₹450", "₹150", "₹25.50, free above ₹499", "+91 98765 00011",
+				"About 25 min", "₹450", "₹150", "₹25.50, free above ₹599", "+91 98765 00011",
 				"src=\"/uploads/" + r.getLogoPath() + "\"")
 			.doesNotContain("View your page");
 		mvc.perform(get("/orders").session(session)).andExpect(status().isForbidden());
@@ -215,6 +222,23 @@ class RestaurantOnboardingTest {
 		// and the new account signs in with the login form, landing on the dashboard
 		mvc.perform(post("/login").param("email", "asha@onboard.zaika.test").param("password", "Kolhapur2026").with(csrf()))
 			.andExpect(redirectedUrl("/owner"));
+	}
+
+	@Test
+	void theThanksUsesTheFirstNameWhateverWhitespaceFollowsIt() throws Exception {
+		mvc.perform(signUp(Map.of("email", "tab@onboard.zaika.test", "ownerName", "Asha\tKulkarni",
+				"restaurantName", "Tab Kitchen")))
+			.andExpect(flash().attribute("flashSuccess", "Thanks, Asha! Tab Kitchen is registered and waiting for review."));
+	}
+
+	@Test
+	void aFailedRegistrationRemovesTheStoredLogo() throws Exception {
+		long logos = storedLogos();
+		doThrow(new IllegalStateException("slug taken meanwhile")).when(onboarding).register(any(), any());
+		assertThatThrownBy(() -> mvc.perform(signUp(Map.of("email", "race@onboard.zaika.test"))
+			.file(new MockMultipartFile("logo", "logo.png", "image/png", PNG))))
+			.hasRootCauseMessage("slug taken meanwhile");
+		assertThat(storedLogos()).isEqualTo(logos);
 	}
 
 	@Test

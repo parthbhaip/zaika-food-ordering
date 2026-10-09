@@ -63,7 +63,7 @@ class RegistrationController {
 			return "auth/register";
 		}
 		redirect.addFlashAttribute("flashSuccess",
-				"Welcome to Zaika, " + user.getName().split("\s+")[0] + "! Your account is ready.");
+				"Welcome to Zaika, " + user.firstName() + "! Your account is ready.");
 		return "redirect:" + newAccountSignIn.signIn(user, request, response, redirect);
 	}
 

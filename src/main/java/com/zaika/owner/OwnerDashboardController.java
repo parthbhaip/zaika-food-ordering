@@ -1,6 +1,7 @@
 package com.zaika.owner;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -35,10 +36,24 @@ class OwnerDashboardController {
 
 	@PostMapping("/owner/accepting")
 	String accepting(@RequestParam boolean accepting, @AuthenticationPrincipal CurrentUser me,
-			HttpServletRequest request, Model model, RedirectAttributes redirect) {
-		AcceptingOrders state = dashboard.setAcceptingOrders(me.getId(), accepting);
+			HttpServletRequest request, HttpServletResponse response, Model model, RedirectAttributes redirect) {
+		boolean htmx = "true".equals(request.getHeader("HX-Request"));
+		AcceptingOrders state;
+		try {
+			state = dashboard.setAcceptingOrders(me.getId(), accepting);
+		}
+		catch (OwnerRuleException ex) {
+			if (!htmx) {
+				redirect.addFlashAttribute("flashError", ex.getMessage());
+				return "redirect:/owner";
+			}
+			response.setHeader("HX-Retarget", "#toasts");
+			response.setHeader("HX-Reswap", "beforeend");
+			model.addAttribute("message", ex.getMessage());
+			return "fragments/flash :: htmx-error";
+		}
 		String message = accepting ? "You're taking orders again." : "New orders paused. Turn it back on any time.";
-		if (!"true".equals(request.getHeader("HX-Request"))) {
+		if (!htmx) {
 			redirect.addFlashAttribute(accepting ? "flashSuccess" : "flashInfo", message);
 			return "redirect:/owner";
 		}

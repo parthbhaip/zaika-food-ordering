@@ -138,7 +138,7 @@
 					</div>
 					<div>
 						<dt>Delivery fee</dt>
-						<dd th:text="${r.deliveryFee.signum() == 0} ? 'Free delivery' : |${@fmt.price(r.deliveryFee)}, free above ₹499|">₹30</dd>
+						<dd th:text="${r.deliveryFee.signum() == 0} ? 'Free delivery' : |${@fmt.price(r.deliveryFee)}, free above ${@fmt.price(freeDeliveryThreshold)}|">₹30</dd>
 					</div>
 					<div>
 						<dt>Address</dt>

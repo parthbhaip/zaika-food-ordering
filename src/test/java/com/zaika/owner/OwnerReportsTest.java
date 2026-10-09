@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -215,10 +216,16 @@ class OwnerReportsTest {
 				{ "/owner/reports?from=2026-09-20", "/owner/reports?from=2026-09-20&to=2026-10-04" },
 				{ "/owner/reports?to=2026-09-30", "/owner/reports?from=2026-09-01&to=2026-09-30" },
 				{ "/owner/reports?page=4", "/owner/reports" },
-				{ "/owner/reports?page=0", "/owner/reports" } };
+				{ "/owner/reports?page=0", "/owner/reports" },
+				// dates outside 2000-01-01 .. a year from today count as missing
+				{ "/owner/reports?to=%2B999999999-12-31", "/owner/reports" },
+				{ "/owner/reports?from=2026-09-01&to=9999-12-31", "/owner/reports?from=2026-09-01&to=2026-10-04" },
+				{ "/owner/reports?from=1999-12-31&to=2026-09-30", "/owner/reports?from=2026-09-01&to=2026-09-30" } };
 		for (String[] c : cases) {
-			mvc.perform(get(c[0]).with(owner)).andExpect(redirectedUrl(c[1]));
+			mvc.perform(get(URI.create(c[0])).with(owner)).andExpect(redirectedUrl(c[1]));
 		}
+		mvc.perform(get(URI.create("/owner/reports/orders.csv?from=-999999999-01-01&to=%2B999999999-12-31")).with(owner))
+			.andExpect(status().isOk());
 		mvc.perform(get("/owner/reports?from=2024-01-01&to=2026-10-04").with(owner))
 			.andExpect(redirectedUrl("/owner/reports?from=2025-10-04&to=2026-10-04"))
 			.andExpect(flash().attribute("flashInfo", "Reports cover up to a year at a time, so this one starts on 4 Oct 2025."));
@@ -352,6 +359,11 @@ class OwnerReportsTest {
 		assertThat(OwnerReportsService.cell("+91")).isEqualTo("'+91");
 		assertThat(OwnerReportsService.cell("-5")).isEqualTo("'-5");
 		assertThat(OwnerReportsService.cell("\tx")).isEqualTo("'\tx");
+		assertThat(OwnerReportsService.cell("\rx")).isEqualTo("\"'\rx\"");
+		// the first non-whitespace character counts too
+		assertThat(OwnerReportsService.cell(" =HYPERLINK(1)")).isEqualTo("' =HYPERLINK(1)");
+		assertThat(OwnerReportsService.cell(" \t @SUM(1)")).isEqualTo("' \t @SUM(1)");
+		assertThat(OwnerReportsService.cell("  plain")).isEqualTo("  plain");
 		assertThat(OwnerReportsService.cell("two\nlines")).isEqualTo("\"two\nlines\"");
 		assertThat(OwnerReportsService.cell("=a,b")).isEqualTo("\"'=a,b\"");
 	}

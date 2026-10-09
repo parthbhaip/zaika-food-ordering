@@ -111,10 +111,10 @@
 					<p class="field-help" id="avgPrepMinutes-help">How long a typical order takes in your kitchen. Customers see it plus the ride as the delivery time.</p>
 					<p class="field-error" th:if="${invalid}" id="avgPrepMinutes-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('avgPrepMinutes'), ' ')}">Choose a preparation time.</span></p>
 				</div>
-				<div class="onboarding-grid onboarding-grid-3" th:with="inputmode='decimal'">
+				<div class="onboarding-grid onboarding-grid-3" th:with="inputmode='decimal', feeHelp=|Free above ${@fmt.price(freeDeliveryThreshold)} for customers.|">
 					<div th:replace="~{fragments/form :: field('costForTwo', 'Cost for two (₹)', 'text', 'Shown as “₹400 for two”.', 'off')}"></div>
 					<div th:replace="~{fragments/form :: field('minimumOrder', 'Minimum order (₹)', 'text', '0 for no minimum.', 'off')}"></div>
-					<div th:replace="~{fragments/form :: field('deliveryFee', 'Delivery fee (₹)', 'text', 'Free above ₹499 for customers.', 'off')}"></div>
+					<div th:replace="~{fragments/form :: field('deliveryFee', 'Delivery fee (₹)', 'text', ${feeHelp}, 'off')}"></div>
 				</div>
 			</fieldset>
 

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import com.zaika.cart.CartOwner;
 import com.zaika.cart.CartService;
+import com.zaika.common.Requests;
 
 /**
  * {@code /r/{slug}}: a restaurant's header and menu. The menu search and the "Pure veg only" toggle are a plain GET
@@ -42,7 +43,7 @@ class RestaurantPageController {
 		if (htmx) {
 			response.setHeader("HX-Push-Url", canonical);
 		}
-		else if (!canonical.equals(CatalogRequests.currentUrl(request))) {
+		else if (!canonical.equals(Requests.currentUrl(request))) {
 			return "redirect:" + canonical;
 		}
 		model.addAttribute("menu", menu);

@@ -54,6 +54,9 @@ class AddressServiceTest {
 		assertThat(home.getHouse()).isEqualTo("Flat 4B, Shree Apartments");
 		assertThat(home.getLandmark()).isNull();
 		assertThat(home.getPincode()).isEqualTo("416008");
+		AddressForm tabbed = new AddressForm();
+		tabbed.setPincode("416\t008 ");
+		assertThat(tabbed.getPincode()).isEqualTo("416008");
 		assertThat(home.getOneLine()).isEqualTo("Flat 4B, Shree Apartments, Rajarampuri 5th Lane, Kolhapur 416008");
 
 		Address work = service.create(asha, form(AddressLabel.WORK, "Office 12, Station Road"));

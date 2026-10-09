@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.zaika.catalog.Restaurant;
 import com.zaika.catalog.RestaurantRepository;
+import com.zaika.catalog.RestaurantStatus;
 import com.zaika.common.NotFoundException;
 import com.zaika.order.Order;
 import com.zaika.order.OrderRepository;
@@ -77,11 +78,16 @@ public class OwnerDashboardService {
 	/**
 	 * Pauses or resumes new orders for the owner's restaurant. Orders already placed are not touched.
 	 * @throws NotFoundException if this owner has no restaurant
+	 * @throws OwnerRuleException if the restaurant is not approved (pending, rejected or suspended)
 	 */
 	@Transactional
 	public AcceptingOrders setAcceptingOrders(long ownerId, boolean accepting) {
 		Restaurant restaurant = restaurants.findByOwnerId(ownerId)
 			.orElseThrow(() -> new NotFoundException("No restaurant for owner " + ownerId));
+		if (restaurant.getStatus() != RestaurantStatus.APPROVED) {
+			throw new OwnerRuleException(null,
+					"You can pause or resume orders once " + restaurant.getName() + " is live on Zaika.");
+		}
 		restaurant.setAcceptingOrders(accepting);
 		return AcceptingOrders.of(restaurant, clock);
 	}

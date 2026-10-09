@@ -112,6 +112,12 @@ class RegistrationTest {
 	}
 
 	@Test
+	void theWelcomeUsesTheFirstNameWhateverWhitespaceFollowsIt() throws Exception {
+		mvc.perform(register("name", "Asha\tPatil"))
+			.andExpect(flash().attribute("flashSuccess", "Welcome to Zaika, Asha! Your account is ready."));
+	}
+
+	@Test
 	void welcomeToastRendersInTheLayout() throws Exception {
 		MvcResult result = mvc.perform(register()).andReturn();
 		String html = mvc.perform(get("/about").flashAttrs(result.getFlashMap()))

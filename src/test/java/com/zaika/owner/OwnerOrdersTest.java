@@ -245,6 +245,18 @@ class OwnerOrdersTest {
 		assertThat(eight).isEqualTo(one);
 		assertThat(one).isLessThanOrEqualTo(2);
 
+		// a board left open picks the pause up on its next poll, and loses it again on resume
+		String open = currentVersion(few);
+		mvc.perform(post("/owner/accepting").param("accepting", "false").with(csrf()).with(as(few.owner())));
+		String paused = mvc.perform(get("/owner/orders").param("v", open).header("HX-Request", "true").with(as(few.owner())))
+			.andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString().replaceAll("\\s+", " ");
+		assertThat(paused).startsWith(" <section id=\"owner-board\"").contains("<strong>New orders are paused.</strong>");
+		String pausedVersion = currentVersion(few);
+		mvc.perform(post("/owner/accepting").param("accepting", "true").with(csrf()).with(as(few.owner())));
+		assertThat(mvc.perform(get("/owner/orders").param("v", pausedVersion).header("HX-Request", "true").with(as(few.owner())))
+			.andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString()).doesNotContain("New orders are paused.");
 		mvc.perform(post("/owner/accepting").param("accepting", "false").with(csrf()).with(as(few.owner())));
 		assertThat(board(few)).contains("<strong>New orders are paused.</strong> Finish the ones below, then <a href=\"/owner\">turn orders back on</a>");
 		assertThat(board(many)).doesNotContain("New orders are paused.");

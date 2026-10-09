@@ -10,6 +10,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.zaika.common.Requests;
+
 /**
  * {@code /search?q=}: matching restaurants and dishes in two groups, and {@code /search/suggest?q=}: the header's
  * type-ahead list (an htmx fragment). Non-canonical search URLs ({@code ?q=}, padded text) redirect to the canonical
@@ -31,7 +33,7 @@ class SearchController {
 	String search(@RequestParam(required = false) String q, HttpServletRequest request, Model model) {
 		String query = CatalogRequests.searchText(q, RestaurantFilter.MAX_QUERY_LENGTH);
 		String canonical = SearchService.url(query);
-		if (!canonical.equals(CatalogRequests.currentUrl(request))) {
+		if (!canonical.equals(Requests.currentUrl(request))) {
 			return "redirect:" + canonical;
 		}
 		SearchService.Results results = query == null ? null : search.search(query);

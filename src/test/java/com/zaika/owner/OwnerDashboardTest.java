@@ -6,6 +6,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -286,6 +287,22 @@ class OwnerDashboardTest {
 	void theSwitchOnlyShowsOnceTheRestaurantIsLive() throws Exception {
 		Kitchen k = kitchen(fixtures.restaurant("dash-pending", "Pending Kitchen").status(RestaurantStatus.PENDING));
 		assertThat(ownerPage(k)).contains("Waiting for review.").doesNotContain("owner-accepting");
+	}
+
+	@Test
+	void aRestaurantThatIsNotLiveCannotFlipTheSwitch() throws Exception {
+		Kitchen k = kitchen(fixtures.restaurant("dash-pending-flip", "Pending Flip").status(RestaurantStatus.PENDING));
+		mvc.perform(post("/owner/accepting").param("accepting", "false").with(csrf()).with(as(k.restaurant().getOwner())))
+			.andExpect(redirectedUrl("/owner"))
+			.andExpect(flash().attribute("flashError", "You can pause or resume orders once Pending Flip is live on Zaika."));
+		String html = mvc.perform(post("/owner/accepting").param("accepting", "false").header("HX-Request", "true")
+				.with(csrf()).with(as(k.restaurant().getOwner())))
+			.andExpect(status().isOk())
+			.andExpect(header().string("HX-Retarget", "#toasts"))
+			.andReturn().getResponse().getContentAsString();
+		assertThat(html).contains("toast-error", "You can pause or resume orders once Pending Flip is live on Zaika.")
+			.doesNotContain("owner-accepting");
+		assertThat(restaurants.findById(k.restaurant().getId()).orElseThrow().isAcceptingOrders()).isTrue();
 	}
 
 	@Test

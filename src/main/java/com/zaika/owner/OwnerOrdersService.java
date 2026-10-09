@@ -168,7 +168,7 @@ public class OwnerOrdersService {
 
 		/** "Riya": the customer's first name, all the kitchen needs on the bag. */
 		public String firstName(Order order) {
-			return order.getCustomer().getName().strip().split("\\s+")[0];
+			return order.getCustomer().firstName();
 		}
 
 		/** Accepted or cooking and past its ready-by time. */

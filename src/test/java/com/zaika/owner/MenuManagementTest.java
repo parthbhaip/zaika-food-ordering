@@ -1,6 +1,10 @@
 package com.zaika.owner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -26,6 +30,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
@@ -73,7 +78,7 @@ class MenuManagementTest {
 	@Autowired
 	OrderFixtures orders;
 
-	@Autowired
+	@MockitoSpyBean
 	OrderRepository orderRepository;
 
 	@Autowired
@@ -85,7 +90,7 @@ class MenuManagementTest {
 	@Autowired
 	ZaikaUserDetailsService userDetails;
 
-	@Autowired
+	@MockitoSpyBean
 	StorageService storage;
 
 	@Autowired
@@ -322,6 +327,8 @@ class MenuManagementTest {
 		long id = theirs.desserts().getId();
 		RequestPostProcessor me = mine.owner(userDetails);
 		mvc.perform(post("/owner/menu/categories/{id}/rename", id).param("name", "Mine now").with(me).with(csrf())).andExpect(status().isNotFound());
+		// an invalid name does not turn the foreign id into a page of the caller's own menu
+		mvc.perform(post("/owner/menu/categories/{id}/rename", id).param("name", " ").with(me).with(csrf())).andExpect(status().isNotFound());
 		mvc.perform(post("/owner/menu/categories/{id}/move", id).param("direction", "UP").with(me).with(csrf())).andExpect(status().isNotFound());
 		mvc.perform(post("/owner/menu/categories/{id}/delete", id).with(me).with(csrf())).andExpect(status().isNotFound());
 		assertThat(categories.findById(id).orElseThrow().getName()).isEqualTo("Desserts");
@@ -623,6 +630,33 @@ class MenuManagementTest {
 			.andExpect(flash().attribute("flashError", "Move or delete the dish in “Menu” first, then delete the category."));
 	}
 
+	@Test
+	void aDishOrderedWhileItIsBeingDeletedIsArchivedInstead() throws Exception {
+		Kitchen k = kitchen();
+		Order order = orders.place(orders.customer().getId(), k.thali().getId(), 1, PaymentMethod.COD, OrderStatus.PLACED);
+		// the order lands between the "ever ordered?" check and the delete
+		doReturn(false).when(orderRepository).wasEverOrdered(k.thali().getId());
+		mvc.perform(post("/owner/menu/items/{id}/delete", k.thali().getId()).with(k.owner(userDetails)).with(csrf()))
+			.andExpect(redirectedUrl("/owner/menu"))
+			.andExpect(flash().attribute("flashSuccess", "“Mutton Thali” is off your menu. Past orders still show it."));
+		assertThat(items.findById(k.thali().getId()).orElseThrow().isArchived()).isTrue();
+		assertThat(jdbc.queryForObject("select menu_item_id from order_items where order_id = ?", Long.class, order.getId()))
+			.isEqualTo(k.thali().getId());
+	}
+
+	@Test
+	void aPhotoStoredByAChangeThatRollsBackIsRemovedAgain() throws Exception {
+		Kitchen k = kitchen();
+		long files = storedDishPhotos();
+		doThrow(new IllegalStateException("failure after the store")).when(storage).deleteAfterCommit(any());
+		assertThatThrownBy(() -> mvc.perform(dishForm("/owner/menu/items/" + k.thali().getId(), k.main(), "Mutton Thali",
+				"250", "false")
+			.file(new MockMultipartFile("image", "a.png", "image/png", PNG)).with(k.owner(userDetails))))
+			.hasRootCauseMessage("failure after the store");
+		assertThat(items.findById(k.thali().getId()).orElseThrow().getImagePath()).isNull();
+		assertThat(storedDishPhotos()).isEqualTo(files);
+	}
+
 	// ---------------------------------------------------------------- access
 
 	@Test
@@ -676,6 +710,16 @@ class MenuManagementTest {
 		}
 		form.with(csrf());
 		return form;
+	}
+
+	private long storedDishPhotos() throws java.io.IOException {
+		Path dir = storage.root().resolve("dish");
+		if (!java.nio.file.Files.isDirectory(dir)) {
+			return 0;
+		}
+		try (var listing = java.nio.file.Files.list(dir)) {
+			return listing.count();
+		}
 	}
 
 	private String html(RequestBuilder request) throws Exception {

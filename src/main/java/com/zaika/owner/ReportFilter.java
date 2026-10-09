@@ -26,6 +26,9 @@ public class ReportFilter {
 	/** The longest range a report covers (a year). */
 	public static final int MAX_DAYS = 366;
 
+	/** The earliest date a report accepts; later than a year from today is refused too. */
+	public static final LocalDate EARLIEST = LocalDate.of(2000, 1, 1);
+
 	/** The statuses an owner can filter by: every order that reached the kitchen ends in one of these. */
 	public static final List<OrderStatus> STATUSES = Arrays.stream(OrderStatus.values())
 		.filter(s -> s != OrderStatus.PENDING_PAYMENT)
@@ -86,12 +89,15 @@ public class ReportFilter {
 	}
 
 	/**
-	 * Fills in the defaults as of {@code today}: a missing end is today, a missing start is 30 days before the end,
+	 * Fills in the defaults as of {@code today}: dates outside 2000-01-01 .. a year from today count as missing, a
+	 * missing end is today, a missing start is 30 days before the end,
 	 * swapped ends are put in order, and a range longer than a year is cut to the year up to its end.
 	 * @return true when the range had to be cut
 	 */
 	public boolean normalize(LocalDate today) {
 		this.today = today;
+		from = inWindow(from, today);
+		to = inWindow(to, today);
 		if (to == null) {
 			to = from != null && from.isAfter(today) ? from : today;
 		}
@@ -108,6 +114,15 @@ public class ReportFilter {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * The date, or null (missing) when it lies outside {@link #EARLIEST} .. a year from today: such dates
+	 * ({@code +999999999-12-31}, year 9999) would break date arithmetic or the database, and the canonical redirect
+	 * drops them.
+	 */
+	private static LocalDate inWindow(LocalDate date, LocalDate today) {
+		return date == null || date.isBefore(EARLIEST) || date.isAfter(today.plusYears(1)) ? null : date;
 	}
 
 	/** Days in the range, both ends included. */

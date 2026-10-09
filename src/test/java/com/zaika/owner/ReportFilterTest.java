@@ -53,6 +53,22 @@ class ReportFilterTest {
 	}
 
 	@Test
+	void datesOutsideTheWindowCountAsMissing() {
+		ReportFilter extreme = filter(LocalDate.MIN, LocalDate.MAX);
+		assertThat(extreme.normalize(TODAY)).isFalse();
+		assertThat(extreme.url()).isEqualTo("/owner/reports");
+
+		ReportFilter edges = filter(ReportFilter.EARLIEST, TODAY.plusYears(1));
+		edges.normalize(TODAY);
+		assertThat(edges.getFrom()).isEqualTo(TODAY.plusYears(1).minusDays(ReportFilter.MAX_DAYS - 1)); // cut to a year
+		assertThat(edges.getTo()).isEqualTo(LocalDate.of(2027, 10, 4));
+
+		ReportFilter outside = filter(ReportFilter.EARLIEST.minusDays(1), TODAY.plusYears(1).plusDays(1));
+		outside.normalize(TODAY);
+		assertThat(outside.url()).isEqualTo("/owner/reports");
+	}
+
+	@Test
 	void statusesUseSlugsAndSkipUnpaidOrders() {
 		ReportFilter f = new ReportFilter();
 		f.setStatus(" Out_For_Delivery ");
