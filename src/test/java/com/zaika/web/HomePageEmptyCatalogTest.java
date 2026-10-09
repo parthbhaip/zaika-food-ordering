@@ -34,7 +34,7 @@ class HomePageEmptyCatalogTest {
 		String html = mvc.perform(get("/"))
 			.andExpect(status().isOk())
 			.andExpect(view().name("home"))
-			.andReturn().getResponse().getContentAsString().replaceAll("\s+", " ");
+			.andReturn().getResponse().getContentAsString().replaceAll("\\s+", " ");
 		assertThat(html).contains("Your city's best kitchens, delivered.",
 				"Kolhapur's favourite kitchens are joining Zaika.",
 				"<h2 class=\"empty-state-title\">No kitchens are live yet</h2>",
@@ -48,7 +48,7 @@ class HomePageEmptyCatalogTest {
 	void theUnfilteredListingSaysNoKitchenIsTakingOrdersAndOffersToListOne() throws Exception {
 		String html = mvc.perform(get("/restaurants"))
 			.andExpect(status().isOk())
-			.andReturn().getResponse().getContentAsString().replaceAll("\s+", " ");
+			.andReturn().getResponse().getContentAsString().replaceAll("\\s+", " ");
 		assertThat(html).contains("No kitchens are taking orders in Kolhapur right now.",
 				"href=\"/partner-with-us/restaurant\">List your restaurant</a>")
 			.doesNotContain("Check back soon");
