@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Rider dashboard | Zaika</title></head>
+<body>
+<!--/* The rider's home. "profile" (delivery.DeliveryPartnerProfile, user loaded) is the signed-in rider's own profile,
+     or null for a rider account without one. */-->
+<main id="main" class="owner-page">
+	<div class="container owner-container">
+		<th:block th:if="${profile == null}">
+			<div th:replace="~{fragments/ui :: emptyState('bike', 'No rider profile on this account', 'This partner account has no rider profile linked to it. Write to partners@zaika.test and we will sort it out.', 'Contact us', '/contact')}"></div>
+		</th:block>
+
+		<th:block th:if="${profile != null}" th:with="p=${profile}, u=${profile.user}">
+			<header class="owner-head">
+				<span class="rider-avatar"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
+				<div class="owner-head-text">
+					<p class="eyebrow">Rider dashboard</p>
+					<h1 class="owner-title" th:text="${u.name}">Rahul Pawar</h1>
+					<p class="owner-head-meta">
+						<span th:replace="~{fragments/partner :: statusBadge(${p})}"></span>
+						<span th:text="|Based in ${p.preferredArea}|">Based in Rajarampuri</span>
+					</p>
+				</div>
+			</header>
+
+			<div th:replace="~{fragments/partner :: statusBanner(${p})}"></div>
+
+			<section class="card owner-listing" aria-labelledby="partner-details-title">
+				<h2 id="partner-details-title" class="owner-section-title">Your details</h2>
+				<dl class="owner-facts">
+					<div>
+						<dt>Vehicle</dt>
+						<dd th:text="${p.vehicleType.label}">Motorbike</dd>
+					</div>
+					<div>
+						<dt>Number plate</dt>
+						<dd th:text="${p.vehicleNumber} ?: 'Not needed for a bicycle'">MH09EK4521</dd>
+					</div>
+					<div>
+						<dt>Preferred area</dt>
+						<dd th:text="|${p.preferredArea}, Kolhapur|">Rajarampuri, Kolhapur</dd>
+					</div>
+					<div>
+						<dt>Mobile</dt>
+						<dd th:text="${@fmt.phone(u.phone)}">+91 98900 11221</dd>
+					</div>
+				</dl>
+				<p class="owner-listing-help">Changed your vehicle or number? Write to <a href="mailto:partners@zaika.test">partners@zaika.test</a> from <th:block th:text="${u.email}">rider1@zaika.test</th:block> and we'll update it.</p>
+			</section>
+		</th:block>
+	</div>
+</main>
+</body>
+</html>

@@ -31,9 +31,13 @@ import com.zaika.config.DemoData.Account;
 import com.zaika.config.DemoData.Deal;
 import com.zaika.config.DemoData.Dish;
 import com.zaika.config.DemoData.Place;
+import com.zaika.config.DemoData.Ride;
 import com.zaika.config.DemoData.Section;
 import com.zaika.coupon.Coupon;
 import com.zaika.coupon.CouponRepository;
+import com.zaika.delivery.DeliveryPartnerProfile;
+import com.zaika.delivery.DeliveryPartnerProfileRepository;
+import com.zaika.delivery.RiderStatus;
 import com.zaika.user.AddressForm;
 import com.zaika.user.AddressLabel;
 import com.zaika.user.AddressService;
@@ -44,7 +48,8 @@ import com.zaika.user.UserRepository;
 /**
  * Loads {@link DemoData} on startup when {@code app.seed-demo=true} (dev; SEED_DEMO in mysql). Idempotent: cuisines,
  * accounts, restaurants and coupons are looked up by slug, email or code and only created when missing, and a restaurant's menu is
- * only written together with the restaurant, so a restart changes nothing. An existing account with a demo email is
+ * only written together with the restaurant; a demo rider gets an APPROVED profile when their account has none. So a
+ * restart changes nothing. An existing account with a demo email is
  * reused, never changed. Runs after {@code AdminBootstrap}, so a configured ADMIN_EMAIL wins over the demo admin.
  */
 @Component
@@ -71,13 +76,16 @@ class DemoDataSeeder implements ApplicationRunner {
 
 	private final CouponRepository coupons;
 
+	private final DeliveryPartnerProfileRepository riderProfiles;
+
 	private final PasswordEncoder passwordEncoder;
 
 	private final Clock clock;
 
 	DemoDataSeeder(UserRepository users, AddressService addresses, CuisineRepository cuisines,
 			RestaurantRepository restaurants, MenuCategoryRepository categories, MenuItemRepository items,
-			CouponRepository coupons, PasswordEncoder passwordEncoder, Clock clock) {
+			CouponRepository coupons, DeliveryPartnerProfileRepository riderProfiles, PasswordEncoder passwordEncoder,
+			Clock clock) {
 		this.users = users;
 		this.addresses = addresses;
 		this.cuisines = cuisines;
@@ -85,6 +93,7 @@ class DemoDataSeeder implements ApplicationRunner {
 		this.categories = categories;
 		this.items = items;
 		this.coupons = coupons;
+		this.riderProfiles = riderProfiles;
 		this.passwordEncoder = passwordEncoder;
 		this.clock = clock;
 	}
@@ -127,9 +136,10 @@ class DemoDataSeeder implements ApplicationRunner {
 			}
 		}
 		int createdCoupons = createCoupons();
-		if (createdAccounts + createdRestaurants + createdCoupons > 0) {
-			log.info("Demo data: added {} accounts, {} restaurants and {} coupons", createdAccounts,
-					createdRestaurants, createdCoupons);
+		int createdRiders = createRiderProfiles();
+		if (createdAccounts + createdRestaurants + createdCoupons + createdRiders > 0) {
+			log.info("Demo data: added {} accounts, {} restaurants, {} coupons and {} rider profiles", createdAccounts,
+					createdRestaurants, createdCoupons, createdRiders);
 		}
 	}
 
@@ -178,6 +188,31 @@ class DemoDataSeeder implements ApplicationRunner {
 			return Optional.empty();
 		}
 		return Optional.of(user);
+	}
+
+	/**
+	 * An APPROVED profile for each demo rider account that has none. An account using a rider's email that is not
+	 * a delivery partner is left alone (with a warning).
+	 */
+	private int createRiderProfiles() {
+		int created = 0;
+		for (Ride ride : DemoData.RIDERS) {
+			Optional<User> rider = users.findByEmailIgnoreCase(ride.email());
+			if (rider.isEmpty() || riderProfiles.existsByUserId(rider.get().getId())) {
+				continue;
+			}
+			if (rider.get().getRole() != Role.DELIVERY_PARTNER) {
+				log.warn("Demo data: skipped the rider profile for {} because it is not a delivery partner account",
+						ride.email());
+				continue;
+			}
+			DeliveryPartnerProfile profile = new DeliveryPartnerProfile(rider.get(), ride.vehicle(),
+					ride.numberPlate(), ride.area());
+			profile.changeStatus(RiderStatus.APPROVED, null);
+			riderProfiles.save(profile);
+			created++;
+		}
+		return created;
 	}
 
 	private User createUser(Account account, String passwordHash) {

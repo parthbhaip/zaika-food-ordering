@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Rider panel pieces. statusBanner(p): the review status of the signed-in rider's profile
+     (delivery.DeliveryPartnerProfile) for every rider page,
+       <div th:replace="~{fragments/partner :: statusBanner(${profile})}"></div>
+     Pending and suspended (with the reason) show a banner; approved shows nothing. */-->
+<th:block th:fragment="statusBanner(p)">
+	<div class="alert alert-warning owner-status" role="status" th:if="${p.status.name() == 'PENDING'}">
+		<svg th:replace="~{fragments/icon :: icon('clock')}"></svg>
+		<div>
+			<p><strong>Waiting for review.</strong> Our partner team is checking your details, usually within 2 working days.</p>
+			<p>You can go online and take deliveries once you're approved. Questions? Write to <a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+		</div>
+	</div>
+	<div class="alert alert-error owner-status" role="status" th:if="${p.status.name() == 'SUSPENDED'}">
+		<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+		<div>
+			<p><strong>Your rider account is suspended.</strong> You can't go online or take deliveries right now.</p>
+			<p class="owner-status-reason">Reason: <th:block th:text="${p.statusReason}">Three late deliveries this week.</th:block></p>
+			<p>To ride again, write to <a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+		</div>
+	</div>
+</th:block>
+
+<!--/* The review status as a badge: Under review / Approved / Suspended. */-->
+<span th:fragment="statusBadge(p)" class="badge badge-dot"
+	th:classappend="${p.status.name() == 'APPROVED'} ? 'badge-success' : (${p.status.name() == 'PENDING'} ? 'badge-warning' : 'badge-danger')"
+	th:text="${p.status.name() == 'APPROVED'} ? 'Approved' : (${p.status.name() == 'PENDING'} ? 'Under review' : 'Suspended')">Under review</span>
+</body>
+</html>

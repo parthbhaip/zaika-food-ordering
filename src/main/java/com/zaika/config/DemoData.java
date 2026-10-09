@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.zaika.catalog.RestaurantStatus;
 import com.zaika.coupon.CouponType;
+import com.zaika.delivery.VehicleType;
 import com.zaika.user.Role;
 
 /**
@@ -188,6 +189,14 @@ final class DemoData {
 			new Account("customer@zaika.test", "Riya Shinde", "9890011230", Role.CUSTOMER));
 
 	static final String CUSTOMER_EMAIL = "customer@zaika.test";
+
+	/** A demo rider's profile, APPROVED so they can go online straight away. */
+	record Ride(String email, VehicleType vehicle, String numberPlate, String area) {
+	}
+
+	static final List<Ride> RIDERS = List.of(
+			new Ride("rider1@zaika.test", VehicleType.BIKE, "MH09EK4521", "Rajarampuri"),
+			new Ride("rider2@zaika.test", VehicleType.SCOOTER, "MH09FG7310", "Shahupuri"));
 
 	/**
 	 * A demo coupon, valid from the first day of the month the seeder first runs, for {@code months} months

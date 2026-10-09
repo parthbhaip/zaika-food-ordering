@@ -93,8 +93,9 @@ class WebSecurityTest {
 	@Test
 	void areaPrefixesDoNotSwallowLookAlikeUrls() throws Exception {
 		// /partner-with-us is public even though it starts with "/partner"
+		// (the sign-up page itself sends signed-in visitors home: the controller ran, security did not step in)
 		mvc.perform(get("/partner-with-us/rider").with(user("c@zaika.test").roles("CUSTOMER")))
-			.andExpect(result -> assertThat(result.getResponse().getStatus()).isNotIn(302, 401, 403));
+			.andExpect(redirectedUrl("/"));
 		assertThat(SecurityConfig.areaOf("/partner-with-us")).isNull();
 		assertThat(SecurityConfig.areaOf("/ordersheet")).isNull();
 		assertThat(SecurityConfig.areaOf("/orders")).isEqualTo(Role.CUSTOMER);

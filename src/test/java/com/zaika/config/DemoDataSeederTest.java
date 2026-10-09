@@ -3,6 +3,7 @@ package com.zaika.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 
@@ -20,9 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zaika.catalog.Cuisine;
@@ -36,6 +39,9 @@ import com.zaika.catalog.RestaurantStatus;
 import com.zaika.coupon.Coupon;
 import com.zaika.coupon.CouponRepository;
 import com.zaika.coupon.CouponType;
+import com.zaika.delivery.DeliveryPartnerProfile;
+import com.zaika.delivery.DeliveryPartnerProfileRepository;
+import com.zaika.delivery.RiderStatus;
 import com.zaika.user.Address;
 import com.zaika.user.AddressRepository;
 import com.zaika.user.Role;
@@ -54,7 +60,7 @@ import com.zaika.user.UserRepository;
 class DemoDataSeederTest {
 
 	static final List<String> TABLES = List.of("users", "addresses", "cuisines", "restaurants", "restaurant_cuisines",
-			"menu_categories", "menu_items", "coupons");
+			"menu_categories", "menu_items", "coupons", "delivery_partner_profiles");
 
 	/** Typical demo hours: a college demo or a recruiter's visit happens somewhere between 10 AM and 9 PM. */
 	static final List<LocalTime> DEMO_TIMES = IntStream.rangeClosed(10, 21).mapToObj(h -> LocalTime.of(h, 0)).toList();
@@ -88,6 +94,9 @@ class DemoDataSeederTest {
 
 	@Autowired
 	PasswordEncoder passwordEncoder;
+
+	@Autowired
+	DeliveryPartnerProfileRepository riderProfiles;
 
 	@Autowired
 	MockMvc mvc;
@@ -285,6 +294,31 @@ class DemoDataSeederTest {
 	void demoOwnerCanSignIn() throws Exception {
 		mvc.perform(post("/login").param("email", "owner1@zaika.test").param("password", "Demo@1234").with(csrf()))
 			.andExpect(redirectedUrl("/owner"));
+	}
+
+	@Test
+	@Transactional
+	void demoRidersAreApprovedAndOffline() {
+		Map<String, String> plates = Map.of("rider1@zaika.test", "MH09EK4521", "rider2@zaika.test", "MH09FG7310");
+		plates.forEach((email, plate) -> {
+			DeliveryPartnerProfile p = riderProfiles.findByUserId(users.findByEmail(email).orElseThrow().getId())
+				.orElseThrow();
+			assertThat(p.getStatus()).as(email).isEqualTo(RiderStatus.APPROVED);
+			assertThat(p.isOnline()).as(email).isFalse();
+			assertThat(p.getVehicleNumber()).as(email).isEqualTo(plate);
+		});
+		assertThat(riderProfiles.count()).isEqualTo(2);
+	}
+
+	@Test
+	void demoRiderSignsInToTheRiderPanelWithoutABanner() throws Exception {
+		MvcResult login = mvc.perform(post("/login").param("email", "rider1@zaika.test").param("password", "Demo@1234")
+			.with(csrf()))
+			.andExpect(redirectedUrl("/partner"))
+			.andReturn();
+		String html = mvc.perform(get("/partner").session((MockHttpSession) login.getRequest().getSession()))
+			.andReturn().getResponse().getContentAsString();
+		assertThat(html).contains("Rahul Pawar", "Approved", "MH09EK4521").doesNotContain("Waiting for review.");
 	}
 
 	@Test

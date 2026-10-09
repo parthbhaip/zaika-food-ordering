@@ -180,7 +180,7 @@ How this file works
 
 ## Phase 5 - Delivery partner (rider) panel
 
-- [ ] T34 Rider onboarding
+- [x] T34 Rider onboarding
   - `/partner-with-us/rider`: account + `DeliveryPartnerProfile` (vehicle type BIKE/SCOOTER/BICYCLE, vehicle number, preferred area, status PENDING/APPROVED/SUSPENDED, online flag).
   - Seeder makes rider1 and rider2 APPROVED. Pending riders see a status banner. Tests.
 

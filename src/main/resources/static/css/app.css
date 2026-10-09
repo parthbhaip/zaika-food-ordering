@@ -3085,6 +3085,27 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.report-filters { padding: var(--space-5) var(--space-6); }
 }
 
+/* ------------------------------------------------------------------ Rider panel (/partner-with-us/rider, /partner)
+   The sign-up reuses the restaurant sign-up shell and checkout's option cards (.pay-option) for the vehicle; the rider
+   dashboard reuses the owner panel's head, status banner and facts card. */
+.vehicle-options { gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+.vehicle-options > legend { float: left; width: 100%; }
+.vehicle-options-list { display: grid; gap: var(--space-3); }
+.vehicle-options-list .pay-option { grid-template-columns: auto minmax(0, 1fr); }
+.rider-avatar {
+	display: grid;
+	place-items: center;
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	background: var(--color-primary-tint);
+	color: var(--color-primary);
+}
+.rider-avatar .icon { width: 30px; height: 30px; }
+@media (min-width: 640px) {
+	.vehicle-options-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */
 .error-body {
 	min-height: 100vh;

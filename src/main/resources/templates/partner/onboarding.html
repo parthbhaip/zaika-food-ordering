@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Become a delivery partner | Zaika</title></head>
+<body>
+<!--/* Rider sign-up, bound to delivery.RiderSignupForm as "form"; "vehicleTypes" and "areas" come from
+     partner.RiderOnboardingController. Errors re-render this page with typed values kept (passwords are not). */-->
+<main id="main" class="auth-page onboarding-page">
+	<div class="container onboarding">
+		<header class="onboarding-head">
+			<a class="checkout-back" th:href="@{/partner-with-us}" href="/partner-with-us"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>Partner with us</a>
+			<h1 id="onboarding-title">Become a delivery partner</h1>
+			<p class="auth-lede">Two short sections, about 3 minutes. Our partner team reviews every rider, usually within 2 working days, and then you can go online whenever it suits you.</p>
+		</header>
+
+		<div class="alert alert-error onboarding-alert" role="alert" th:if="${#fields.hasErrors('${form.*}')}">
+			<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+			<p><strong>A few details need another look.</strong> Fix the fields marked below and send the form again.</p>
+		</div>
+
+		<form class="onboarding-form" th:action="@{/partner-with-us/rider}" action="/partner-with-us/rider" method="post"
+			th:object="${form}" novalidate aria-labelledby="onboarding-title">
+
+			<fieldset class="card onboarding-step">
+				<legend class="checkout-step-title"><span class="checkout-step-no" aria-hidden="true">1</span>About you</legend>
+				<p class="onboarding-step-intro">You'll sign in with this email and password to go online and take deliveries.</p>
+				<div class="onboarding-grid">
+					<div th:replace="~{fragments/form :: field('name', 'Your full name', 'text', 'As on your driving licence or ID.', 'name')}"></div>
+					<th:block th:with="inputmode='tel'">
+						<div th:replace="~{fragments/form :: field('phone', 'Mobile number', 'tel', 'Restaurants and customers reach you on it during a delivery.', 'tel-national')}"></div>
+					</th:block>
+				</div>
+				<div th:replace="~{fragments/form :: field('email', 'Email', 'email', 'Your sign-in. Review updates land here too.', 'email')}"></div>
+				<div class="onboarding-grid">
+					<div th:replace="~{fragments/form :: password('password', 'Password', 'At least 8 characters, with a letter and a digit.', 'new-password')}"></div>
+					<div th:replace="~{fragments/form :: password('confirmPassword', 'Confirm password', null, 'new-password')}"></div>
+				</div>
+			</fieldset>
+
+			<fieldset class="card onboarding-step">
+				<legend class="checkout-step-title"><span class="checkout-step-no" aria-hidden="true">2</span>Your ride</legend>
+				<fieldset class="field vehicle-options" th:with="invalid=${#fields.hasErrors('vehicleType')}" th:classappend="${invalid} ? 'has-error'"
+					th:aria-describedby="${invalid} ? 'vehicleType-error'">
+					<legend class="field-label">Vehicle</legend>
+					<div class="vehicle-options-list">
+						<label class="pay-option" th:each="v : ${vehicleTypes}">
+							<input class="radio" type="radio" name="vehicleType" th:id="|vehicle-${#strings.toLowerCase(v.name())}|" th:value="${v.name()}"
+								th:checked="${form.vehicleType == v}">
+							<span class="pay-option-body"><strong th:text="${v.label}">Motorbike</strong><span th:text="${v.description}">Fastest across town.</span></span>
+						</label>
+					</div>
+					<p class="field-error" th:if="${invalid}" id="vehicleType-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('vehicleType'), ' ')}">Choose the vehicle you'll ride.</span></p>
+				</fieldset>
+
+				<div class="onboarding-grid">
+					<div th:replace="~{fragments/form :: field('vehicleNumber', 'Number plate', 'text', 'Like MH 09 AB 1234. Leave it empty if you ride a bicycle.', 'off')}"></div>
+					<div class="field" th:with="invalid=${#fields.hasErrors('preferredArea')}" th:classappend="${invalid} ? 'has-error'">
+						<label class="field-label" for="preferredArea">Preferred area</label>
+						<div class="select-wrap">
+							<select class="select" id="preferredArea" name="preferredArea" th:aria-invalid="${invalid} ? 'true'"
+								th:aria-describedby="${invalid} ? 'preferredArea-error preferredArea-help' : 'preferredArea-help'">
+								<option value="">Choose an area</option>
+								<option th:each="a : ${areas}" th:value="${a}" th:text="${a}" th:selected="${a == form.preferredArea}">Rajarampuri</option>
+							</select>
+						</div>
+						<p class="field-help" id="preferredArea-help">Where you'd like to start from. You can still take orders anywhere in Kolhapur.</p>
+						<p class="field-error" th:if="${invalid}" id="preferredArea-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('preferredArea'), ' ')}">Choose the area you'd like to ride in.</span></p>
+					</div>
+				</div>
+			</fieldset>
+
+			<div class="card onboarding-submit">
+				<div class="field" th:with="invalid=${#fields.hasErrors('acceptTerms')}" th:classappend="${invalid} ? 'has-error'">
+					<label class="check"><input class="checkbox" type="checkbox" id="acceptTerms" name="acceptTerms" value="true"
+						th:checked="*{acceptTerms}" th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? 'acceptTerms-error'"><span class="check-text">I'm 18 or older, hold a valid driving licence for a motorbike or scooter, and agree to the <a th:href="@{/terms}" href="/terms" target="_blank" rel="noopener">Terms of use</a> and <a th:href="@{/privacy}" href="/privacy" target="_blank" rel="noopener">Privacy policy</a><small>No licence is needed to ride a bicycle.</small></span></label>
+					<p class="field-error" th:if="${invalid}" id="acceptTerms-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('acceptTerms'), ' ')}">Please confirm and accept the partner terms to sign up.</span></p>
+				</div>
+				<button type="submit" class="btn btn-primary btn-lg btn-block">Submit for review</button>
+				<p class="auth-switch">Already a partner? <a th:href="@{/login}" href="/login">Sign in</a></p>
+			</div>
+		</form>
+
+		<aside class="auth-aside onboarding-aside" aria-labelledby="onboarding-next-title">
+			<h2 id="onboarding-next-title">What happens next</h2>
+			<ol class="auth-perks onboarding-next">
+				<li><svg th:replace="~{fragments/icon :: icon('check')}"></svg><span>You're signed in to your rider dashboard straight away.</span></li>
+				<li><svg th:replace="~{fragments/icon :: icon('clock')}"></svg><span>Our partner team checks your details, usually within 2 working days.</span></li>
+				<li><svg th:replace="~{fragments/icon :: icon('bike')}"></svg><span>Once approved, go online and claim deliveries near you. Each one shows its payout first.</span></li>
+			</ol>
+			<p>Questions? Write to <a href="mailto:partners@zaika.test">partners@zaika.test</a></p>
+		</aside>
+	</div>
+</main>
+</body>
+</html>
