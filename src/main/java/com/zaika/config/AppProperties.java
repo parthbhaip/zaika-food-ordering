@@ -25,6 +25,7 @@ import org.springframework.validation.annotation.Validated;
  * @param gstRate               GST as a fraction, 0.05 = 5%
  * @param freeDeliveryThreshold food subtotal above which delivery is free, INR
  * @param riderBasePayout       rider earning per delivered order before extras, INR
+ * @param riderDeliveryFeeShare the part of the order's delivery fee the rider also earns, as a fraction (0.80 = 80%)
  * @param baseUrl               public address of the site (scheme, host, optional port and path, no trailing slash);
  *                              links in emails start with it
  */
@@ -39,6 +40,7 @@ public record AppProperties(
 		@NotNull @DecimalMin("0.00") @DecimalMax("1.00") @Digits(integer = 1, fraction = 4) BigDecimal gstRate,
 		@NotNull @DecimalMin("0.00") @Digits(integer = 6, fraction = 2) BigDecimal freeDeliveryThreshold,
 		@NotNull @DecimalMin("0.00") @Digits(integer = 6, fraction = 2) BigDecimal riderBasePayout,
+		@NotNull @DecimalMin("0.00") @DecimalMax("1.00") @Digits(integer = 1, fraction = 2) BigDecimal riderDeliveryFeeShare,
 		@NotBlank @Pattern(regexp = "https?://[^\\s/]+(/\\S*)?",
 				message = "must be an http(s) address like https://zaika.example.in") String baseUrl) {
 

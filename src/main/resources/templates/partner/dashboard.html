@@ -2,15 +2,17 @@
 <html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
 <head><title>Rider dashboard | Zaika</title></head>
 <body>
-<!--/* The rider's home. "profile" (delivery.DeliveryPartnerProfile, user loaded) is the signed-in rider's own profile,
-     or null for a rider account without one. */-->
+<!--/* The rider's home. "d" (delivery.DeliveryService.Dashboard) holds the signed-in rider's own profile (account
+     loaded), their live delivery (or null) and the orders waiting for a rider; d is null for a rider account without
+     a profile. The online switch shows only to approved riders; the waiting orders only while online and free.
+     #partner-available polls itself every 15 s (fragment "available"). */-->
 <main id="main" class="owner-page">
 	<div class="container owner-container">
-		<th:block th:if="${profile == null}">
+		<th:block th:if="${d == null}">
 			<div th:replace="~{fragments/ui :: emptyState('bike', 'No rider profile on this account', 'This partner account has no rider profile linked to it. Write to partners@zaika.test and we will sort it out.', 'Contact us', '/contact')}"></div>
 		</th:block>
 
-		<th:block th:if="${profile != null}" th:with="p=${profile}, u=${profile.user}">
+		<th:block th:if="${d != null}" th:with="p=${d.profile}, u=${d.profile.user}, approved=${d.profile.status.name() == 'APPROVED'}">
 			<header class="owner-head">
 				<span class="rider-avatar"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
 				<div class="owner-head-text">
@@ -24,6 +26,116 @@
 			</header>
 
 			<div th:replace="~{fragments/partner :: statusBanner(${p})}"></div>
+
+			<!--/* Online switch: a one-button form whose role="switch" button sends the opposite state. */-->
+			<section th:if="${approved}" class="card owner-accepting rider-online" th:classappend="${p.online} ? 'is-on' : 'is-paused'" aria-labelledby="rider-online-title">
+				<form class="owner-accepting-form" method="post" th:action="@{/partner/online}" action="/partner/online">
+					<input type="hidden" name="online" th:value="${!p.online}" value="true">
+					<div class="owner-accepting-text">
+						<h2 id="rider-online-title" class="owner-section-title">Online</h2>
+						<p id="rider-online-help" class="owner-accepting-help">
+							<th:block th:if="${p.online}"><strong>You're online.</strong> Orders waiting for a rider show up below.</th:block>
+							<th:block th:unless="${p.online}"><strong>You're offline.</strong> Go online to see orders waiting for pickup.</th:block>
+						</p>
+					</div>
+					<button id="rider-online-switch" class="switch" type="submit" role="switch" th:aria-checked="${p.online}" aria-checked="false"
+						aria-labelledby="rider-online-title" aria-describedby="rider-online-help"></button>
+				</form>
+			</section>
+
+			<!--/* The live delivery: where to pick up, where to drop, what to collect. */-->
+			<section th:if="${d.active != null}" th:with="o=${d.active}, r=${d.active.restaurant}, cash=${d.cashToCollect()}"
+				id="current-delivery" class="card rider-delivery" aria-labelledby="current-delivery-title">
+				<div class="owner-card-head rider-delivery-head">
+					<div>
+						<h2 id="current-delivery-title" class="owner-section-title">Current delivery</h2>
+						<p class="rider-delivery-code"><span th:text="${o.code}">ZK-26-000123</span> · <th:block th:text="|${o.itemCount} ${o.itemCount == 1 ? 'item' : 'items'}|">3 items</th:block></p>
+					</div>
+					<span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Preparing</span>
+				</div>
+
+				<p class="rider-delivery-next" th:switch="${o.status.name()}">
+					<th:block th:case="'READY_FOR_PICKUP'"><strong>Packed and waiting for you.</strong> Pick it up from the counter.</th:block>
+					<th:block th:case="'OUT_FOR_DELIVERY'"><strong>On the way.</strong> Hand it over at the address below.</th:block>
+					<th:block th:case="*"><strong>The kitchen is on it.</strong> Food should be packed by <th:block th:text="${@fmt.time(d.readyBy(o))}">7:45 PM</th:block>.</th:block>
+				</p>
+
+				<ol class="rider-stops">
+					<li class="rider-stop">
+						<span class="rider-stop-icon"><svg th:replace="~{fragments/icon :: icon('store')}"></svg></span>
+						<div class="rider-stop-text">
+							<p class="rider-stop-label">Pick up</p>
+							<p class="rider-stop-name" th:text="${r.name}">Rassa Darbar</p>
+							<p th:text="|${r.address}, ${r.area}, ${r.city} ${r.pincode}|">14 Rajarampuri 6th Lane, Rajarampuri, Kolhapur 416008</p>
+							<a class="rider-stop-phone" th:href="|tel:+91${r.phone}|" href="tel:+919876543210"><svg th:replace="~{fragments/icon :: icon('phone')}"></svg><th:block th:text="${@fmt.phone(r.phone)}">+91 98765 43210</th:block></a>
+						</div>
+					</li>
+					<li class="rider-stop">
+						<span class="rider-stop-icon"><svg th:replace="~{fragments/icon :: icon('location')}"></svg></span>
+						<div class="rider-stop-text">
+							<p class="rider-stop-label">Drop</p>
+							<p class="rider-stop-name" th:text="${o.customer.name}">Riya Shinde</p>
+							<p th:text="${o.address.oneLine()}">Flat 4B, Shree Apartments, Rajarampuri 5th Lane, near Ganesh Mandir, Kolhapur 416008</p>
+							<p class="rider-stop-phone"><svg th:replace="~{fragments/icon :: icon('phone')}"></svg><th:block th:text="${@fmt.maskedPhone(o.customer.phone)}">+91 98••• ••210</th:block></p>
+							<p class="rider-stop-note" th:if="${o.deliveryNote != null}">Note: <th:block th:text="${o.deliveryNote}">Ring the bell twice</th:block></p>
+						</div>
+					</li>
+				</ol>
+
+				<dl class="rider-delivery-money">
+					<div class="rider-cash" th:classappend="${cash != null} ? 'is-collect'">
+						<dt th:text="${cash != null} ? 'Cash to collect' : 'Payment'">Cash to collect</dt>
+						<dd th:if="${cash != null}" th:text="${@fmt.price(cash)}">₹612</dd>
+						<dd th:if="${cash == null}">Paid online. Nothing to collect.</dd>
+					</div>
+					<div>
+						<dt>You earn</dt>
+						<dd th:text="${@fmt.price(d.activePayout)}">₹54</dd>
+					</div>
+				</dl>
+			</section>
+
+			<!--/* Orders waiting for a rider: only while online and free. Also the htmx poll's answer (model "d" only): it
+			     polls every 15 s with the version it shows (?v=), gets 204 until the list changes, and a page refresh
+			     once the rider is off duty or busy. Claim buttons and Refresh keep their ids so focus survives a swap. */-->
+			<section th:fragment="available" th:if="${d.onDuty() and d.active == null}" id="partner-available" class="rider-available"
+				aria-labelledby="partner-available-title"
+				th:hx-get="@{/partner(v=${d.version()})}" hx-trigger="every 15s" hx-swap="outerHTML">
+				<div class="owner-card-head">
+					<h2 id="partner-available-title" class="owner-section-title">Waiting for a rider <span class="board-count" th:text="${d.offers.size()}">3</span></h2>
+					<a id="partner-refresh" class="btn btn-ghost btn-sm" th:href="@{/partner}" href="/partner">Refresh</a>
+				</div>
+				<p class="rider-available-lede" th:unless="${d.offers.isEmpty()}">Oldest first. Take one at a time: claim it, pick it up, deliver it.</p>
+				<div class="rider-available-empty card" th:if="${d.offers.isEmpty()}">
+					<div th:replace="~{fragments/ui :: emptyState('clock', 'No orders waiting right now', 'New orders show up here as kitchens accept them. This list refreshes on its own.', null, null)}"></div>
+				</div>
+				<ol class="rider-offers" th:unless="${d.offers.isEmpty()}">
+					<li th:each="offer : ${d.offers}" th:with="o=${offer.order}, r=${offer.order.restaurant}">
+						<article class="card rider-offer" th:id="|offer-${o.code}|" th:aria-labelledby="|offer-${o.code}-title|">
+							<div class="rider-offer-main">
+								<h3 class="rider-offer-title" th:id="|offer-${o.code}-title|" th:text="${r.name}">Rassa Darbar</h3>
+								<p class="rider-offer-route">
+									<span><svg th:replace="~{fragments/icon :: icon('store')}"></svg><th:block th:text="${r.area}">Rajarampuri</th:block></span>
+									<span><svg th:replace="~{fragments/icon :: icon('location')}"></svg><th:block th:text="${o.address.street}">Rajarampuri 5th Lane</th:block></span>
+								</p>
+								<p class="rider-offer-meta">
+									<span th:text="${o.code}">ZK-26-000123</span>
+									<span th:text="|${o.itemCount} ${o.itemCount == 1 ? 'item' : 'items'}|">2 items</span>
+									<span th:if="${o.status.name() == 'READY_FOR_PICKUP'}" class="badge badge-success">Ready now</span>
+									<span th:unless="${o.status.name() == 'READY_FOR_PICKUP'}" class="badge badge-primary" th:text="|Ready by ${@fmt.time(d.readyBy(o))}|">Ready by 7:45 PM</span>
+									<span th:if="${o.paymentMethod.name() == 'COD'}" class="badge badge-warning">Cash order</span>
+								</p>
+							</div>
+							<div class="rider-offer-side">
+								<p class="rider-offer-pay"><span class="visually-hidden">You earn </span><th:block th:text="${@fmt.price(offer.payout)}">₹54</th:block></p>
+								<form method="post" th:action="@{/partner/orders/{code}/claim(code=${o.code})}" action="/partner/orders/ZK-26-000123/claim">
+									<button class="btn btn-primary btn-sm" type="submit" th:id="|claim-${o.code}|" th:aria-describedby="|offer-${o.code}-title|">Claim</button>
+								</form>
+							</div>
+						</article>
+					</li>
+				</ol>
+			</section>
 
 			<section class="card owner-listing" aria-labelledby="partner-details-title">
 				<h2 id="partner-details-title" class="owner-section-title">Your details</h2>

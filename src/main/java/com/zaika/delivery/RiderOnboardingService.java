@@ -1,7 +1,5 @@
 package com.zaika.delivery;
 
-import java.util.Optional;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,7 +9,7 @@ import com.zaika.user.User;
 import com.zaika.user.UserService;
 
 /**
- * Rider sign-up and the rider's own profile. One transaction creates the DELIVERY_PARTNER account and a PENDING,
+ * Rider sign-up. One transaction creates the DELIVERY_PARTNER account and a PENDING,
  * offline profile; an admin approves it before the rider can go online.
  */
 @Service
@@ -37,12 +35,6 @@ public class RiderOnboardingService {
 				Role.DELIVERY_PARTNER);
 		return profiles.save(new DeliveryPartnerProfile(rider, form.getVehicleType(), form.getVehicleNumber(),
 				form.getPreferredArea()));
-	}
-
-	/** The signed-in rider's own profile with their account; empty for a rider account without one. */
-	@Transactional(readOnly = true)
-	public Optional<DeliveryPartnerProfile> profileOf(long riderId) {
-		return profiles.findByUserId(riderId);
 	}
 
 }

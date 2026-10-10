@@ -184,7 +184,7 @@ How this file works
   - `/partner-with-us/rider`: account + `DeliveryPartnerProfile` (vehicle type BIKE/SCOOTER/BICYCLE, vehicle number, preferred area, status PENDING/APPROVED/SUSPENDED, online flag).
   - Seeder makes rider1 and rider2 APPROVED. Pending riders see a status banner. Tests.
 
-- [ ] T35 Rider dashboard `/partner`
+- [x] T35 Rider dashboard `/partner`
   - Online/offline toggle. Available orders (ACCEPTED, PREPARING or READY_FOR_PICKUP, unassigned) with restaurant area and payout.
   - Claim uses optimistic locking: if two riders claim at once, one wins and the other sees a friendly message. Max one active delivery.
   - Active delivery card: restaurant address and phone, customer address and masked phone, item count, cash to collect for COD. Tests including the concurrent claim.

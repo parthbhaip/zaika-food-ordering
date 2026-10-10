@@ -33,7 +33,7 @@ class PasswordResetMailFailureTest {
 	private final MailService mail = mock(MailService.class);
 
 	private final AppProperties app = new AppProperties("Zaika", ZoneId.of("Asia/Kolkata"), "./uploads", false,
-			BigDecimal.ONE, new BigDecimal("0.05"), BigDecimal.TEN, BigDecimal.TEN, "https://zaika.example.in");
+			BigDecimal.ONE, new BigDecimal("0.05"), BigDecimal.TEN, BigDecimal.TEN, new BigDecimal("0.80"), "https://zaika.example.in");
 
 	private final PasswordResetService resets = new PasswordResetService(users, tokens, mock(PasswordEncoder.class),
 			mail, app, new MutableClock(app.zone()));

@@ -36,7 +36,7 @@ class StorageServiceTest {
 		uploads = temp.resolve("uploads");
 		storage = new StorageService(new AppProperties("Zaika", ZoneId.of("Asia/Kolkata"), uploads.toString(), false,
 				new BigDecimal("5.00"), new BigDecimal("0.05"), new BigDecimal("499.00"), new BigDecimal("30.00"),
-				"http://localhost:8080"));
+				new BigDecimal("0.80"), "http://localhost:8080"));
 	}
 
 	@Test

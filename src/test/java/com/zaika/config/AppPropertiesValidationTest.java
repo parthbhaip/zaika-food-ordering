@@ -20,7 +20,7 @@ class AppPropertiesValidationTest {
 	private final ApplicationContextRunner runner = new ApplicationContextRunner().withUserConfiguration(Config.class)
 		.withPropertyValues("app.brand-name=Zaika", "app.zone=Asia/Kolkata", "app.upload-dir=./uploads",
 				"app.seed-demo=true", "app.platform-fee=5", "app.gst-rate=0.05", "app.free-delivery-threshold=499",
-				"app.rider-base-payout=30.5", "app.base-url=https://zaika.example.in/");
+				"app.rider-base-payout=30.5", "app.rider-delivery-fee-share=0.8", "app.base-url=https://zaika.example.in/");
 
 	@Test
 	void validValuesBindAndMoneyIsScaledToTwoDecimals() {
@@ -31,6 +31,7 @@ class AppPropertiesValidationTest {
 			assertThat(app.platformFee()).isEqualTo(new BigDecimal("5.00"));
 			assertThat(app.freeDeliveryThreshold()).isEqualTo(new BigDecimal("499.00"));
 			assertThat(app.riderBasePayout()).isEqualTo(new BigDecimal("30.50"));
+			assertThat(app.riderDeliveryFeeShare()).isEqualByComparingTo("0.80");
 			assertThat(app.baseUrl()).isEqualTo("https://zaika.example.in");
 		});
 	}
@@ -53,6 +54,12 @@ class AppPropertiesValidationTest {
 	@Test
 	void moneyWithMoreThanTwoDecimalsFailsStartup() {
 		assertFails("app.rider-base-payout=30.555", "riderBasePayout");
+	}
+
+	@Test
+	void riderShareAboveTheWholeDeliveryFeeFailsStartup() {
+		assertFails("app.rider-delivery-fee-share=1.5", "riderDeliveryFeeShare");
+		assertFails("app.rider-delivery-fee-share=-0.1", "riderDeliveryFeeShare");
 	}
 
 	@Test

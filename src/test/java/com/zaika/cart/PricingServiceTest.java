@@ -27,7 +27,7 @@ class PricingServiceTest {
 	private static PricingService service(String platformFee, String gstRate, String threshold) {
 		return new PricingService(new AppProperties("Zaika", ZoneId.of("Asia/Kolkata"), "./uploads", false,
 				new BigDecimal(platformFee), new BigDecimal(gstRate), new BigDecimal(threshold),
-				new BigDecimal("30.00"), "http://localhost:8080"));
+				new BigDecimal("30.00"), new BigDecimal("0.80"), "http://localhost:8080"));
 	}
 
 	private static BigDecimal inr(String amount) {

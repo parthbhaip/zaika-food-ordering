@@ -132,4 +132,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 	@Query("select o.id from Order o where o.status = :status and o.createdAt <= :cutoff order by o.createdAt, o.id")
 	List<Long> findIdsByStatusCreatedUpTo(OrderStatus status, LocalDateTime cutoff);
 
+	/** The order by its code with its restaurant, no lock: a rider's claim relies on the {@code version} check. */
+	@EntityGraph(attributePaths = "restaurant")
+	Optional<Order> findByCode(String code);
+
+	/**
+	 * The oldest 20 orders in {@code statuses} that no rider has taken yet, with their restaurant: the rider panel's
+	 * "available orders" (idx_orders_status_created). Dishes not loaded.
+	 */
+	@EntityGraph(attributePaths = "restaurant")
+	List<Order> findTop20ByRiderIsNullAndStatusInOrderByPlacedAtAscIdAsc(Collection<OrderStatus> statuses);
+
+	/** The rider's orders in {@code statuses} with restaurant, customer and dishes (idx_orders_rider_status). */
+	@EntityGraph(attributePaths = { "restaurant", "customer", "items" })
+	List<Order> findByRiderIdAndStatusIn(long riderId, Collection<OrderStatus> statuses);
+
+	/** Uses {@code idx_orders_rider_status}. */
+	boolean existsByRiderIdAndStatusIn(long riderId, Collection<OrderStatus> statuses);
+
 }
