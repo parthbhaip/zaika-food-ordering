@@ -43,9 +43,14 @@
 				</form>
 			</section>
 
-			<!--/* The live delivery: where to pick up, where to drop, what to collect. */-->
-			<section th:if="${d.active != null}" th:with="o=${d.active}, r=${d.active.restaurant}, cash=${d.cashToCollect()}"
-				id="current-delivery" class="card rider-delivery" aria-labelledby="current-delivery-title">
+			<!--/* The live delivery: where to pick up, where to drop, what to collect, and the next step (Picked up once the
+			     kitchen has packed it, then Delivered with the customer's code). While the kitchen is still cooking the
+			     card polls every 15 s (?delivery=) and the page refreshes once the order moves on. "otpError"/"otp" are
+			     set when a delivery code was refused. */-->
+			<section th:if="${d.active != null}" th:with="o=${d.active}, r=${d.active.restaurant}, cash=${d.cashToCollect()},
+					cooking=${d.active.status.name() == 'ACCEPTED' or d.active.status.name() == 'PREPARING'}"
+				id="current-delivery" class="card rider-delivery" aria-labelledby="current-delivery-title"
+				th:hx-get="${cooking} ? @{/partner(delivery=${d.deliveryVersion()})}" th:hx-trigger="${cooking} ? 'every 15s'" th:hx-swap="${cooking} ? 'none'">
 				<div class="owner-card-head rider-delivery-head">
 					<div>
 						<h2 id="current-delivery-title" class="owner-section-title">Current delivery</h2>
@@ -56,7 +61,7 @@
 
 				<p class="rider-delivery-next" th:switch="${o.status.name()}">
 					<th:block th:case="'READY_FOR_PICKUP'"><strong>Packed and waiting for you.</strong> Pick it up from the counter.</th:block>
-					<th:block th:case="'OUT_FOR_DELIVERY'"><strong>On the way.</strong> Hand it over at the address below.</th:block>
+					<th:block th:case="'OUT_FOR_DELIVERY'"><strong>On the way.</strong> Hand it over at the address below and ask for the delivery code.</th:block>
 					<th:block th:case="*"><strong>The kitchen is on it.</strong> Food should be packed by <th:block th:text="${@fmt.time(d.readyBy(o))}">7:45 PM</th:block>.</th:block>
 				</p>
 
@@ -93,6 +98,28 @@
 						<dd th:text="${@fmt.price(d.activePayout)}">₹54</dd>
 					</div>
 				</dl>
+
+				<div class="rider-delivery-action" th:switch="${o.status.name()}">
+					<form th:case="'READY_FOR_PICKUP'" class="rider-action-form" method="post"
+						th:action="@{/partner/orders/{code}/pickup(code=${o.code})}" action="/partner/orders/ZK-26-000123/pickup">
+						<button id="rider-pickup" class="btn btn-primary btn-lg btn-block" type="submit" aria-describedby="rider-pickup-help">Picked up</button>
+						<p id="rider-pickup-help" class="field-help">Tap once the food is sealed and in your bag.</p>
+					</form>
+					<form th:case="'OUT_FOR_DELIVERY'" class="rider-action-form rider-otp-form" method="post" novalidate
+						th:action="@{/partner/orders/{code}/deliver(code=${o.code})}" action="/partner/orders/ZK-26-000123/deliver"
+						th:with="invalid=${otpError != null}">
+						<div class="field" th:classappend="${invalid} ? 'has-error'">
+							<label class="field-label" for="otp">Customer's delivery code</label>
+							<input id="otp" class="input rider-otp-input" type="text" name="otp" inputmode="numeric" autocomplete="one-time-code"
+								maxlength="4" th:value="${otp}" th:aria-invalid="${invalid} ? 'true'"
+								aria-describedby="otp-help" th:aria-describedby="${invalid} ? 'otp-error otp-help' : 'otp-help'">
+							<p id="otp-help" class="field-help">The customer sees this 4-digit code on their order tracking page.</p>
+							<p id="otp-error" class="field-error" th:if="${invalid}"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${otpError}">That code doesn't match. 4 tries left.</span></p>
+						</div>
+						<button id="rider-deliver" class="btn btn-primary btn-lg btn-block" type="submit">Delivered</button>
+					</form>
+					<p th:case="*" class="rider-delivery-wait"><svg th:replace="~{fragments/icon :: icon('clock')}"></svg><span>You can mark it picked up once the kitchen has packed it. This card updates on its own.</span></p>
+				</div>
 			</section>
 
 			<!--/* Orders waiting for a rider: only while online and free. Also the htmx poll's answer (model "d" only): it

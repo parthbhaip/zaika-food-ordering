@@ -3,6 +3,7 @@ package com.zaika.delivery;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -13,13 +14,17 @@ import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.StringUtils;
 
 import com.zaika.catalog.Restaurant;
+import com.zaika.common.Formatters;
 import com.zaika.common.NotFoundException;
 import com.zaika.config.AppProperties;
 import com.zaika.order.Order;
+import com.zaika.order.OrderActor;
 import com.zaika.order.OrderRepository;
 import com.zaika.order.OrderStatus;
+import com.zaika.order.OrderWorkflow;
 import com.zaika.order.PaymentMethod;
 import com.zaika.order.PaymentStatus;
 
@@ -28,7 +33,8 @@ import com.zaika.order.PaymentStatus;
  * delivery. Claiming is not a status change ({@link Order#assignRider}), so it does not go through the workflow; it
  * relies on the order's {@code version}: when two riders claim the same order at once, the second write fails and
  * that rider is told someone else took it. A rider's own claims are serialized by a lock on their profile row, so
- * nobody ends up with two live deliveries.
+ * nobody ends up with two live deliveries. Picking up and delivering are status changes made through the workflow
+ * under a row lock on the order; delivering needs the customer's code and records what the rider earned.
  */
 @Service
 public class DeliveryService {
@@ -49,12 +55,25 @@ public class DeliveryService {
 
 	private final TransactionTemplate tx;
 
+	private final OrderWorkflow workflow;
+
+	private final RiderEarningRepository earnings;
+
+	private final Formatters fmt;
+
+	private final Clock clock;
+
 	DeliveryService(DeliveryPartnerProfileRepository profiles, OrderRepository orders, AppProperties app,
-			TransactionTemplate tx) {
+			TransactionTemplate tx, OrderWorkflow workflow, RiderEarningRepository earnings, Formatters fmt,
+			Clock clock) {
 		this.profiles = profiles;
 		this.orders = orders;
 		this.app = app;
 		this.tx = tx;
+		this.workflow = workflow;
+		this.earnings = earnings;
+		this.fmt = fmt;
+		this.clock = clock;
 	}
 
 	/**
@@ -146,6 +165,87 @@ public class DeliveryService {
 		return orders.saveAndFlush(order); // the version check happens here
 	}
 
+	/**
+	 * The rider has the food: READY_FOR_PICKUP -> OUT_FOR_DELIVERY. Works whatever the rider's online status, so a
+	 * delivery already on the way can always be finished.
+	 *
+	 * @throws DeliveryRuleException if the order is not ready yet, already picked up, delivered or cancelled
+	 * @throws NotFoundException     if there is no such order or it is not assigned to this rider
+	 */
+	@Transactional
+	public Order pickUp(long riderId, String code) {
+		Order order = assigned(riderId, code);
+		switch (order.getStatus()) {
+			case READY_FOR_PICKUP -> {
+			}
+			case ACCEPTED, PREPARING ->
+				throw new DeliveryRuleException("The kitchen hasn't marked " + code + " ready yet. Pick it up once it's packed.");
+			case OUT_FOR_DELIVERY -> throw new DeliveryRuleException(code + " is already picked up.");
+			default -> throw moved(order, "so there's nothing to pick up.");
+		}
+		return workflow.transition(order, OrderStatus.OUT_FOR_DELIVERY, OrderActor.rider(riderId));
+	}
+
+	/**
+	 * Hands the order over: checks the customer's 4-digit code ({@code otp}, spaces ignored), then OUT_FOR_DELIVERY
+	 * -> DELIVERED (a cash order becomes PAID) and records what the rider earned and the cash they collected. A wrong
+	 * code is counted and committed; the fifth in a row locks the code for {@link Order#OTP_LOCK}.
+	 *
+	 * @return the rider's earning for this delivery
+	 * @throws OtpException          if the code is badly formed, wrong or locked (message for the code field)
+	 * @throws DeliveryRuleException if the order is not out for delivery (not picked up yet, delivered, cancelled)
+	 * @throws NotFoundException     if there is no such order or it is not assigned to this rider
+	 */
+	@Transactional(noRollbackFor = OtpException.class)
+	public RiderEarning deliver(long riderId, String code, String otp) {
+		Order order = assigned(riderId, code);
+		switch (order.getStatus()) {
+			case OUT_FOR_DELIVERY -> {
+			}
+			case ACCEPTED, PREPARING, READY_FOR_PICKUP ->
+				throw new DeliveryRuleException("Mark " + code + " picked up before you deliver it.");
+			default -> throw moved(order, "so there's nothing to deliver. Take the food back to "
+					+ order.getRestaurant().getName() + ".");
+		}
+		String typed = otp == null ? "" : StringUtils.trimAllWhitespace(otp);
+		if (!typed.matches("[0-9]{4}")) {
+			throw new OtpException("Enter the 4-digit code from the customer's tracking page.");
+		}
+		LocalDateTime now = LocalDateTime.now(clock);
+		if (order.otpLockedAt(now)) {
+			throw new OtpException("Too many wrong codes. You can try again at " + fmt.time(order.getOtpLockedUntil())
+					+ ". Call the customer to check the code.");
+		}
+		if (!order.checkDeliveryOtp(typed, now)) {
+			if (order.otpLockedAt(now)) {
+				throw new OtpException("That's " + Order.MAX_OTP_ATTEMPTS + " wrong codes, so the code is locked until "
+						+ fmt.time(order.getOtpLockedUntil()) + ". Call the customer to check the code.");
+			}
+			int left = order.otpAttemptsLeft();
+			throw new OtpException("That code doesn't match. " + left + (left == 1 ? " try" : " tries") + " left.");
+		}
+		boolean cash = order.getPaymentMethod() == PaymentMethod.COD
+				&& order.getPaymentStatus() != PaymentStatus.PAID;
+		BigDecimal collected = cash ? order.getBill().grandTotal() : BigDecimal.ZERO;
+		workflow.transition(order, OrderStatus.DELIVERED, OrderActor.rider(riderId));
+		BigDecimal feeShare = app.riderDeliveryFeeShare().multiply(order.getBill().deliveryFee());
+		return earnings.save(new RiderEarning(order.getRider(), order, app.riderBasePayout(), feeShare, collected, now));
+	}
+
+	/** The order with a row lock, if it is assigned to this rider; anyone else's (or an unknown code) is a 404. */
+	private Order assigned(long riderId, String code) {
+		return orders.findForUpdateByCode(code)
+			.filter(o -> o.getRider() != null && o.getRider().getId() == riderId)
+			.orElseThrow(() -> new NotFoundException("Order " + code + " for rider " + riderId));
+	}
+
+	/** For an order that is delivered or was cancelled while the rider had it; {@code cancelled} ends the message. */
+	private static DeliveryRuleException moved(Order order, String cancelled) {
+		return new DeliveryRuleException(order.getStatus() == OrderStatus.DELIVERED
+				? order.getCode() + " is already delivered."
+				: order.getCode() + " was cancelled, " + cancelled);
+	}
+
 	/** What the rider earns for delivering {@code order}: the base payout plus their share of its delivery fee. */
 	public BigDecimal payout(Order order) {
 		return payout(app.riderBasePayout(), app.riderDeliveryFeeShare(), order.getBill().deliveryFee());
@@ -201,6 +301,14 @@ public class DeliveryService {
 			CRC32 crc = new CRC32();
 			crc.update(all.toString().getBytes(StandardCharsets.US_ASCII));
 			return Long.toString(crc.getValue(), 36) + "-" + offers.size();
+		}
+
+		/**
+		 * The live delivery's code and version, for its poll while the kitchen is cooking: it changes when the kitchen
+		 * marks it ready or it is cancelled. {@code null} without a live delivery.
+		 */
+		public String deliveryVersion() {
+			return active == null ? null : active.getCode() + ":" + active.getVersion();
 		}
 
 		/** Cash the rider collects at the door for a cash order not paid yet, else {@code null}. */

@@ -3136,6 +3136,20 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 .rider-cash.is-collect { background: var(--color-warning-tint); }
 .rider-cash.is-collect dt { color: var(--color-warning-ink); }
 .rider-cash.is-collect dd { font-size: var(--text-xl); font-weight: var(--weight-extrabold); }
+.rider-delivery-action { padding-top: var(--space-4); border-top: 1px solid var(--color-line); }
+.rider-action-form { display: grid; gap: var(--space-3); }
+.rider-otp-input {
+	max-width: 12rem;
+	font-size: var(--text-xl);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.4em;
+	font-variant-numeric: tabular-nums;
+}
+.rider-delivery-wait { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--color-text-secondary); font-size: var(--text-sm); }
+.rider-delivery-wait .icon { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--color-text-muted); }
+@media (min-width: 640px) {
+	.rider-action-form .btn-block { width: fit-content; }
+}
 .rider-available { display: grid; gap: var(--space-3); }
 .rider-available .owner-card-head { align-items: center; }
 .rider-available-lede { color: var(--color-text-secondary); font-size: var(--text-sm); }

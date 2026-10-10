@@ -2,6 +2,8 @@ package com.zaika.order;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -47,6 +49,12 @@ public class Order extends BaseEntity {
 
 	/** How long an online order waits for its payment before it is cancelled. */
 	public static final Duration PAY_WITHIN = Duration.ofMinutes(15);
+
+	/** Wrong delivery codes in a row that lock the code. */
+	public static final int MAX_OTP_ATTEMPTS = 5;
+
+	/** How long the delivery code stays locked after {@link #MAX_OTP_ATTEMPTS} wrong tries. */
+	public static final Duration OTP_LOCK = Duration.ofMinutes(10);
 
 	private static final SecureRandom OTP_RANDOM = new SecureRandom();
 
@@ -115,6 +123,14 @@ public class Order extends BaseEntity {
 	/** The 4 digits the customer tells the rider at the door. Never logged. */
 	@Column(name = "delivery_otp", nullable = false, length = 4, updatable = false)
 	private String deliveryOtp;
+
+	/** Wrong delivery codes typed since the last lock (or since the start). */
+	@Column(name = "otp_failed_attempts", nullable = false)
+	private int otpFailedAttempts;
+
+	/** Set when the rider typed {@link #MAX_OTP_ATTEMPTS} wrong codes in a row: no tries until then. */
+	@Column(name = "otp_locked_until")
+	private LocalDateTime otpLockedUntil;
 
 	@Column(name = "estimated_delivery_at", nullable = false)
 	private LocalDateTime estimatedDeliveryAt;
@@ -268,6 +284,46 @@ public class Order extends BaseEntity {
 			throw new IllegalArgumentException("Only delivery partners deliver orders");
 		}
 		this.rider = rider;
+	}
+
+	/** Whether wrong codes have locked the delivery code at {@code now}. */
+	public boolean otpLockedAt(LocalDateTime now) {
+		return otpLockedUntil != null && now.isBefore(otpLockedUntil);
+	}
+
+	/**
+	 * Checks the code the rider typed at the door (compared in constant time). A wrong code counts; the
+	 * {@link #MAX_OTP_ATTEMPTS}th in a row locks the code for {@link #OTP_LOCK} and starts the count again. The right
+	 * code clears the count. The caller (the rider's "Delivered") then moves the order through the workflow.
+	 *
+	 * @return whether the code matches
+	 * @throws IllegalStateException if the code is locked at {@code now}
+	 */
+	public boolean checkDeliveryOtp(String typed, LocalDateTime now) {
+		if (otpLockedAt(now)) {
+			throw new IllegalStateException("The delivery code of " + code + " is locked");
+		}
+		if (typed != null && MessageDigest.isEqual(deliveryOtp.getBytes(StandardCharsets.US_ASCII),
+				typed.getBytes(StandardCharsets.US_ASCII))) {
+			otpFailedAttempts = 0;
+			otpLockedUntil = null;
+			return true;
+		}
+		otpFailedAttempts++;
+		if (otpFailedAttempts >= MAX_OTP_ATTEMPTS) {
+			otpFailedAttempts = 0;
+			otpLockedUntil = now.plus(OTP_LOCK);
+		}
+		return false;
+	}
+
+	/** Wrong codes the rider may still type before the code locks. */
+	public int otpAttemptsLeft() {
+		return MAX_OTP_ATTEMPTS - otpFailedAttempts;
+	}
+
+	public LocalDateTime getOtpLockedUntil() {
+		return otpLockedUntil;
 	}
 
 	/** When the order reached {@code status}, or {@code null} if it has not (awaiting payment = creation time). */

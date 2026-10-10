@@ -189,7 +189,7 @@ How this file works
   - Claim uses optimistic locking: if two riders claim at once, one wins and the other sees a friendly message. Max one active delivery.
   - Active delivery card: restaurant address and phone, customer address and masked phone, item count, cash to collect for COD. Tests including the concurrent claim.
 
-- [ ] T36 Delivery flow
+- [x] T36 Delivery flow
   - "Picked up" (only at READY_FOR_PICKUP) -> OUT_FOR_DELIVERY. "Delivered" requires the customer's 4-digit OTP; 5 wrong attempts lock it for 10 minutes.
   - COD orders marked PAID on delivery. Earnings record per delivery (base payout + share of delivery fee, from AppProperties). Tests.
 
