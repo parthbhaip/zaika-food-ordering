@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Earnings | Zaika</title></head>
+<body>
+<!--/* /partner/earnings: what the signed-in rider earned today, this week (from Monday) and this month, the cash
+     collected today (cash in hand), and the delivery history, 20 to a page, newest first.
+     Model: e (delivery.RiderEarningsService.Earnings, null for a rider account without a profile). */-->
+<main id="main" class="owner-page">
+	<div class="container owner-container">
+		<th:block th:if="${e == null}">
+			<div th:replace="~{fragments/ui :: emptyState('bike', 'No rider profile on this account', 'This partner account has no rider profile linked to it. Write to partners@zaika.test and we will sort it out.', 'Contact us', '/contact')}"></div>
+		</th:block>
+
+		<th:block th:if="${e != null}" th:with="p=${e.profile}, s=${e.summary}, cash=${e.cashInHand()}, page=${e.history}">
+			<nav th:replace="~{fragments/partner :: nav('earnings')}"></nav>
+
+			<header class="owner-head-text">
+				<p class="eyebrow" th:text="${p.user.name}">Rahul Pawar</p>
+				<h1 class="owner-title">Earnings</h1>
+				<p class="owner-board-lede">What you earned for every delivery, and the cash you're carrying.</p>
+			</header>
+
+			<div th:replace="~{fragments/partner :: statusBanner(${p})}"></div>
+
+			<section class="report-summary" aria-labelledby="earnings-summary-title">
+				<h2 id="earnings-summary-title" class="visually-hidden">Your totals</h2>
+				<dl class="owner-stats">
+					<div class="card owner-stat" id="earnings-today">
+						<dt>Today</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.price(s.today.earned)}">₹162</dd>
+						<dd class="report-stat-note" th:text="${s.today.deliveries == 0} ? 'No deliveries yet' : (${s.today.deliveries == 1} ? '1 delivery' : |${@fmt.count(s.today.deliveries)} deliveries|)">3 deliveries</dd>
+					</div>
+					<div class="card owner-stat" id="earnings-week">
+						<dt>This week</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.price(s.week.earned)}">₹1,134</dd>
+						<dd class="report-stat-note" th:text="|${s.week.deliveries == 1 ? '1 delivery' : @fmt.count(s.week.deliveries) + ' deliveries'} since ${e.periods.weekStartLabel()}|">21 deliveries since Mon 28 Sep</dd>
+					</div>
+					<div class="card owner-stat" id="earnings-month">
+						<dt th:text="|This month · ${e.periods.monthName()}|">This month · October</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.price(s.month.earned)}">₹648</dd>
+						<dd class="report-stat-note" th:text="${s.month.deliveries == 1} ? '1 delivery' : |${@fmt.count(s.month.deliveries)} deliveries|">12 deliveries</dd>
+					</div>
+					<div class="card owner-stat" id="earnings-cash" th:classappend="${cash.cashOrders > 0} ? 'is-waiting'">
+						<dt>Cash in hand</dt>
+						<dd class="owner-stat-value" th:text="${@fmt.price(cash.cash)}">₹894.50</dd>
+						<dd class="report-stat-note" th:text="${cash.cashOrders == 0} ? 'No cash orders today' : (${cash.cashOrders == 1} ? 'From 1 cash order today' : |From ${@fmt.count(cash.cashOrders)} cash orders today|)">From 2 cash orders today</dd>
+					</div>
+				</dl>
+				<p class="owner-stats-note">You earn a base payout plus a share of the delivery fee on every order. Weeks start on Monday. Cash in hand is the cash you collected at the door today: settle it with the Zaika partner team at the end of your day.</p>
+			</section>
+
+			<section class="report-orders" aria-labelledby="earnings-history-title">
+				<div class="owner-card-head">
+					<h2 id="earnings-history-title" class="owner-section-title">Delivery history</h2>
+				</div>
+				<div th:if="${page.totalElements == 0}" class="card">
+					<div th:replace="~{fragments/ui :: emptyState('cash', 'No deliveries yet', 'Each delivery you finish shows up here with what you earned. Go online on your dashboard to take orders.', 'Go to dashboard', '/partner')}"></div>
+				</div>
+				<th:block th:if="${page.hasContent()}">
+					<p class="report-count" th:with="first=${page.number * page.size + 1}, last=${page.number * page.size + page.numberOfElements}"
+						th:text="${page.totalElements == 1} ? 'One delivery' : |Showing ${@fmt.count(first)}–${@fmt.count(last)} of ${@fmt.count(page.totalElements)} deliveries, newest first|">Showing 1–20 of 57 deliveries, newest first</p>
+					<div class="table-wrap">
+						<table class="table earnings-table">
+							<caption class="visually-hidden">Your deliveries, newest first</caption>
+							<thead>
+								<tr>
+									<th scope="col">Order</th>
+									<th scope="col">Delivered</th>
+									<th scope="col">Restaurant</th>
+									<th scope="col" class="num">Cash collected</th>
+									<th scope="col" class="num">You earned</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="x : ${page.content}" th:with="o=${x.order}">
+									<th scope="row" th:text="${o.code}">ZK-26-000123</th>
+									<td><time th:datetime="${x.earnedAt}" th:text="${@fmt.dateTime(x.earnedAt)}">4 Oct 2026, 7:30 PM</time></td>
+									<td>
+										<span class="earnings-restaurant" th:text="${o.restaurant.name}">Rassa Darbar</span>
+										<span class="earnings-area" th:text="${o.restaurant.area}">Rajarampuri</span>
+									</td>
+									<td class="num" th:text="${x.cashCollected.signum() > 0} ? ${@fmt.money(x.cashCollected)} : 'Paid online'">₹297.50</td>
+									<td class="num">
+										<span class="earnings-amount" th:text="${@fmt.money(x.amount)}">₹54.00</span>
+										<span class="earnings-split" th:text="|${@fmt.price(x.basePayout)} + ${@fmt.price(x.feeShare)} fee share|">₹30 + ₹24 fee share</span>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<nav th:replace="~{fragments/pagination :: pagination(${page}, '/partner/earnings')}"></nav>
+				</th:block>
+			</section>
+		</th:block>
+	</div>
+</main>
+</body>
+</html>

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.zaika.common.Formatters;
+import com.zaika.common.Requests;
 import com.zaika.security.CurrentUser;
 
 /**
@@ -54,7 +55,7 @@ public class OrderController {
 
 	@GetMapping
 	String list(@AuthenticationPrincipal CurrentUser me, @RequestParam(required = false) String page, Model model) {
-		int number = pageNumber(page);
+		int number = Requests.pageNumber(page);
 		if (number < 1 || "1".equals(page)) { // unreadable, out of range, or spelling out the default
 			return "redirect:/orders";
 		}
@@ -151,19 +152,6 @@ public class OrderController {
 		model.addAttribute("cancelForm", form);
 		model.addAttribute("cancelReasons", CancelOrderForm.REASONS);
 		model.addAttribute("cancelOpen", cancelOpen);
-	}
-
-	/** The 1-based page asked for: 1 when absent, 0 when unreadable. */
-	private static int pageNumber(String page) {
-		if (page == null) {
-			return 1;
-		}
-		try {
-			return Integer.parseInt(page);
-		}
-		catch (NumberFormatException ex) {
-			return 0;
-		}
 	}
 
 }

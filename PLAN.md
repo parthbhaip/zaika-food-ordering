@@ -193,7 +193,7 @@ How this file works
   - "Picked up" (only at READY_FOR_PICKUP) -> OUT_FOR_DELIVERY. "Delivered" requires the customer's 4-digit OTP; 5 wrong attempts lock it for 10 minutes.
   - COD orders marked PAID on delivery. Earnings record per delivery (base payout + share of delivery fee, from AppProperties). Tests.
 
-- [ ] T37 Rider earnings `/partner/earnings`
+- [x] T37 Rider earnings `/partner/earnings`
   - Today / week / month totals, delivery history, COD cash in hand. Tests.
 
 ## Phase 6 - Admin panel

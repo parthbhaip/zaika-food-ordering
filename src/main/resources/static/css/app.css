@@ -3085,7 +3085,7 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.report-filters { padding: var(--space-5) var(--space-6); }
 }
 
-/* ------------------------------------------------------------------ Rider panel (/partner-with-us/rider, /partner)
+/* ------------------------------------------------------------------ Rider panel (/partner-with-us/rider, /partner, /partner/earnings)
    The sign-up reuses the restaurant sign-up shell and checkout's option cards (.pay-option) for the vehicle; the rider
    dashboard reuses the owner panel's head, status banner and facts card. */
 .vehicle-options { gap: var(--space-2); min-width: 0; margin: 0; padding: 0; border: 0; }
@@ -3163,6 +3163,13 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 .rider-offer-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); color: var(--color-text-muted); font-size: var(--text-sm); }
 .rider-offer-side { display: grid; justify-items: end; gap: var(--space-2); }
 .rider-offer-pay { font-size: var(--text-lg); font-weight: var(--weight-extrabold); }
+
+/* Rider earnings: the owner's stat cards and report table, with a two-line restaurant and amount cell */
+.earnings-table td { vertical-align: top; }
+.earnings-restaurant,
+.earnings-amount { display: block; font-weight: var(--weight-semibold); color: var(--color-ink); }
+.earnings-area,
+.earnings-split { display: block; color: var(--color-text-muted); font-size: var(--text-xs); }
 
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */
 .error-body {

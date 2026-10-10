@@ -13,6 +13,8 @@
 		</th:block>
 
 		<th:block th:if="${d != null}" th:with="p=${d.profile}, u=${d.profile.user}, approved=${d.profile.status.name() == 'APPROVED'}">
+			<nav th:replace="~{fragments/partner :: nav('dashboard')}"></nav>
+
 			<header class="owner-head">
 				<span class="rider-avatar"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg></span>
 				<div class="owner-head-text">
