@@ -264,7 +264,7 @@ class RiderDashboardTest {
 		Order second = place(k, OrderStatus.ACCEPTED);
 		String fragment = mvc.perform(poll(rider, v))
 			.andExpect(status().isOk())
-			.andReturn().getResponse().getContentAsString().replaceAll("\s+", " ");
+			.andReturn().getResponse().getContentAsString().replaceAll("\\s+", " ");
 		String now = deliveries.dashboard(rider.getId()).orElseThrow().version();
 		assertThat(now).isNotEqualTo(v);
 		assertThat(fragment.strip()).startsWith("<section id=\"partner-available\"");
