@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Admin dashboard | Zaika</title></head>
+<body>
+<!--/* The admin's home. "d" (admin.AdminDashboardService.Dashboard): platform KPIs, orders per day for 14 days, the
+     top five restaurants of the last 30 days and the ten latest orders. Both charts are SVG drawn on the server. */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="k=${d.kpis}">
+		<header class="admin-head">
+			<p class="eyebrow">Admin</p>
+			<h1 class="owner-title">Platform overview</h1>
+			<p class="admin-head-meta" th:text="|Kolhapur · ${d.ordersChart.bars[d.ordersChart.bars.size() - 1].longLabel}|">Kolhapur · Sunday 4 Oct</p>
+		</header>
+
+		<section class="owner-today" aria-labelledby="admin-today-title">
+			<h2 id="admin-today-title" class="owner-section-title">Today</h2>
+			<dl class="owner-stats">
+				<div class="card owner-stat">
+					<dt>Orders today</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.count(k.ordersToday)}">48</dd>
+				</div>
+				<div class="card owner-stat">
+					<dt>GMV today</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.price(k.gmvToday)}">₹21,640</dd>
+				</div>
+				<div class="card owner-stat">
+					<dt>GMV, last 7 days</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.price(k.gmvWeek)}">₹1,42,380</dd>
+				</div>
+				<div class="card owner-stat">
+					<dt>Riders online</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.count(k.ridersOnline)}">6</dd>
+					<dd class="admin-stat-help">Right now</dd>
+				</div>
+			</dl>
+			<p class="owner-stats-note">GMV is what customers paid, with fees and GST. Orders count when placed; cancelled, rejected and unpaid orders don't count.</p>
+		</section>
+
+		<section class="owner-today" aria-labelledby="admin-platform-title">
+			<h2 id="admin-platform-title" class="owner-section-title">Platform</h2>
+			<dl class="owner-stats admin-stats-3">
+				<div class="card owner-stat">
+					<dt>Active restaurants</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.count(k.activeRestaurants)}">12</dd>
+					<dd class="admin-stat-help">Approved and listed</dd>
+				</div>
+				<div class="card owner-stat">
+					<dt>Customers</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.count(k.customers)}">1,204</dd>
+					<dd class="admin-stat-help">Active accounts</dd>
+				</div>
+				<div class="card owner-stat" th:classappend="${k.pendingApprovals() > 0} ? 'is-waiting'">
+					<dt>Pending approvals</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.count(k.pendingApprovals())}">3</dd>
+					<dd class="admin-stat-help" th:text="|${k.pendingRestaurants} ${k.pendingRestaurants == 1 ? 'restaurant' : 'restaurants'} · ${k.pendingRiders} ${k.pendingRiders == 1 ? 'rider' : 'riders'}|">2 restaurants · 1 rider</dd>
+				</div>
+			</dl>
+		</section>
+
+		<div class="owner-panels">
+			<section class="card owner-chart" aria-labelledby="admin-chart-title" th:with="c=${d.ordersChart}">
+				<div class="owner-card-head">
+					<h2 id="admin-chart-title" class="owner-section-title">Orders per day</h2>
+					<p class="owner-chart-total"><strong th:text="${@fmt.count(c.total.longValue())}">312</strong> <th:block th:text="|${c.total.longValue() == 1 ? 'order' : 'orders'}, ${c.bars[0].date} to ${c.bars[c.bars.size() - 1].date}|">orders, 21 Sep to 4 Oct</th:block></p>
+				</div>
+				<p class="owner-chart-empty" th:if="${c.empty}">No orders in the last 14 days yet. New orders show up here as customers place them.</p>
+				<div class="revenue-chart" aria-hidden="true">
+					<div class="revenue-chart-axis">
+						<span th:each="t : ${c.ticks}" th:text="${@fmt.count(t.amount.longValue())}">20</span>
+					</div>
+					<svg class="revenue-chart-plot" th:attr="viewBox=|0 0 ${c.width} ${c.height}|" viewBox="0 0 700 200" preserveAspectRatio="none" focusable="false" xmlns="http://www.w3.org/2000/svg">
+						<line th:each="t : ${c.ticks}" class="revenue-chart-grid" x1="0" th:x2="${c.width}" th:y1="${c.height - t.percent * c.height / 100}" th:y2="${c.height - t.percent * c.height / 100}" vector-effect="non-scaling-stroke"></line>
+						<th:block th:each="b : ${c.bars}"><rect th:if="${b.height > 0}" class="revenue-chart-bar" th:classappend="${b.today} ? 'is-today'" th:x="${b.x}" th:y="${b.y}" th:width="${b.width}" th:height="${b.height}"></rect></th:block>
+					</svg>
+					<ol class="revenue-chart-days admin-chart-days">
+						<li th:each="b : ${c.bars}" th:classappend="${b.today} ? 'is-today'" th:title="|${b.longLabel}: ${@fmt.count(b.amount.longValue())} ${b.amount.longValue() == 1 ? 'order' : 'orders'}|"><span th:text="${b.day.dayOfMonth}">21</span></li>
+					</ol>
+				</div>
+				<table class="visually-hidden">
+					<caption>Orders per day, last 14 days</caption>
+					<thead><tr><th scope="col">Day</th><th scope="col">Orders</th></tr></thead>
+					<tbody>
+						<tr th:each="b : ${c.bars}"><th scope="row" th:text="${b.today ? 'Today, ' + b.longLabel : b.longLabel}">Sunday 4 Oct</th><td th:text="${@fmt.count(b.amount.longValue())}">24</td></tr>
+					</tbody>
+				</table>
+			</section>
+
+			<section class="card owner-latest" aria-labelledby="admin-top-title">
+				<div class="owner-card-head">
+					<h2 id="admin-top-title" class="owner-section-title">Top restaurants</h2>
+					<p class="owner-chart-total">Food sales, last 30 days</p>
+				</div>
+				<p class="owner-latest-empty" th:if="${d.top.isEmpty()}">No sales in the last 30 days yet. The five best-selling kitchens show up here.</p>
+				<ol class="admin-top" th:unless="${d.top.isEmpty()}" aria-label="Top restaurants by food sales, best first">
+					<li class="admin-top-row" th:each="t, s : ${d.top}">
+						<span class="admin-top-rank" aria-hidden="true" th:text="${s.count}">1</span>
+						<div class="admin-top-main">
+							<p class="admin-top-line">
+								<span class="admin-top-name" th:text="${t.name}">Rassa Darbar</span>
+								<strong class="admin-top-sales" th:text="${@fmt.price(t.sales)}">₹48,250</strong>
+							</p>
+							<svg class="admin-top-bar" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+								<rect class="admin-top-track" width="100" height="8"></rect>
+								<rect class="admin-top-fill" th:width="${t.percent}" width="100" height="8"></rect>
+							</svg>
+							<p class="admin-top-orders" th:text="|${@fmt.count(t.orders)} ${t.orders == 1 ? 'order' : 'orders'}|">112 orders</p>
+						</div>
+					</li>
+				</ol>
+			</section>
+		</div>
+
+		<section class="admin-recent" aria-labelledby="admin-recent-title">
+			<h2 id="admin-recent-title" class="owner-section-title">Recent orders</h2>
+			<p class="owner-latest-empty" th:if="${d.recent.isEmpty()}">No orders yet. The latest ten orders on Zaika show up here.</p>
+			<div class="table-wrap" th:unless="${d.recent.isEmpty()}">
+				<table class="table">
+					<caption class="visually-hidden">The ten latest orders, newest first</caption>
+					<thead>
+						<tr>
+							<th scope="col">Order</th>
+							<th scope="col">Restaurant</th>
+							<th scope="col">Customer</th>
+							<th scope="col">Status</th>
+							<th scope="col" class="num">Total</th>
+							<th scope="col">Placed</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="o : ${d.recent}">
+							<th scope="row" class="admin-code" th:text="${o.code}">ZK-26-000123</th>
+							<td th:text="${o.restaurant.name}">Rassa Darbar</td>
+							<td th:text="${o.customer.name}">Riya Shinde</td>
+							<td><span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Placed</span></td>
+							<td class="num" th:text="${@fmt.price(o.bill.grandTotal)}">₹540</td>
+							<td><time th:with="at=${o.timestampOf(T(com.zaika.order.OrderStatus).PLACED)}" th:datetime="${at}" th:title="${@fmt.dateTime(at)}" th:text="${@fmt.relative(at)}">12 min ago</time></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</section>
+	</div>
+</main>
+</body>
+</html>

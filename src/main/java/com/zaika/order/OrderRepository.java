@@ -1,6 +1,7 @@
 package com.zaika.order;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Optional;
 
 import jakarta.persistence.LockModeType;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -149,5 +151,33 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
 	/** Uses {@code idx_orders_rider_status}. */
 	boolean existsByRiderIdAndStatusIn(long riderId, Collection<OrderStatus> statuses);
+
+	/** Platform-wide orders of one day (by placed time): how many and their grand total (GMV). */
+	record DayTotal(LocalDate day, Long orders, BigDecimal grandTotal) {
+	}
+
+	/** Orders in {@code statuses} placed at or after {@code from}, per day, across all restaurants (idx_orders_placed). */
+	@Query("""
+			select new com.zaika.order.OrderRepository$DayTotal(cast(o.placedAt as LocalDate), count(o), sum(o.grandTotal))
+			from Order o where o.placedAt >= :from and o.status in :statuses group by cast(o.placedAt as LocalDate)""")
+	List<DayTotal> dailyTotals(LocalDateTime from, Collection<OrderStatus> statuses);
+
+	/** A restaurant's sales over a period: orders and food value (item total). */
+	record RestaurantSales(Long restaurantId, String name, Long orders, BigDecimal itemTotal) {
+	}
+
+	/**
+	 * The restaurants with the highest food value in orders in {@code statuses} placed at or after {@code from}, best
+	 * first (ties by name) (idx_orders_placed).
+	 */
+	@Query("""
+			select new com.zaika.order.OrderRepository$RestaurantSales(r.id, r.name, count(o), sum(o.itemTotal))
+			from Order o join o.restaurant r where o.placedAt >= :from and o.status in :statuses
+			group by r.id, r.name order by sum(o.itemTotal) desc, r.name, r.id""")
+	List<RestaurantSales> findTopRestaurants(LocalDateTime from, Collection<OrderStatus> statuses, Limit limit);
+
+	/** The ten latest placed orders on the platform, newest first, with restaurant and customer (idx_orders_placed). */
+	@EntityGraph(attributePaths = { "restaurant", "customer" })
+	List<Order> findTop10ByPlacedAtNotNullOrderByPlacedAtDescIdDesc();
 
 }

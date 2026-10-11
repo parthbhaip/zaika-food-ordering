@@ -198,7 +198,7 @@ How this file works
 
 ## Phase 6 - Admin panel
 
-- [ ] T38 Admin dashboard `/admin`
+- [x] T38 Admin dashboard `/admin`
   - KPIs: orders today, GMV today and 7 days, active restaurants, customers, riders online, pending approvals.
   - Server-side SVG charts: orders per day (14 days), top 5 restaurants by revenue. Recent orders table. Tests.
 

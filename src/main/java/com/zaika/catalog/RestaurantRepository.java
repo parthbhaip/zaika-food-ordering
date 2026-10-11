@@ -16,6 +16,9 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, J
 	@EntityGraph(attributePaths = "cuisines")
 	Optional<Restaurant> findBySlug(String slug);
 
+	/** Uses {@code idx_restaurants_status}. */
+	long countByStatus(RestaurantStatus status);
+
 	/** The owner's own restaurant (an owner has at most one). */
 	Optional<Restaurant> findByOwnerId(Long ownerId);
 

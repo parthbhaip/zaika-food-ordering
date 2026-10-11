@@ -14,6 +14,9 @@ import java.util.Map;
  * {@code viewBox} of {@link #WIDTH} x {@link #HEIGHT} that the template stretches to its box, plus the y-axis ticks
  * (top, half, 0: in reading order for the labels) as percentages for the HTML labels beside it. The top of the scale is a round amount (1, 2 or 5 x a
  * power of ten, at least ₹100) at or above the best day, so the half tick is round too.
+ * <p>
+ * {@link #of(LocalDate, int, BigDecimal, Map)} draws any number of days with another floor for the scale: the admin
+ * dashboard uses it for orders per day over 14 days (counts, floor 10 so the half tick stays a whole number).
  */
 public record RevenueChart(List<Bar> bars, List<Tick> ticks, BigDecimal total) {
 
@@ -28,10 +31,6 @@ public record RevenueChart(List<Bar> bars, List<Tick> ticks, BigDecimal total) {
 
 	/** A bar never drawn lower than this when its day sold something, so a small day stays visible. */
 	static final double MIN_BAR = 2;
-
-	private static final double SLOT = (double) WIDTH / DAYS;
-
-	private static final double BAR_WIDTH = Math.round(SLOT * 0.56);
 
 	private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH);
 
@@ -50,21 +49,31 @@ public record RevenueChart(List<Bar> bars, List<Tick> ticks, BigDecimal total) {
 
 	/** The chart for the seven days ending {@code today}; days missing from {@code revenueByDay} sold nothing. */
 	public static RevenueChart of(LocalDate today, Map<LocalDate, BigDecimal> revenueByDay) {
+		return of(today, DAYS, MIN_SCALE, revenueByDay);
+	}
+
+	/**
+	 * The chart for the {@code days} days ending {@code today}, its scale never below {@code minScale}; days missing
+	 * from {@code valueByDay} count as zero.
+	 */
+	public static RevenueChart of(LocalDate today, int days, BigDecimal minScale, Map<LocalDate, BigDecimal> valueByDay) {
+		double slot = (double) WIDTH / days;
+		double barWidth = Math.round(slot * 0.56);
 		List<BigDecimal> amounts = new ArrayList<>();
-		for (int i = DAYS - 1; i >= 0; i--) {
-			amounts.add(revenueByDay.getOrDefault(today.minusDays(i), BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP));
+		for (int i = days - 1; i >= 0; i--) {
+			amounts.add(valueByDay.getOrDefault(today.minusDays(i), BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP));
 		}
 		BigDecimal best = amounts.stream().reduce(BigDecimal.ZERO, BigDecimal::max);
-		BigDecimal scale = niceCeiling(best);
+		BigDecimal scale = niceCeiling(best, minScale);
 		List<Bar> bars = new ArrayList<>();
-		for (int i = 0; i < DAYS; i++) {
-			LocalDate day = today.minusDays(DAYS - 1 - i);
+		for (int i = 0; i < days; i++) {
+			LocalDate day = today.minusDays(days - 1 - i);
 			BigDecimal amount = amounts.get(i);
 			double height = amount.signum() == 0 ? 0
 					: Math.max(MIN_BAR, round(amount.doubleValue() / scale.doubleValue() * HEIGHT));
 			boolean isToday = day.equals(today);
 			bars.add(new Bar(day, isToday ? "Today" : DAY.format(day), DATE.format(day), LONG.format(day), amount,
-					isToday, round(i * SLOT + (SLOT - BAR_WIDTH) / 2), round(HEIGHT - height), BAR_WIDTH, height));
+					isToday, round(i * slot + (slot - barWidth) / 2), round(HEIGHT - height), barWidth, height));
 		}
 		BigDecimal half = scale.divide(BigDecimal.TWO, 2, RoundingMode.HALF_UP);
 		List<Tick> ticks = List.of(new Tick(scale, 100), new Tick(half, 50), new Tick(BigDecimal.ZERO, 0));
@@ -87,8 +96,13 @@ public record RevenueChart(List<Bar> bars, List<Tick> ticks, BigDecimal total) {
 
 	/** The smallest of 1, 2, 5 x 10^n at or above {@code amount}, and never below {@link #MIN_SCALE}. */
 	static BigDecimal niceCeiling(BigDecimal amount) {
-		if (amount.compareTo(MIN_SCALE) <= 0) {
-			return MIN_SCALE;
+		return niceCeiling(amount, MIN_SCALE);
+	}
+
+	/** The smallest of 1, 2, 5 x 10^n at or above {@code amount}, and never below {@code floor}. */
+	static BigDecimal niceCeiling(BigDecimal amount, BigDecimal floor) {
+		if (amount.compareTo(floor) <= 0) {
+			return floor;
 		}
 		BigDecimal power = BigDecimal.ONE.scaleByPowerOfTen(amount.precision() - amount.scale() - 1);
 		for (int step : new int[] { 1, 2, 5, 10 }) {

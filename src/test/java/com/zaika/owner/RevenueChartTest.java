@@ -93,6 +93,30 @@ class RevenueChartTest {
 	}
 
 	@Test
+	void anyNumberOfDaysWithItsOwnScaleFloor() {
+		// T38: the admin dashboard's orders per day, 14 days, counts with a floor of 10
+		RevenueChart chart = RevenueChart.of(TODAY, 14, BigDecimal.TEN,
+				Map.of(TODAY.minusDays(13), new BigDecimal("3"), TODAY, new BigDecimal("7")));
+		assertThat(chart.bars()).hasSize(14);
+		assertThat(chart.bars().get(0).day()).isEqualTo(LocalDate.of(2026, 9, 21));
+		assertThat(chart.bars().get(13).today()).isTrue();
+		assertThat(chart.ticks()).extracting(Tick::amount)
+			.usingElementComparator(BigDecimal::compareTo)
+			.containsExactly(BigDecimal.TEN, new BigDecimal("5"), BigDecimal.ZERO);
+		assertThat(chart.bars().get(13).height()).isEqualTo(140.0); // 7 of 10 x 200
+		assertThat(chart.total()).isEqualByComparingTo("10");
+		double slot = (double) RevenueChart.WIDTH / 14;
+		for (int i = 0; i < 14; i++) {
+			Bar bar = chart.bars().get(i);
+			assertThat(bar.width()).isEqualTo(Math.round(slot * 0.56));
+			assertThat(bar.x()).isGreaterThanOrEqualTo(i * slot).isLessThan((i + 1) * slot);
+			assertThat(bar.x() + bar.width()).isLessThanOrEqualTo((i + 1) * slot + 0.1);
+		}
+		assertThat(RevenueChart.niceCeiling(new BigDecimal("11"), BigDecimal.TEN)).isEqualByComparingTo("20");
+		assertThat(RevenueChart.niceCeiling(new BigDecimal("0"), BigDecimal.TEN)).isEqualByComparingTo("10");
+	}
+
+	@Test
 	void averageOrderValueRoundsHalfUpAndIsZeroWithoutOrders() {
 		assertThat(new Today(3, new BigDecimal("100.00")).averageOrderValue()).isEqualByComparingTo("33.33");
 		assertThat(new Today(3, new BigDecimal("100.01")).averageOrderValue()).isEqualByComparingTo("33.34");

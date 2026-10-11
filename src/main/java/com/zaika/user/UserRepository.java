@@ -31,6 +31,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	/** Is there at least one account with this role (e.g. an admin, checked on startup)? Uses idx_users_role. */
 	boolean existsByRole(Role role);
 
+	/** Enabled accounts with this role (idx_users_role). */
+	long countByRoleAndEnabledTrue(Role role);
+
 	/** Exact stored email with a row lock, so concurrent failed sign-ins are all counted. */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select u from User u where u.email = :email")

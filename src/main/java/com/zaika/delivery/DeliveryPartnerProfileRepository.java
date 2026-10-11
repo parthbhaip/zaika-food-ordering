@@ -17,6 +17,12 @@ public interface DeliveryPartnerProfileRepository extends JpaRepository<Delivery
 
 	boolean existsByUserId(Long userId);
 
+	/** Uses {@code idx_delivery_partner_profiles_status}. */
+	long countByStatus(RiderStatus status);
+
+	/** Uses {@code idx_delivery_partner_profiles_status}. */
+	long countByStatusAndOnline(RiderStatus status, boolean online);
+
 	/** The rider's profile with a row lock: one rider's claims (two tabs, a double tap) run one after the other. */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select p from DeliveryPartnerProfile p where p.user.id = :userId")
