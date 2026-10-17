@@ -15,8 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.zaika.admin.RestaurantModerationService.Decision;
 import com.zaika.admin.RestaurantModerationService.Detail;
-import com.zaika.admin.RestaurantModerationService.ModerationException;
-import com.zaika.admin.RestaurantModerationService.Queue;
+import com.zaika.catalog.Restaurant;
 import com.zaika.catalog.RestaurantStatus;
 import com.zaika.common.Requests;
 
@@ -41,8 +40,8 @@ class RestaurantModerationController {
 	@GetMapping(ModerationFilter.BASE)
 	String list(@RequestParam(required = false) String status, @RequestParam(required = false) String q,
 			@RequestParam(required = false) String page, HttpServletRequest request, Model model) {
-		ModerationFilter filter = ModerationFilter.of(status, q, page);
-		Queue queue = moderation.list(filter);
+		ModerationFilter<RestaurantStatus> filter = ModerationFilter.of(status, q, page);
+		Queue<Restaurant, RestaurantStatus> queue = moderation.list(filter);
 		filter.setPage(Math.min(filter.getPage(), Math.max(queue.page().getTotalPages(), 1)));
 		if (!filter.url().equals(Requests.currentUrl(request))) {
 			return "redirect:" + filter.url();

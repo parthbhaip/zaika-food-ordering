@@ -30,6 +30,8 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.RememberMeAuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -37,6 +39,7 @@ import org.springframework.security.web.access.intercept.RequestAuthorizationCon
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -100,6 +103,18 @@ public class SecurityConfig {
 		return new BCryptPasswordEncoder();
 	}
 
+	/** Every signed-in session per account, so an admin can sign a disabled account out ({@link LiveSessions}). */
+	@Bean
+	SessionRegistry sessionRegistry() {
+		return new SessionRegistryImpl();
+	}
+
+	/** Tells the registry when sessions end or change id (Boot registers it as a servlet listener). */
+	@Bean
+	HttpSessionEventPublisher httpSessionEventPublisher() {
+		return new HttpSessionEventPublisher();
+	}
+
 	@Bean
 	@Order(1)
 	@Profile("dev")
@@ -116,8 +131,8 @@ public class SecurityConfig {
 	@Bean
 	@Order(2)
 	SecurityFilterChain webSecurity(HttpSecurity http, ZaikaUserDetailsService users, PasswordEncoder passwordEncoder,
-			UserService userService, LoginSuccessHandler successHandler, Clock clock, Environment env,
-			@Value("${app.remember-me-key:}") String rememberMeKey) throws Exception {
+			UserService userService, LoginSuccessHandler successHandler, SessionRegistry sessionRegistry, Clock clock,
+			Environment env, @Value("${app.remember-me-key:}") String rememberMeKey) throws Exception {
 		boolean dev = env.acceptsProfiles(Profiles.of("dev"));
 		LoginUrlAuthenticationEntryPoint toLogin = new LoginUrlAuthenticationEntryPoint("/login");
 		String key = rememberMeKey.isBlank() ? randomKey() : rememberMeKey;
@@ -177,6 +192,20 @@ public class SecurityConfig {
 				.key(key)
 				.userDetailsService(users)
 				.tokenValiditySeconds((int) REMEMBER_ME_VALIDITY.toSeconds()))
+			// every sign-in (form, remember-me) registers its session; one ended by LiveSessions (account disabled)
+			// signs the browser out on its next request
+			.sessionManagement(session -> session.maximumSessions(-1)
+				.sessionRegistry(sessionRegistry)
+				.expiredSessionStrategy(event -> {
+					HttpServletResponse response = event.getResponse();
+					String target = event.getRequest().getContextPath() + "/login?disabled";
+					if (event.getRequest().getHeader("HX-Request") == null) {
+						response.sendRedirect(target);
+						return;
+					}
+					response.setHeader("HX-Redirect", target);
+					response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				}))
 			.logout(logout -> logout
 				.logoutSuccessUrl("/login?logout")
 				.deleteCookies("JSESSIONID"))

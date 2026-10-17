@@ -15,26 +15,7 @@
 			<p class="admin-head-meta">Review new kitchens, and suspend or reactivate live ones. Owners get an email for every decision.</p>
 		</header>
 
-		<section class="card admin-filters" aria-labelledby="admin-filters-title">
-			<h2 id="admin-filters-title" class="visually-hidden">Filter restaurants</h2>
-			<nav class="chip-row" aria-label="Status">
-				<a class="chip" th:with="href=${filter.urlFor(null)}" th:href="@{${href}}" href="/admin/restaurants"
-					th:aria-current="${filter.status == null} ? 'true'">All <span class="admin-chip-count" th:text="${@fmt.count(queue.total())}">14</span></a>
-				<a class="chip" th:each="s : ${statuses}" th:with="href=${filter.urlFor(s)}" th:href="@{${href}}" href="/admin/restaurants?status=pending"
-					th:aria-current="${filter.status == s} ? 'true'"><th:block th:text="${T(com.zaika.admin.ModerationFilter).label(s)}">Pending review</th:block>
-					<span class="admin-chip-count" th:classappend="${s.name() == 'PENDING' and queue.count(s) > 0} ? 'is-waiting'" th:text="${@fmt.count(queue.count(s))}">1</span></a>
-			</nav>
-			<form class="admin-search" method="get" th:action="@{/admin/restaurants}" action="/admin/restaurants" role="search">
-				<input type="hidden" name="status" th:if="${filter.status != null}" th:value="${T(com.zaika.admin.ModerationFilter).slug(filter.status)}">
-				<div class="field">
-					<label class="field-label" for="admin-restaurant-q">Search restaurants</label>
-					<input class="input" id="admin-restaurant-q" name="q" type="search" maxlength="80" autocomplete="off"
-						th:value="${filter.q}" placeholder="Name, area, owner or email">
-				</div>
-				<button class="btn btn-primary" type="submit"><svg th:replace="~{fragments/icon :: icon('search')}"></svg>Search</button>
-				<a class="btn btn-ghost" th:if="${filter.q != null}" th:with="href=${filter.withoutSearch()}" th:href="@{${href}}" href="/admin/restaurants">Clear search</a>
-			</form>
-		</section>
+		<section th:replace="~{fragments/admin :: filters(${filter}, ${queue}, ${statuses}, 'restaurant', 'Name, area, owner or email')}"></section>
 
 		<section class="admin-recent" aria-labelledby="admin-list-title">
 			<h2 id="admin-list-title" class="visually-hidden">Restaurants found</h2>

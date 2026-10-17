@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Users | Zaika</title></head>
+<body>
+<!--/* /admin/users: every account, newest sign-ups first, with role chips (counts over all accounts) and a search over
+     name and email. Phones are never shown here. Each row opens the account page.
+     Model: filter (admin.ModerationFilter, canonical), queue (admin.Queue), roles. */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="page=${queue.page}">
+		<nav th:replace="~{fragments/admin :: nav('users')}"></nav>
+
+		<header class="admin-head">
+			<p class="eyebrow">Admin</p>
+			<h1 class="owner-title">Users</h1>
+			<p class="admin-head-meta">Find any account, see what a customer has ordered, and switch an account off when it is misused. A disabled account is signed out at once.</p>
+		</header>
+
+		<section th:replace="~{fragments/admin :: filters(${filter}, ${queue}, ${roles}, 'user', 'Name or email')}"></section>
+
+		<section class="admin-recent" aria-labelledby="admin-list-title">
+			<h2 id="admin-list-title" class="visually-hidden">Accounts found</h2>
+			<div class="card" th:if="${page.totalElements == 0}"
+				th:with="title=${filter.q != null} ? |No accounts match “${filter.q}”| : 'No accounts here',
+					hint=${filter.q != null} ? 'Check the spelling, or search by email instead.' : 'Nobody with this role has signed up yet.'">
+				<div th:replace="~{fragments/ui :: emptyState('user', ${title}, ${hint}, null, null)}"></div>
+			</div>
+			<th:block th:if="${page.hasContent()}">
+				<p class="report-count" th:with="first=${page.number * page.size + 1}, last=${page.number * page.size + page.numberOfElements}"
+					th:text="${page.totalElements == 1} ? 'One account' : |Showing ${@fmt.count(first)}–${@fmt.count(last)} of ${@fmt.count(page.totalElements)} accounts, newest first|">Showing 1–20 of 64 accounts, newest first</p>
+				<div class="table-wrap">
+					<table class="table admin-restaurants">
+						<caption class="visually-hidden">Accounts, newest sign-ups first</caption>
+						<thead>
+							<tr>
+								<th scope="col">Name</th>
+								<th scope="col">Role</th>
+								<th scope="col">Account</th>
+								<th scope="col">Joined</th>
+								<th scope="col"><span class="visually-hidden">Actions</span></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="u : ${page.content}">
+								<th scope="row">
+									<a class="admin-restaurant-name" th:href="@{/admin/users/{id}(id=${u.id})}" href="/admin/users/7" th:text="${u.name}">Riya Shinde</a>
+									<span class="admin-restaurant-meta" th:text="${u.email}">customer@zaika.test</span>
+								</th>
+								<td th:text="${T(com.zaika.admin.ModerationFilter).roleName(u.role)}">Customer</td>
+								<td><span th:replace="~{fragments/admin :: accountBadge(${u})}"></span></td>
+								<td><time th:datetime="${u.createdAt}" th:text="${@fmt.date(u.createdAt)}">4 Oct 2026</time></td>
+								<td class="num"><a class="btn btn-secondary btn-sm" th:href="@{/admin/users/{id}(id=${u.id})}" href="/admin/users/7"
+									>Open<span class="visually-hidden" th:text="| ${u.name}|"> Riya Shinde</span></a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div th:replace="~{fragments/pagination :: pagination(${page}, ${filter.url()})}"></div>
+			</th:block>
+		</section>
+	</div>
+</main>
+</body>
+</html>

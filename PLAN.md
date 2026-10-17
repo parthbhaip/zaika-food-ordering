@@ -205,7 +205,7 @@ How this file works
 - [x] T39 Restaurant moderation `/admin/restaurants`
   - Status filter and search; detail view; approve, reject (reason), suspend (reason), reactivate; owner emailed via MailService. Tests.
 
-- [ ] T40 Riders and users
+- [x] T40 Riders and users
   - `/admin/riders`: approve / suspend. `/admin/users`: search, enable/disable (never self, never the last admin), view a user's orders. Tests.
 
 - [ ] T41 Coupons and cuisines admin

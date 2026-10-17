@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Riders | Zaika</title></head>
+<body>
+<!--/* /admin/riders: every delivery partner, newest sign-ups first, with status chips (counts over all riders) and a
+     search over name, email, preferred area and number plate. Each row opens the review page.
+     Model: filter (admin.ModerationFilter, canonical), queue (admin.Queue), statuses. */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="page=${queue.page}">
+		<nav th:replace="~{fragments/admin :: nav('riders')}"></nav>
+
+		<header class="admin-head">
+			<p class="eyebrow">Admin</p>
+			<h1 class="owner-title">Riders</h1>
+			<p class="admin-head-meta">Approve new delivery partners so they can go online, or suspend one with a reason. Riders get an email for every decision.</p>
+		</header>
+
+		<section th:replace="~{fragments/admin :: filters(${filter}, ${queue}, ${statuses}, 'rider', 'Name, email, area or number plate')}"></section>
+
+		<section class="admin-recent" aria-labelledby="admin-list-title">
+			<h2 id="admin-list-title" class="visually-hidden">Riders found</h2>
+			<div class="card" th:if="${page.totalElements == 0}"
+				th:with="title=${filter.q != null} ? |No riders match “${filter.q}”| : 'No riders here',
+					hint=${filter.q != null} ? 'Check the spelling, or search by email or number plate instead.' : (${filter.status == null} ? 'Riders show up here as soon as they sign up to deliver.' : (${filter.status.name() == 'PENDING'} ? 'Nobody is waiting for review. New sign-ups show up here.' : 'No riders have this status right now.'))">
+				<div th:replace="~{fragments/ui :: emptyState('bike', ${title}, ${hint}, null, null)}"></div>
+			</div>
+			<th:block th:if="${page.hasContent()}">
+				<p class="report-count" th:with="first=${page.number * page.size + 1}, last=${page.number * page.size + page.numberOfElements}"
+					th:text="${page.totalElements == 1} ? 'One rider' : |Showing ${@fmt.count(first)}–${@fmt.count(last)} of ${@fmt.count(page.totalElements)} riders, newest first|">Showing 1–2 of 2 riders, newest first</p>
+				<div class="table-wrap">
+					<table class="table admin-restaurants">
+						<caption class="visually-hidden">Riders, newest sign-ups first</caption>
+						<thead>
+							<tr>
+								<th scope="col">Rider</th>
+								<th scope="col">Vehicle</th>
+								<th scope="col">Status</th>
+								<th scope="col">Signed up</th>
+								<th scope="col"><span class="visually-hidden">Actions</span></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="p : ${page.content}" th:with="u=${p.user}">
+								<th scope="row">
+									<a class="admin-restaurant-name" th:href="@{/admin/riders/{id}(id=${u.id})}" href="/admin/riders/5" th:text="${u.name}">Sagar Patil</a>
+									<span class="admin-restaurant-meta" th:text="${u.email}">rider1@zaika.test</span>
+								</th>
+								<td>
+									<span class="admin-owner-name" th:text="${p.vehicleNumber == null} ? ${p.vehicleType.label} : |${p.vehicleType.label} · ${p.vehicleNumber}|">Scooter · MH09AB1234</span>
+									<span class="admin-restaurant-meta" th:text="|Rides around ${p.preferredArea}|">Rides around Rajarampuri</span>
+								</td>
+								<td>
+									<span th:replace="~{fragments/partner :: statusBadge(${p})}"></span>
+									<span class="admin-restaurant-meta" th:if="${p.online}">Online now</span>
+								</td>
+								<td><time th:datetime="${p.createdAt}" th:text="${@fmt.date(p.createdAt)}">4 Oct 2026</time></td>
+								<td class="num"><a class="btn btn-secondary btn-sm" th:href="@{/admin/riders/{id}(id=${u.id})}" href="/admin/riders/5"
+									><th:block th:text="${p.status.name() == 'PENDING'} ? 'Review' : 'Open'">Review</th:block><span class="visually-hidden" th:text="| ${u.name}|"> Sagar Patil</span></a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div th:replace="~{fragments/pagination :: pagination(${page}, ${filter.url()})}"></div>
+			</th:block>
+		</section>
+	</div>
+</main>
+</body>
+</html>

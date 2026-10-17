@@ -7,6 +7,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -19,7 +20,7 @@ import com.zaika.user.User;
 /**
  * Signs a just-created account in, as the login form would, for every sign-up form (customers, restaurant owners,
  * riders): new session id (no fixation, session attributes kept), fresh CSRF token, context saved in the session,
- * guest cart merged (customers) or dropped (staff).
+ * session registered in {@link LiveSessions}, guest cart merged (customers) or dropped (staff).
  */
 @Component
 public class NewAccountSignIn {
@@ -28,11 +29,14 @@ public class NewAccountSignIn {
 
 	private final LoginSuccessHandler afterSignIn;
 
+	private final SessionRegistry sessions;
+
 	private final SecurityContextRepository contextRepository = new HttpSessionSecurityContextRepository();
 
-	NewAccountSignIn(ZaikaUserDetailsService userDetails, LoginSuccessHandler afterSignIn) {
+	NewAccountSignIn(ZaikaUserDetailsService userDetails, LoginSuccessHandler afterSignIn, SessionRegistry sessions) {
 		this.userDetails = userDetails;
 		this.afterSignIn = afterSignIn;
+		this.sessions = sessions;
 	}
 
 	/** True when the request already carries a signed-in user. */
@@ -53,7 +57,8 @@ public class NewAccountSignIn {
 			RedirectAttributes redirect) {
 		UserDetails details = userDetails.loadUserByUsername(user.getEmail());
 		request.getSession();
-		request.changeSessionId();
+		String sessionId = request.changeSessionId();
+		sessions.registerNewSession(sessionId, details);
 		new HttpSessionCsrfTokenRepository().saveToken(null, request, response);
 		Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(details, null,
 				details.getAuthorities());

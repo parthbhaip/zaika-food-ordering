@@ -13,6 +13,9 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface RiderEarningRepository extends JpaRepository<RiderEarning, Long> {
 
+	/** Deliveries the rider has completed (idx_rider_earnings_rider_earned). */
+	long countByRiderId(long riderId);
+
 	/** The earning for one order (uk_rider_earnings_order). */
 	Optional<RiderEarning> findByOrderId(long orderId);
 

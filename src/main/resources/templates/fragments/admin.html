@@ -1,11 +1,42 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!--/* The admin panel's sections, on every admin page. current: 'dashboard' or 'restaurants'. */-->
+<!--/* The admin panel's sections, on every admin page. current: 'dashboard', 'restaurants', 'riders' or 'users'. */-->
 <nav th:fragment="nav(current)" class="tabs owner-nav" aria-label="Admin panel">
 	<a class="tab" th:href="@{/admin}" href="/admin" th:aria-current="${current == 'dashboard'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('chart')}"></svg>Dashboard</a>
 	<a class="tab" th:href="@{/admin/restaurants}" href="/admin/restaurants" th:aria-current="${current == 'restaurants'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Restaurants</a>
+	<a class="tab" th:href="@{/admin/riders}" href="/admin/riders" th:aria-current="${current == 'riders'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg>Riders</a>
+	<a class="tab" th:href="@{/admin/users}" href="/admin/users" th:aria-current="${current == 'users'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('user')}"></svg>Users</a>
 </nav>
+
+<!--/* The chips (one per value, counts over the whole table, the search kept) and the search box of an admin list.
+     filter: admin.ModerationFilter (canonical), queue: admin.Queue, values: the enum values in chip order,
+     noun: 'restaurant', 'rider' or 'user' (labels and ids), placeholder: what the search matches. */-->
+<section th:fragment="filters(filter, queue, values, noun, placeholder)" class="card admin-filters" aria-labelledby="admin-filters-title">
+	<h2 id="admin-filters-title" class="visually-hidden" th:text="|Filter ${noun}s|">Filter restaurants</h2>
+	<!--/* a div with the navigation role, not <nav>: "fragments/admin :: nav(...)" would select every <nav> in this file */-->
+	<div class="chip-row" role="navigation" th:aria-label="${filter.field == 'role'} ? 'Role' : 'Status'">
+		<a class="chip" th:with="href=${filter.urlFor(null)}" th:href="@{${href}}" href="/admin/restaurants"
+			th:aria-current="${filter.status == null} ? 'true'">All <span class="admin-chip-count" th:text="${@fmt.count(queue.total())}">14</span></a>
+		<a class="chip" th:each="s : ${values}" th:with="href=${filter.urlFor(s)}" th:href="@{${href}}" href="/admin/restaurants?status=pending"
+			th:aria-current="${filter.status == s} ? 'true'"><th:block th:text="${T(com.zaika.admin.ModerationFilter).label(s)}">Pending review</th:block>
+			<span class="admin-chip-count" th:classappend="${s.name() == 'PENDING' and queue.count(s) > 0} ? 'is-waiting'" th:text="${@fmt.count(queue.count(s))}">1</span></a>
+	</div>
+	<form class="admin-search" method="get" th:action="@{${filter.base}}" action="/admin/restaurants" role="search">
+		<input type="hidden" th:name="${filter.field}" th:if="${filter.status != null}" th:value="${T(com.zaika.admin.ModerationFilter).slug(filter.status)}">
+		<div class="field">
+			<label class="field-label" th:for="|admin-${noun}-q|" th:text="|Search ${noun}s|">Search restaurants</label>
+			<input class="input" th:id="|admin-${noun}-q|" name="q" type="search" maxlength="80" autocomplete="off"
+				th:value="${filter.q}" th:placeholder="${placeholder}">
+		</div>
+		<button class="btn btn-primary" type="submit"><svg th:replace="~{fragments/icon :: icon('search')}"></svg>Search</button>
+		<a class="btn btn-ghost" th:if="${filter.q != null}" th:with="href=${filter.withoutSearch()}" th:href="@{${href}}" href="/admin/restaurants">Clear search</a>
+	</form>
+</section>
+
+<!--/* A user's account state: Active or Disabled. */-->
+<span th:fragment="accountBadge(u)" class="badge badge-dot" th:classappend="${u.enabled} ? 'badge-success' : 'badge-danger'"
+	th:text="${u.enabled} ? 'Active' : 'Disabled'">Active</span>
 
 <!--/* A restaurant's status as the admin pages name it (admin.ModerationFilter.label). */-->
 <span th:fragment="statusBadge(r)" class="badge badge-dot"

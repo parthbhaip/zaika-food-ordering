@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Account | Zaika</title></head>
+<body>
+<!--/* /admin/users/{id}?page=: one account for the admin. The access card switches it on or off (never your own account
+     or the last active admin; roles never change here), then the account details (phone masked) and the orders it
+     placed as a customer, newest first, ten a page.
+     Model: d (admin.UserAdminService.Detail), ordersUrl (the canonical URL of the first page). */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="u=${d.user}, page=${d.orders}">
+		<nav th:replace="~{fragments/admin :: nav('users')}"></nav>
+
+		<a class="checkout-back" th:href="@{/admin/users}" href="/admin/users"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>All users</a>
+
+		<header class="admin-head">
+			<p class="eyebrow" th:text="${T(com.zaika.admin.ModerationFilter).roleName(u.role)}">Customer</p>
+			<h1 class="owner-title" th:text="${u.name}">Riya Shinde</h1>
+			<p class="owner-head-meta">
+				<span th:replace="~{fragments/admin :: accountBadge(${u})}"></span>
+				<span th:text="|Joined ${@fmt.date(u.createdAt)}|">Joined 4 Oct 2026</span>
+			</p>
+		</header>
+
+		<section class="card admin-decision" aria-labelledby="admin-access-title">
+			<h2 id="admin-access-title" class="owner-section-title">Access</h2>
+			<th:block th:if="${u.enabled}">
+				<p class="admin-decision-text">Active: they can sign in and use Zaika as usual.</p>
+				<p class="admin-decision-text" th:if="${d.cantDisable != null}" th:text="${d.cantDisable}">This is your own account, so you can't disable it.</p>
+				<div class="admin-decision-actions" th:if="${d.cantDisable == null}">
+					<details class="confirm admin-reason" data-menu>
+						<summary class="btn btn-secondary">Disable account</summary>
+						<form class="confirm-panel admin-reason-form" method="post" th:action="@{/admin/users/{id}/disable(id=${u.id})}" action="/admin/users/7/disable">
+							<p th:text="|${u.name} is signed out everywhere at once and can't sign in until you enable the account again.|">Riya Shinde is signed out everywhere at once and can't sign in until you enable the account again.</p>
+							<p class="field-help" th:if="${u.role.name() == 'RESTAURANT_OWNER'}">Their restaurant stays listed. To hide it from customers, suspend the restaurant as well.</p>
+							<p class="field-help" th:if="${u.role.name() == 'DELIVERY_PARTNER'}">They go offline now. A delivery already on the way stays assigned to them.</p>
+							<button type="submit" class="btn btn-danger">Disable account</button>
+						</form>
+					</details>
+				</div>
+			</th:block>
+			<th:block th:unless="${u.enabled}">
+				<p class="admin-decision-text">Disabled: they can't sign in. Enabling lets them sign in again with their usual password.</p>
+				<div class="admin-decision-actions">
+					<form method="post" th:action="@{/admin/users/{id}/enable(id=${u.id})}" action="/admin/users/7/enable">
+						<button type="submit" class="btn btn-primary"><svg th:replace="~{fragments/icon :: icon('check')}"></svg>Enable account</button>
+					</form>
+				</div>
+			</th:block>
+		</section>
+
+		<div class="owner-panels admin-user-panels">
+			<section class="card owner-listing" aria-labelledby="admin-account-title">
+				<div class="owner-card-head">
+					<h2 id="admin-account-title" class="owner-section-title">Account</h2>
+					<a class="btn btn-ghost btn-sm" th:if="${d.restaurantSlug != null}" th:href="@{/admin/restaurants/{slug}(slug=${d.restaurantSlug})}" href="/admin/restaurants/rassa-darbar">Their restaurant</a>
+					<a class="btn btn-ghost btn-sm" th:if="${d.rider}" th:href="@{/admin/riders/{id}(id=${u.id})}" href="/admin/riders/5">Rider details</a>
+				</div>
+				<dl class="owner-facts">
+					<div>
+						<dt>Email</dt>
+						<dd class="admin-email"><a th:href="|mailto:${u.email}|" href="mailto:customer@zaika.test" th:text="${u.email}">customer@zaika.test</a></dd>
+					</div>
+					<div>
+						<dt>Mobile</dt>
+						<dd th:text="${@fmt.maskedPhone(u.phone)}">+91 98XXX XX210</dd>
+					</div>
+					<div>
+						<dt>Role</dt>
+						<dd th:text="${T(com.zaika.admin.ModerationFilter).roleName(u.role)}">Customer</dd>
+					</div>
+					<div th:if="${d.lockedUntil != null}">
+						<dt>Sign-in</dt>
+						<dd th:text="|Locked after wrong passwords until ${@fmt.time(d.lockedUntil)}|">Locked after wrong passwords until 7:45 PM</dd>
+					</div>
+				</dl>
+			</section>
+
+			<section class="card owner-listing admin-user-orders" aria-labelledby="admin-orders-title">
+				<div class="owner-card-head">
+					<h2 id="admin-orders-title" class="owner-section-title">Orders</h2>
+					<span class="admin-restaurant-meta" th:if="${page.totalElements > 0}" th:text="${page.totalElements == 1} ? 'One order' : |${@fmt.count(page.totalElements)} orders|">12 orders</span>
+				</div>
+				<th:block th:if="${page.totalElements == 0}">
+					<div th:replace="~{fragments/ui :: emptyState('receipt', 'No orders yet', ${u.role.name() == 'CUSTOMER'} ? 'Orders they place show up here.' : 'Only customer accounts place orders.', null, null)}"></div>
+				</th:block>
+				<th:block th:if="${page.hasContent()}">
+					<div class="table-wrap">
+						<table class="table">
+							<caption class="visually-hidden">Orders placed by this account, newest first</caption>
+							<thead>
+								<tr>
+									<th scope="col">Order</th>
+									<th scope="col">Restaurant</th>
+									<th scope="col">Status</th>
+									<th scope="col" class="num">Total</th>
+									<th scope="col">Date</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="o : ${page.content}">
+									<th scope="row" class="admin-code" th:text="${o.code}">ZK-26-000123</th>
+									<td th:text="${o.restaurant.name}">Rassa Darbar</td>
+									<td><span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Delivered</span></td>
+									<td class="num" th:text="${@fmt.price(o.bill.grandTotal)}">₹540</td>
+									<td><time th:datetime="${o.createdAt}" th:text="${@fmt.dateTime(o.createdAt)}">4 Oct 2026, 7:30 PM</time></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div th:replace="~{fragments/pagination :: pagination(${page}, ${ordersUrl})}"></div>
+				</th:block>
+			</section>
+		</div>
+	</div>
+</main>
+</body>
+</html>

@@ -1,18 +1,12 @@
 package com.zaika.admin;
 
-import java.util.EnumMap;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.zaika.catalog.MenuItemRepository;
 import com.zaika.catalog.Restaurant;
@@ -36,8 +30,6 @@ public class RestaurantModerationService {
 
 	public static final int PAGE_SIZE = 20;
 
-	private static final Logger log = LoggerFactory.getLogger(RestaurantModerationService.class);
-
 	private final RestaurantRepository restaurants;
 
 	private final MenuItemRepository dishes;
@@ -59,18 +51,13 @@ public class RestaurantModerationService {
 
 	/** One page of the list (owners loaded) and how many restaurants each status has, all statuses included. */
 	@Transactional(readOnly = true)
-	public Queue list(ModerationFilter filter) {
+	public Queue<Restaurant, RestaurantStatus> list(ModerationFilter<RestaurantStatus> filter) {
 		String pattern = filter.getQ() == null ? null : RestaurantBrowseService.likePattern(filter.getQ());
 		Page<Restaurant> page = restaurants.findForModeration(filter.getStatus(), pattern,
 				PageRequest.of(filter.getPage() - 1, PAGE_SIZE));
-		Map<RestaurantStatus, Long> counts = new EnumMap<>(RestaurantStatus.class);
-		for (RestaurantStatus status : RestaurantStatus.values()) {
-			counts.put(status, 0L);
-		}
-		for (StatusCount row : restaurants.countPerStatus()) {
-			counts.put(row.status(), row.restaurants());
-		}
-		return new Queue(page, counts);
+		return Queue.of(page, RestaurantStatus.values(), restaurants.countPerStatus()
+			.stream()
+			.collect(Collectors.toMap(StatusCount::status, StatusCount::restaurants)));
 	}
 
 	/** The review page: the restaurant (owner and cuisines loaded), its live dishes and the orders it has had. */
@@ -98,22 +85,8 @@ public class RestaurantModerationService {
 			throw new ModerationException(refusal(r, decision));
 		}
 		r.changeStatus(decision.target, decision.target.needsReason() ? reason : null);
-		String to = r.getOwner().getEmail();
-		String subject = subject(r, decision);
-		String text = message(r, decision);
-		Long id = r.getId();
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCommit() {
-				try {
-					mail.send(to, subject, text);
-				}
-				catch (MailException ex) {
-					log.warn("Moderation email ({}) for restaurant {} could not be sent: {}", decision, id,
-							ex.getMessage());
-				}
-			}
-		});
+		AfterCommit.mail(mail, r.getOwner().getEmail(), subject(r, decision), message(r, decision),
+				"Moderation email (" + decision + ") for restaurant " + r.getId());
 		return r.getName();
 	}
 
@@ -209,31 +182,8 @@ public class RestaurantModerationService {
 
 	}
 
-	/** One page of the list plus the restaurant count per status (every status present, zero when none). */
-	public record Queue(Page<Restaurant> page, Map<RestaurantStatus, Long> counts) {
-
-		/** Restaurants in {@code status}, zero when none. */
-		public long count(RestaurantStatus status) {
-			return counts.get(status);
-		}
-
-		public long total() {
-			return counts.values().stream().mapToLong(Long::longValue).sum();
-		}
-
-	}
-
 	/** The review page: owner and cuisines loaded. {@code orders} counts placed, not cancelled or rejected orders. */
 	public record Detail(Restaurant restaurant, long dishes, long orders) {
-	}
-
-	/** A decision that does not fit the restaurant's current status; the message is for the admin. */
-	public static class ModerationException extends RuntimeException {
-
-		ModerationException(String message) {
-			super(message);
-		}
-
 	}
 
 }

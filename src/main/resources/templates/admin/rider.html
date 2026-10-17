@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Rider review | Zaika</title></head>
+<body>
+<!--/* /admin/riders/{userId}: one delivery partner for the admin. The decision card offers what fits the status
+     (under review: approve or suspend; approved: suspend; suspended: approve again); suspending asks for a reason the
+     rider sees. Then the rider's details (phone masked) and their deliveries.
+     Model: d (admin.RiderModerationService.Detail), reasonForm (admin.ModerationReasonForm), open (true when the
+     suspend form is re-shown with errors). */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="p=${d.profile}, u=${d.profile.user}, st=${d.profile.status.name()},
+			reasonError=${open and #fields.hasErrors('${reasonForm.reason}')}">
+		<nav th:replace="~{fragments/admin :: nav('riders')}"></nav>
+
+		<a class="checkout-back" th:href="@{/admin/riders}" href="/admin/riders"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>All riders</a>
+
+		<header class="admin-head">
+			<p class="eyebrow">Rider review</p>
+			<h1 class="owner-title" th:text="${u.name}">Sagar Patil</h1>
+			<p class="owner-head-meta">
+				<span th:replace="~{fragments/partner :: statusBadge(${p})}"></span>
+				<span class="badge badge-success" th:if="${p.online}">Online now</span>
+				<span class="badge badge-danger" th:unless="${u.enabled}">Account disabled</span>
+				<span th:text="|Signed up ${@fmt.date(p.createdAt)}|">Signed up 4 Oct 2026</span>
+			</p>
+		</header>
+
+		<section class="card admin-decision" aria-labelledby="admin-decision-title">
+			<h2 id="admin-decision-title" class="owner-section-title">Decision</h2>
+			<p class="admin-decision-text" th:if="${st == 'PENDING'}">Check the vehicle and contact details below. Approving lets them go online and take orders right away.</p>
+			<p class="admin-decision-text" th:if="${st == 'APPROVED'}">Approved: they can go online and take orders. Suspending takes them offline at once; a delivery already on the way can still be finished.</p>
+			<th:block th:if="${st == 'SUSPENDED'}">
+				<p class="admin-decision-text">Suspended: they can't go online or take orders. They can still sign in and see their earnings.</p>
+				<p class="admin-decision-reason"><strong>Reason given:</strong> <th:block th:text="${p.statusReason}">Three late deliveries this week.</th:block></p>
+			</th:block>
+
+			<div class="admin-decision-actions">
+				<form th:if="${st != 'APPROVED'}" method="post" th:action="@{/admin/riders/{id}/approve(id=${u.id})}" action="/admin/riders/5/approve">
+					<button type="submit" class="btn btn-primary"><svg th:replace="~{fragments/icon :: icon('check')}"></svg><th:block th:text="${st == 'SUSPENDED'} ? 'Approve again' : 'Approve rider'">Approve rider</th:block></button>
+				</form>
+
+				<details class="confirm admin-reason" data-menu th:if="${st != 'SUSPENDED'}" th:open="${reasonError}">
+					<summary class="btn btn-secondary">Suspend</summary>
+					<form class="confirm-panel admin-reason-form" method="post" novalidate th:action="@{/admin/riders/{id}/suspend(id=${u.id})}" action="/admin/riders/5/suspend">
+						<div class="field" th:classappend="${reasonError} ? 'has-error'">
+							<label class="field-label" for="moderation-reason">Why suspend this rider?</label>
+							<textarea class="textarea" id="moderation-reason" name="reason" rows="3" maxlength="500"
+								th:attr="aria-describedby=${reasonError} ? 'moderation-reason-error moderation-reason-help' : 'moderation-reason-help'"
+								th:aria-invalid="${reasonError} ? 'true'" th:text="${reasonForm.reason}"></textarea>
+							<p class="field-error" th:if="${reasonError}" id="moderation-reason-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('${reasonForm.reason}'), ' ')}">Write a reason.</span></p>
+							<p class="field-help" id="moderation-reason-help">The rider sees this in the email and on their dashboard. Up to 500 characters.</p>
+						</div>
+						<button type="submit" class="btn btn-danger">Suspend rider</button>
+					</form>
+				</details>
+			</div>
+		</section>
+
+		<div class="owner-panels">
+			<section class="card owner-listing" aria-labelledby="admin-rider-title">
+				<div class="owner-card-head">
+					<h2 id="admin-rider-title" class="owner-section-title">Rider details</h2>
+					<a class="btn btn-ghost btn-sm" th:href="@{/admin/users/{id}(id=${u.id})}" href="/admin/users/5">Account and orders</a>
+				</div>
+				<dl class="owner-facts">
+					<div>
+						<dt>Vehicle</dt>
+						<dd th:text="${p.vehicleType.label}">Scooter</dd>
+					</div>
+					<div>
+						<dt>Number plate</dt>
+						<dd class="admin-slug" th:text="${p.vehicleNumber == null} ? 'None (bicycle)' : ${p.vehicleNumber}">MH09AB1234</dd>
+					</div>
+					<div>
+						<dt>Preferred area</dt>
+						<dd th:text="${p.preferredArea}">Rajarampuri</dd>
+					</div>
+					<div>
+						<dt>Email</dt>
+						<dd class="admin-email"><a th:href="|mailto:${u.email}|" href="mailto:rider1@zaika.test" th:text="${u.email}">rider1@zaika.test</a></dd>
+					</div>
+					<div>
+						<dt>Mobile</dt>
+						<dd th:text="${@fmt.maskedPhone(u.phone)}">+91 98XXX XX210</dd>
+					</div>
+				</dl>
+			</section>
+
+			<section class="card owner-listing" aria-labelledby="admin-rider-numbers-title">
+				<div class="owner-card-head">
+					<h2 id="admin-rider-numbers-title" class="owner-section-title">On Zaika</h2>
+				</div>
+				<dl class="owner-facts">
+					<div>
+						<dt>Deliveries completed</dt>
+						<dd th:text="${@fmt.count(d.deliveries)}">48</dd>
+					</div>
+					<div>
+						<dt>Right now</dt>
+						<dd th:if="${d.active != null}" th:text="|Delivering ${d.active.code} from ${d.active.restaurant.name}|">Delivering ZK-26-000123 from Rassa Darbar</dd>
+						<dd th:if="${d.active == null}" th:text="${p.online} ? 'Online, waiting for an order' : 'Offline'">Offline</dd>
+					</div>
+				</dl>
+			</section>
+		</div>
+	</div>
+</main>
+</body>
+</html>

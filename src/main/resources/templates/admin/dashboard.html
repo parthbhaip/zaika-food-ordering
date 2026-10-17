@@ -56,6 +56,7 @@
 					<dd class="owner-stat-value" th:text="${@fmt.count(k.pendingApprovals())}">3</dd>
 					<dd class="admin-stat-help" th:text="|${k.pendingRestaurants} ${k.pendingRestaurants == 1 ? 'restaurant' : 'restaurants'} · ${k.pendingRiders} ${k.pendingRiders == 1 ? 'rider' : 'riders'}|">2 restaurants · 1 rider</dd>
 					<dd class="owner-stat-link"><a th:href="@{/admin/restaurants(status='pending')}" href="/admin/restaurants?status=pending">Review restaurants</a></dd>
+					<dd class="owner-stat-link"><a th:href="@{/admin/riders(status='pending')}" href="/admin/riders?status=pending">Review riders</a></dd>
 				</div>
 			</dl>
 		</section>

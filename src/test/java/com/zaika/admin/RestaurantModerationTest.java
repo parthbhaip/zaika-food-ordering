@@ -340,7 +340,7 @@ class RestaurantModerationTest {
 		Restaurant r = restaurant(word() + " Doubtful Diner", RestaurantStatus.PENDING);
 
 		String missing = html(decide(r, "reject").param("reason", "   "));
-		assertThat(missing).contains("Write a reason. The owner sees it in the email and on their panel.")
+		assertThat(missing).contains("Write a reason. They see it in the email and on their panel.")
 			.contains("aria-invalid=\"true\"")
 			.contains("<details class=\"confirm admin-reason\" data-menu open");
 		String tooLong = html(decide(r, "reject").param("reason", "<i>x</i>" + "y".repeat(500)));
