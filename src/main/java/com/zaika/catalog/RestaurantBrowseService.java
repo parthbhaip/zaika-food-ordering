@@ -226,7 +226,7 @@ public class RestaurantBrowseService {
 	}
 
 	/** {@code %text%}, lower-cased, with LIKE wildcards in the text matched literally. */
-	static String likePattern(String text) {
+	public static String likePattern(String text) {
 		StringBuilder pattern = new StringBuilder("%");
 		for (char c : text.toLowerCase(Locale.ROOT).toCharArray()) {
 			if (c == ESCAPE || c == '%' || c == '_') {

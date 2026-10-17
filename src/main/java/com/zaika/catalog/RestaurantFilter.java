@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.StringJoiner;
 
+import com.zaika.common.Requests;
+
 /**
  * The query of the restaurant listing, bound from {@code /restaurants?q=&cuisine=&veg=&top=&open=&sort=&page=}.
  * Unparseable values are left at their defaults. {@link #url()} is the canonical form of the query: only the
@@ -35,7 +37,7 @@ public class RestaurantFilter {
 	}
 
 	public void setQ(String q) {
-		this.q = CatalogRequests.searchText(q, MAX_QUERY_LENGTH);
+		this.q = Requests.searchText(q, MAX_QUERY_LENGTH);
 	}
 
 	/** Cuisine slug, or null for every cuisine. */

@@ -26,6 +26,9 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
 	/** Dishes in the category that are not archived (uses idx_menu_items_category). */
 	long countByCategoryIdAndArchivedFalse(Long categoryId);
 
+	/** Dishes on the restaurant's menu that are not archived, sold-out ones included (admin review). */
+	long countByRestaurantIdAndArchivedFalse(Long restaurantId);
+
 	/** Whether any dish (archived or not) still points at the category. */
 	boolean existsByCategoryId(Long categoryId);
 

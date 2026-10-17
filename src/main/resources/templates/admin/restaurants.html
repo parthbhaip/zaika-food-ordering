@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Restaurants | Zaika</title></head>
+<body>
+<!--/* /admin/restaurants: every restaurant on Zaika, newest sign-ups first, with status chips (counts over all
+     restaurants) and a search over name, slug, area and the owner's name or email. Each row opens the review page.
+     Model: filter (admin.ModerationFilter, canonical), queue (admin.RestaurantModerationService.Queue), statuses. */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="page=${queue.page}">
+		<nav th:replace="~{fragments/admin :: nav('restaurants')}"></nav>
+
+		<header class="admin-head">
+			<p class="eyebrow">Admin</p>
+			<h1 class="owner-title">Restaurants</h1>
+			<p class="admin-head-meta">Review new kitchens, and suspend or reactivate live ones. Owners get an email for every decision.</p>
+		</header>
+
+		<section class="card admin-filters" aria-labelledby="admin-filters-title">
+			<h2 id="admin-filters-title" class="visually-hidden">Filter restaurants</h2>
+			<nav class="chip-row" aria-label="Status">
+				<a class="chip" th:with="href=${filter.urlFor(null)}" th:href="@{${href}}" href="/admin/restaurants"
+					th:aria-current="${filter.status == null} ? 'true'">All <span class="admin-chip-count" th:text="${@fmt.count(queue.total())}">14</span></a>
+				<a class="chip" th:each="s : ${statuses}" th:with="href=${filter.urlFor(s)}" th:href="@{${href}}" href="/admin/restaurants?status=pending"
+					th:aria-current="${filter.status == s} ? 'true'"><th:block th:text="${T(com.zaika.admin.ModerationFilter).label(s)}">Pending review</th:block>
+					<span class="admin-chip-count" th:classappend="${s.name() == 'PENDING' and queue.count(s) > 0} ? 'is-waiting'" th:text="${@fmt.count(queue.count(s))}">1</span></a>
+			</nav>
+			<form class="admin-search" method="get" th:action="@{/admin/restaurants}" action="/admin/restaurants" role="search">
+				<input type="hidden" name="status" th:if="${filter.status != null}" th:value="${T(com.zaika.admin.ModerationFilter).slug(filter.status)}">
+				<div class="field">
+					<label class="field-label" for="admin-restaurant-q">Search restaurants</label>
+					<input class="input" id="admin-restaurant-q" name="q" type="search" maxlength="80" autocomplete="off"
+						th:value="${filter.q}" placeholder="Name, area, owner or email">
+				</div>
+				<button class="btn btn-primary" type="submit"><svg th:replace="~{fragments/icon :: icon('search')}"></svg>Search</button>
+				<a class="btn btn-ghost" th:if="${filter.q != null}" th:with="href=${filter.withoutSearch()}" th:href="@{${href}}" href="/admin/restaurants">Clear search</a>
+			</form>
+		</section>
+
+		<section class="admin-recent" aria-labelledby="admin-list-title">
+			<h2 id="admin-list-title" class="visually-hidden">Restaurants found</h2>
+			<div class="card" th:if="${page.totalElements == 0}"
+				th:with="title=${filter.q != null} ? |No restaurants match “${filter.q}”| : 'No restaurants here',
+					hint=${filter.q != null} ? 'Check the spelling, or search by the owner’s email instead.' : (${filter.status == null} ? 'Restaurants show up here as soon as owners sign up.' : (${filter.status.name() == 'PENDING'} ? 'Nothing waiting for review. New sign-ups show up here.' : 'No restaurants have this status right now.'))">
+				<div th:replace="~{fragments/ui :: emptyState('store', ${title}, ${hint}, null, null)}"></div>
+			</div>
+			<th:block th:if="${page.hasContent()}">
+				<p class="report-count" th:with="first=${page.number * page.size + 1}, last=${page.number * page.size + page.numberOfElements}"
+					th:text="${page.totalElements == 1} ? 'One restaurant' : |Showing ${@fmt.count(first)}–${@fmt.count(last)} of ${@fmt.count(page.totalElements)} restaurants, newest first|">Showing 1–14 of 14 restaurants, newest first</p>
+				<div class="table-wrap">
+					<table class="table admin-restaurants">
+						<caption class="visually-hidden">Restaurants, newest sign-ups first</caption>
+						<thead>
+							<tr>
+								<th scope="col">Restaurant</th>
+								<th scope="col">Owner</th>
+								<th scope="col">Status</th>
+								<th scope="col">Signed up</th>
+								<th scope="col"><span class="visually-hidden">Actions</span></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="r : ${page.content}">
+								<th scope="row">
+									<div class="admin-restaurant-cell">
+										<img class="admin-restaurant-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/x.svg" alt="" width="40" height="40" loading="lazy">
+										<span class="admin-restaurant-text">
+											<a class="admin-restaurant-name" th:href="@{/admin/restaurants/{slug}(slug=${r.slug})}" href="/admin/restaurants/rassa-darbar" th:text="${r.name}">Rassa Darbar</a>
+											<span class="admin-restaurant-meta" th:text="|${r.area}, ${r.city}|">Rajarampuri, Kolhapur</span>
+										</span>
+									</div>
+								</th>
+								<td>
+									<span class="admin-owner-name" th:text="${r.owner.name}">Sanjay Patil</span>
+									<span class="admin-restaurant-meta" th:text="${r.owner.email}">owner1@zaika.test</span>
+								</td>
+								<td><span th:replace="~{fragments/admin :: statusBadge(${r})}"></span></td>
+								<td><time th:datetime="${r.createdAt}" th:text="${@fmt.date(r.createdAt)}">4 Oct 2026</time></td>
+								<td class="num"><a class="btn btn-secondary btn-sm" th:href="@{/admin/restaurants/{slug}(slug=${r.slug})}" href="/admin/restaurants/rassa-darbar"
+									><th:block th:text="${r.status.name() == 'PENDING'} ? 'Review' : 'Open'">Review</th:block><span class="visually-hidden" th:text="| ${r.name}|"> Rassa Darbar</span></a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div th:replace="~{fragments/pagination :: pagination(${page}, ${filter.url()})}"></div>
+			</th:block>
+		</section>
+	</div>
+</main>
+</body>
+</html>

@@ -68,6 +68,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 	/** Uses {@code idx_orders_restaurant_status_created}. */
 	long countByRestaurantIdAndStatus(long restaurantId, OrderStatus status);
 
+	/** Orders of a restaurant in any of {@code statuses}, e.g. {@link OrderStatus#PLACED_AND_LIVE} (admin review). */
+	long countByRestaurantIdAndStatusIn(long restaurantId, Collection<OrderStatus> statuses);
+
 	/** The restaurant's five latest placed orders, newest first (idx_orders_restaurant_placed); dishes not loaded. */
 	List<Order> findTop5ByRestaurantIdAndPlacedAtNotNullOrderByPlacedAtDescIdDesc(long restaurantId);
 

@@ -31,7 +31,7 @@ class SearchController {
 
 	@GetMapping("/search")
 	String search(@RequestParam(required = false) String q, HttpServletRequest request, Model model) {
-		String query = CatalogRequests.searchText(q, RestaurantFilter.MAX_QUERY_LENGTH);
+		String query = Requests.searchText(q, RestaurantFilter.MAX_QUERY_LENGTH);
 		String canonical = SearchService.url(query);
 		if (!canonical.equals(Requests.currentUrl(request))) {
 			return "redirect:" + canonical;
@@ -49,7 +49,7 @@ class SearchController {
 	String suggest(@RequestParam(required = false) String q, HttpServletRequest request,
 			HttpServletResponse response, Model model) {
 		response.addHeader("Vary", "HX-Request");
-		String query = CatalogRequests.searchText(q, RestaurantFilter.MAX_QUERY_LENGTH);
+		String query = Requests.searchText(q, RestaurantFilter.MAX_QUERY_LENGTH);
 		if (!"true".equals(request.getHeader("HX-Request"))) {
 			return "redirect:" + SearchService.url(query);
 		}

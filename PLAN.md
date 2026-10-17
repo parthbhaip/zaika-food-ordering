@@ -202,7 +202,7 @@ How this file works
   - KPIs: orders today, GMV today and 7 days, active restaurants, customers, riders online, pending approvals.
   - Server-side SVG charts: orders per day (14 days), top 5 restaurants by revenue. Recent orders table. Tests.
 
-- [ ] T39 Restaurant moderation `/admin/restaurants`
+- [x] T39 Restaurant moderation `/admin/restaurants`
   - Status filter and search; detail view; approve, reject (reason), suspend (reason), reactivate; owner emailed via MailService. Tests.
 
 - [ ] T40 Riders and users

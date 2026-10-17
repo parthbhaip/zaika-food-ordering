@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.StringJoiner;
 
+import com.zaika.common.Requests;
+
 /**
  * The menu view of a restaurant page, bound from {@code /r/{slug}?q=&veg=}: search text within the menu and the
  * "Pure veg only" toggle. Unparseable values stay at their defaults.
@@ -23,7 +25,7 @@ public class MenuFilter {
 	}
 
 	public void setQ(String q) {
-		this.q = CatalogRequests.searchText(q, MAX_QUERY_LENGTH);
+		this.q = Requests.searchText(q, MAX_QUERY_LENGTH);
 	}
 
 	/** Vegetarian dishes only. */

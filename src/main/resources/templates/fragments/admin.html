@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* The admin panel's sections, on every admin page. current: 'dashboard' or 'restaurants'. */-->
+<nav th:fragment="nav(current)" class="tabs owner-nav" aria-label="Admin panel">
+	<a class="tab" th:href="@{/admin}" href="/admin" th:aria-current="${current == 'dashboard'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('chart')}"></svg>Dashboard</a>
+	<a class="tab" th:href="@{/admin/restaurants}" href="/admin/restaurants" th:aria-current="${current == 'restaurants'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Restaurants</a>
+</nav>
+
+<!--/* A restaurant's status as the admin pages name it (admin.ModerationFilter.label). */-->
+<span th:fragment="statusBadge(r)" class="badge badge-dot"
+	th:classappend="${r.status.name() == 'APPROVED'} ? 'badge-success' : (${r.status.name() == 'PENDING'} ? 'badge-warning' : 'badge-danger')"
+	th:text="${T(com.zaika.admin.ModerationFilter).label(r.status)}">Pending review</span>
+</body>
+</html>

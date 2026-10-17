@@ -2,7 +2,7 @@ package com.zaika.common;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-/** Request helpers shared by list pages that redirect to their canonical URL (catalog, owner reports, orders). */
+/** Request helpers shared by list pages that redirect to their canonical URL (catalog, owner reports, orders, admin). */
 public final class Requests {
 
 	private Requests() {
@@ -25,6 +25,12 @@ public final class Requests {
 		catch (NumberFormatException ex) {
 			return 0;
 		}
+	}
+
+	/** Search text as a search box sends it: stripped and cut to {@code maxLength}; null when blank. */
+	public static String searchText(String raw, int maxLength) {
+		String stripped = raw == null ? "" : raw.strip();
+		return stripped.isEmpty() ? null : stripped.substring(0, Math.min(stripped.length(), maxLength)).strip();
 	}
 
 }

@@ -6,6 +6,8 @@
      top five restaurants of the last 30 days and the ten latest orders. Both charts are SVG drawn on the server. */-->
 <main id="main" class="owner-page admin-page">
 	<div class="container owner-container" th:with="k=${d.kpis}">
+		<nav th:replace="~{fragments/admin :: nav('dashboard')}"></nav>
+
 		<header class="admin-head">
 			<p class="eyebrow">Admin</p>
 			<h1 class="owner-title">Platform overview</h1>
@@ -53,6 +55,7 @@
 					<dt>Pending approvals</dt>
 					<dd class="owner-stat-value" th:text="${@fmt.count(k.pendingApprovals())}">3</dd>
 					<dd class="admin-stat-help" th:text="|${k.pendingRestaurants} ${k.pendingRestaurants == 1 ? 'restaurant' : 'restaurants'} · ${k.pendingRiders} ${k.pendingRiders == 1 ? 'rider' : 'riders'}|">2 restaurants · 1 rider</dd>
+					<dd class="owner-stat-link"><a th:href="@{/admin/restaurants(status='pending')}" href="/admin/restaurants?status=pending">Review restaurants</a></dd>
 				</div>
 			</dl>
 		</section>
