@@ -211,7 +211,7 @@ How this file works
 - [x] T41 Coupons and cuisines admin
   - CRUD with validation; usage count per coupon. Tests.
 
-- [ ] T42 Orders admin `/admin/orders`
+- [x] T42 Orders admin `/admin/orders`
   - Filters (code, status, restaurant, date range), detail with full timeline, admin cancel with reason (paid online orders -> REFUND_PENDING). Tests.
 
 ## Phase 7 - Engagement

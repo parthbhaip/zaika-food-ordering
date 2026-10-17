@@ -347,7 +347,8 @@ class AdminDashboardTest {
 		List<String> expected = placed.reversed().subList(0, 10).stream().map(Order::getCode).toList();
 		int last = -1;
 		for (String code : expected) {
-			int at = html.indexOf("<th scope=\"row\" class=\"admin-code\">" + code + "</th>");
+			int at = html.indexOf("<th scope=\"row\"><a class=\"admin-code\" href=\"/admin/orders/" + code + "\">" + code
+					+ "</a></th>");
 			assertThat(at).as(code).isGreaterThan(last);
 			last = at;
 		}

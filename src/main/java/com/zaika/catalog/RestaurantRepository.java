@@ -80,6 +80,14 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, J
 					or lower(o.email) like :pattern escape '!')""")
 	Page<Restaurant> findForModeration(RestaurantStatus status, String pattern, Pageable pageable);
 
+	/** A restaurant as a filter option: id, slug and name. */
+	record Choice(Long id, String slug, String name) {
+	}
+
+	/** Every restaurant as a filter option, by name (the admin's order filter). */
+	@Query("select new com.zaika.catalog.RestaurantRepository$Choice(r.id, r.slug, r.name) from Restaurant r order by r.name, r.id")
+	List<Choice> findChoices();
+
 	/** How many restaurants are in each status (statuses with none are missing). */
 	record StatusCount(RestaurantStatus status, Long restaurants) {
 	}

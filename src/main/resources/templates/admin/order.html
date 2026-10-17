@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${'Order ' + d.order.code + ' | Zaika'}">Order ZK-26-000123 | Zaika</title></head>
+<body>
+<!--/* /admin/orders/{code}: any order for the admin. The full timeline (checkout, every payment attempt, each status
+     with its time and the time since checkout, how it ended and why), the cancel card while the order is not over,
+     then the dishes and bill, and the people involved (phones masked; the delivery code is never shown).
+     Model: d (admin.OrderAdminService.Detail), cancelForm (admin.AdminCancelForm), cancelOpen (re-shown with errors). */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="o=${d.order}, r=${d.order.restaurant}, bill=${d.order.bill}, st=${d.order.status.name()},
+			reasonError=${cancelOpen and #fields.hasErrors('${cancelForm.reason}')}">
+		<nav th:replace="~{fragments/admin :: nav('orders')}"></nav>
+
+		<a class="checkout-back" th:href="@{/admin/orders}" href="/admin/orders"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>All orders</a>
+
+		<header class="admin-head">
+			<p class="eyebrow">Order</p>
+			<h1 class="owner-title admin-code" th:text="${o.code}">ZK-26-000123</h1>
+			<p class="owner-head-meta">
+				<span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Preparing</span>
+				<span class="badge badge-dot" th:classappend="${o.paymentStatus.name() == 'PAID'} ? 'badge-success' : (${o.paymentStatus.name() == 'REFUND_PENDING' or o.paymentStatus.name() == 'FAILED'} ? 'badge-warning' : '')"
+					th:text="|${o.paymentMethod.name() == 'COD' ? 'Cash' : 'Online'}: ${o.paymentStatus.label}|">Online: Paid</span>
+				<span th:text="|${@fmt.money(bill.grandTotal)} · ${r.name} · ${@fmt.dateTime(o.createdAt)}|">₹557.50 · Rassa Darbar · 4 Oct 2026, 7:30 PM</span>
+			</p>
+		</header>
+
+		<section class="card admin-decision" th:if="${d.canCancel}" aria-labelledby="admin-cancel-title">
+			<h2 id="admin-cancel-title" class="owner-section-title">Cancel this order</h2>
+			<p class="admin-decision-text">
+				<th:block th:text="${st == 'PENDING_PAYMENT'} ? 'The customer has not paid yet.' : |${r.name} has it, and it is ${#strings.toLowerCase(o.status.label)}.|">Rassa Darbar has it, and it is preparing.</th:block>
+				<th:block th:text="${o.paymentStatus.name() == 'PAID'} ? |It was paid online, so it moves to refund pending for ${@fmt.money(bill.grandTotal)}.| : 'Nothing was charged, so there is nothing to refund.'">It was paid online, so it moves to refund pending for ₹557.50.</th:block>
+				<th:block th:if="${o.couponCode != null}" th:text="|The ${o.couponCode} use is given back.|">The WELCOME50 use is given back.</th:block>
+			</p>
+			<div class="admin-decision-actions">
+				<details class="confirm admin-reason" data-menu th:open="${reasonError}">
+					<summary class="btn btn-secondary">Cancel order</summary>
+					<form class="confirm-panel admin-reason-form" method="post" novalidate
+						th:action="@{/admin/orders/{code}/cancel(code=${o.code})}" action="/admin/orders/ZK-26-000123/cancel">
+						<div class="field" th:classappend="${reasonError} ? 'has-error'">
+							<label class="field-label" for="cancel-reason">Why cancel it?</label>
+							<textarea class="textarea" id="cancel-reason" name="reason" rows="3" maxlength="500"
+								th:attr="aria-describedby=${reasonError} ? 'cancel-reason-error cancel-reason-help' : 'cancel-reason-help'"
+								th:aria-invalid="${reasonError} ? 'true'" th:text="${cancelForm.reason}"></textarea>
+							<p class="field-error" th:if="${reasonError}" id="cancel-reason-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('${cancelForm.reason}'), ' ')}">Write a reason.</span></p>
+							<p class="field-help" id="cancel-reason-help">The customer sees this on their order. Up to 500 characters.</p>
+						</div>
+						<button type="submit" class="btn btn-danger">Cancel order</button>
+					</form>
+				</details>
+			</div>
+		</section>
+
+		<div class="owner-panels">
+			<section class="card owner-listing admin-timeline" aria-labelledby="admin-timeline-title">
+				<div class="owner-card-head">
+					<h2 id="admin-timeline-title" class="owner-section-title">Timeline</h2>
+				</div>
+				<ol class="stepper" aria-label="What happened to this order">
+					<li th:each="e : ${d.timeline}" class="step" th:classappend="${e.cssClass()}"
+						th:aria-current="${e.kind.name() == 'CURRENT'} ? 'step'">
+						<span class="step-marker"><svg th:replace="~{fragments/icon :: icon(${e.icon})}"></svg></span>
+						<span class="step-label" th:text="${e.title}">Being prepared</span>
+						<span class="step-time">
+							<th:block th:if="${e.at != null}"><time th:datetime="${e.at}" th:text="${@fmt.dateTime(e.at)}">4 Oct 2026, 7:41 PM</time> · <span th:text="${e.offset()}">+11 min</span></th:block>
+							<span class="admin-timeline-note" th:if="${e.note != null}" th:text="${e.note}">Cooked fresh</span>
+						</span>
+					</li>
+				</ol>
+			</section>
+
+			<div class="admin-side">
+				<section class="card owner-listing" aria-labelledby="admin-people-title">
+					<div class="owner-card-head">
+						<h2 id="admin-people-title" class="owner-section-title">People</h2>
+					</div>
+					<dl class="owner-facts">
+						<div>
+							<dt>Customer</dt>
+							<dd>
+								<a th:href="@{/admin/users/{id}(id=${o.customer.id})}" href="/admin/users/7" th:text="${o.customer.name}">Riya Shinde</a>
+								<span class="admin-restaurant-meta admin-email" th:text="${o.customer.email}">customer@zaika.test</span>
+								<span class="admin-restaurant-meta" th:text="${o.customer.phone == null} ? 'No mobile number' : ${@fmt.maskedPhone(o.customer.phone)}">+91 98XXX XX210</span>
+							</dd>
+						</div>
+						<div>
+							<dt>Restaurant</dt>
+							<dd>
+								<a th:href="@{/admin/restaurants/{slug}(slug=${r.slug})}" href="/admin/restaurants/rassa-darbar" th:text="${r.name}">Rassa Darbar</a>
+								<span class="admin-restaurant-meta" th:text="|${r.area} · owner ${r.owner.name}|">Rajarampuri · owner Sanjay Patil</span>
+							</dd>
+						</div>
+						<div>
+							<dt>Delivery partner</dt>
+							<dd th:if="${o.rider == null}" th:text="${o.status.isFinal() or st == 'PENDING_PAYMENT'} ? 'None' : 'Not assigned yet'">Not assigned yet</dd>
+							<dd th:if="${o.rider != null}">
+								<a th:href="@{/admin/riders/{id}(id=${o.rider.id})}" href="/admin/riders/9" th:text="${o.rider.name}">Sagar Patil</a>
+								<span class="admin-restaurant-meta" th:text="${o.rider.phone == null} ? 'No mobile number' : ${@fmt.maskedPhone(o.rider.phone)}">+91 98XXX XX345</span>
+							</dd>
+						</div>
+					</dl>
+				</section>
+
+				<section class="card owner-listing" aria-labelledby="admin-delivery-title">
+					<div class="owner-card-head">
+						<h2 id="admin-delivery-title" class="owner-section-title">Delivery and payment</h2>
+					</div>
+					<dl class="owner-facts">
+						<div>
+							<dt th:text="|Address (${o.address.label.displayName})|">Address (Home)</dt>
+							<dd><address class="order-address" th:text="${o.address.oneLine()}">Flat 4B, Shree Apartments, Rajarampuri 5th Lane, Kolhapur 416008</address></dd>
+						</div>
+						<div th:if="${d.live()}">
+							<dt>Expected by</dt>
+							<dd th:text="${@fmt.time(o.estimatedDeliveryAt)}">8:05 PM</dd>
+						</div>
+						<div>
+							<dt>Payment</dt>
+							<dd th:text="${o.paymentMethod.name() == 'COD'} ? 'Cash on delivery' : 'Online (test mode)'">Cash on delivery</dd>
+						</div>
+						<div th:if="${d.paidWith() != null}" th:with="paid=${d.paidWith()}">
+							<dt>Paid with</dt>
+							<dd>
+								<span th:text="|${paid.channel} · ${paid.instrument}|">Card · Card ending 1111</span>
+								<span class="admin-restaurant-meta order-ref" th:text="${paid.gatewayReference}">MOCK-1A2B3C4D5E6F7A8B</span>
+							</dd>
+						</div>
+					</dl>
+					<p th:if="${o.deliveryNote != null}" class="checkout-note"><strong>Note for the rider:</strong> <span th:text="${o.deliveryNote}">Ring the bell twice.</span></p>
+				</section>
+			</div>
+		</div>
+
+		<section class="card order-section admin-order-items" aria-labelledby="admin-items-title">
+			<h2 class="order-section-title" id="admin-items-title" th:text="|Dishes · ${o.itemCount} ${o.itemCount == 1 ? 'item' : 'items'}|">Dishes · 3 items</h2>
+			<ul class="checkout-lines order-lines" aria-label="Dishes">
+				<li th:each="item : ${o.items}" class="checkout-line">
+					<span th:replace="~{fragments/ui :: veg(${item.veg})}"></span>
+					<span class="checkout-line-name"><span class="checkout-line-qty" th:text="|${item.quantity} ×|">2 ×</span> <span th:text="${item.name}">Mutton Thali</span>
+						<span class="order-line-each" th:if="${item.quantity > 1}" th:text="|${@fmt.money(item.unitPrice)} each|">₹250.00 each</span></span>
+					<span class="price" th:text="${@fmt.money(item.lineTotal)}">₹500.00</span>
+				</li>
+			</ul>
+			<p th:if="${o.restaurantNote != null}" class="checkout-note"><strong>Note for the restaurant:</strong> <span th:text="${o.restaurantNote}">Less spicy, please.</span></p>
+			<dl class="bill">
+				<div class="bill-row"><dt>Item total</dt><dd th:text="${@fmt.money(bill.itemTotal)}">₹500.00</dd></div>
+				<div th:if="${bill.discount.signum() > 0}" class="bill-row bill-discount"><dt th:text="|Coupon ${o.couponCode}|">Coupon WELCOME50</dt><dd th:text="|−${@fmt.money(bill.discount)}|">−₹50.00</dd></div>
+				<div class="bill-row"><dt>Delivery fee</dt>
+					<dd th:if="${bill.deliveryFee.signum() > 0}" th:text="${@fmt.money(bill.deliveryFee)}">₹30.00</dd>
+					<dd th:if="${bill.deliveryFee.signum() == 0}"><span class="bill-free">FREE</span></dd></div>
+				<div class="bill-row"><dt>Platform fee</dt><dd th:text="${@fmt.money(bill.platformFee)}">₹5.00</dd></div>
+				<div class="bill-row"><dt>GST on food</dt><dd th:text="${@fmt.money(bill.gst)}">₹22.50</dd></div>
+				<div class="bill-row bill-total"><dt>Total</dt><dd th:text="${@fmt.money(bill.grandTotal)}">₹557.50</dd></div>
+			</dl>
+		</section>
+	</div>
+</main>
+</body>
+</html>

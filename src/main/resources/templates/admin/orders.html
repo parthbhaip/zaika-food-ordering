@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Orders | Zaika</title></head>
+<body>
+<!--/* /admin/orders: every order on Zaika, newest checkout first, filtered by part of the code, status, restaurant and a
+     range of checkout days. Each row opens the order page (timeline and cancel).
+     Model: filter (admin.OrderAdminFilter, canonical), orders (a Page of orders, restaurant and customer loaded),
+     restaurants (catalog.RestaurantRepository.Choice by name), statuses. */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container">
+		<nav th:replace="~{fragments/admin :: nav('orders')}"></nav>
+
+		<header class="admin-head">
+			<p class="eyebrow">Admin</p>
+			<h1 class="owner-title">Orders</h1>
+			<p class="admin-head-meta">Find any order by its code, kitchen, status or day. Open one for its full timeline, or to cancel it.</p>
+		</header>
+
+		<section class="card report-filters" aria-labelledby="admin-order-filters-title">
+			<h2 id="admin-order-filters-title" class="visually-hidden">Filter orders</h2>
+			<form class="admin-order-form" method="get" th:action="@{/admin/orders}" action="/admin/orders" role="search">
+				<div class="field admin-order-code">
+					<label class="field-label" for="admin-order-q">Order code</label>
+					<input class="input" id="admin-order-q" name="q" type="search" maxlength="20" autocomplete="off"
+						placeholder="ZK-26-000123" th:value="${filter.q}">
+				</div>
+				<div class="field">
+					<label class="field-label" for="admin-order-status">Status</label>
+					<div class="select-wrap">
+						<select class="select" id="admin-order-status" name="status">
+							<option value="">All statuses</option>
+							<option th:each="st : ${statuses}" th:value="${T(com.zaika.admin.ModerationFilter).slug(st)}"
+								th:selected="${st == filter.status}" th:text="${st.label}" value="placed">Placed</option>
+						</select>
+					</div>
+				</div>
+				<div class="field">
+					<label class="field-label" for="admin-order-restaurant">Restaurant</label>
+					<div class="select-wrap">
+						<select class="select" id="admin-order-restaurant" name="restaurant">
+							<option value="">All restaurants</option>
+							<option th:each="r : ${restaurants}" th:value="${r.slug}"
+								th:selected="${filter.restaurant != null and r.id == filter.restaurant.id}" th:text="${r.name}" value="rassa-darbar">Rassa Darbar</option>
+						</select>
+					</div>
+				</div>
+				<div class="field">
+					<label class="field-label" for="admin-order-from">From</label>
+					<input class="input" id="admin-order-from" name="from" type="date" th:value="${filter.from}">
+				</div>
+				<div class="field">
+					<label class="field-label" for="admin-order-to">To</label>
+					<input class="input" id="admin-order-to" name="to" type="date" th:value="${filter.to}">
+				</div>
+				<div class="admin-order-actions">
+					<button class="btn btn-primary" type="submit"><svg th:replace="~{fragments/icon :: icon('search')}"></svg>Find orders</button>
+					<a class="btn btn-ghost" th:if="${filter.filtered}" th:href="@{/admin/orders}" href="/admin/orders">Clear filters</a>
+				</div>
+			</form>
+		</section>
+
+		<section class="admin-recent" aria-labelledby="admin-orders-title">
+			<h2 id="admin-orders-title" class="visually-hidden">Orders found</h2>
+			<div class="card" th:if="${orders.totalElements == 0}"
+				th:with="title=${filter.filtered} ? 'No orders match these filters' : 'No orders yet',
+					hint=${filter.filtered} ? 'Try part of the code, another status, or a wider range of days.' : 'Every checkout on Zaika shows up here, newest first.'">
+				<div th:replace="~{fragments/ui :: emptyState('receipt', ${title}, ${hint}, null, null)}"></div>
+			</div>
+			<th:block th:if="${orders.hasContent()}">
+				<p class="report-count" th:with="first=${orders.number * orders.size + 1}, last=${orders.number * orders.size + orders.numberOfElements}"
+					th:text="${orders.totalElements == 1} ? 'One order' : |Showing ${@fmt.count(first)}–${@fmt.count(last)} of ${@fmt.count(orders.totalElements)} orders, newest first|">Showing 1–20 of 340 orders, newest first</p>
+				<div class="table-wrap">
+					<table class="table admin-orders">
+						<caption class="visually-hidden">Orders, newest checkout first</caption>
+						<thead>
+							<tr>
+								<th scope="col">Order</th>
+								<th scope="col">Restaurant</th>
+								<th scope="col">Customer</th>
+								<th scope="col">Status</th>
+								<th scope="col">Payment</th>
+								<th scope="col" class="num">Total</th>
+								<th scope="col">Checked out</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="o : ${orders.content}">
+								<th scope="row"><a class="admin-code" th:href="@{/admin/orders/{code}(code=${o.code})}" href="/admin/orders/ZK-26-000123" th:text="${o.code}">ZK-26-000123</a></th>
+								<td th:text="${o.restaurant.name}">Rassa Darbar</td>
+								<td th:text="${o.customer.name}">Riya Shinde</td>
+								<td><span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Placed</span></td>
+								<td>
+									<span class="admin-order-pay" th:text="${o.paymentMethod.name() == 'COD'} ? 'Cash' : 'Online'">Cash</span>
+									<span class="admin-restaurant-meta" th:text="${o.paymentStatus.label}">Pending</span>
+								</td>
+								<td class="num" th:text="${@fmt.money(o.bill.grandTotal)}">₹540.00</td>
+								<td><time th:datetime="${o.createdAt}" th:text="${@fmt.dateTime(o.createdAt)}">4 Oct 2026, 7:30 PM</time></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div th:replace="~{fragments/pagination :: pagination(${orders}, ${filter.url()})}"></div>
+			</th:block>
+		</section>
+	</div>
+</main>
+</body>
+</html>

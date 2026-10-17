@@ -98,7 +98,7 @@
 							</thead>
 							<tbody>
 								<tr th:each="o : ${page.content}">
-									<th scope="row" class="admin-code" th:text="${o.code}">ZK-26-000123</th>
+									<th scope="row"><a class="admin-code" th:href="@{/admin/orders/{code}(code=${o.code})}" href="/admin/orders/ZK-26-000123" th:text="${o.code}">ZK-26-000123</a></th>
 									<td th:text="${o.restaurant.name}">Rassa Darbar</td>
 									<td><span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Delivered</span></td>
 									<td class="num" th:text="${@fmt.price(o.bill.grandTotal)}">₹540</td>

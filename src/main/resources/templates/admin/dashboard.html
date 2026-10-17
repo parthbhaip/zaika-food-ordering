@@ -115,7 +115,10 @@
 		</div>
 
 		<section class="admin-recent" aria-labelledby="admin-recent-title">
-			<h2 id="admin-recent-title" class="owner-section-title">Recent orders</h2>
+			<div class="owner-card-head">
+				<h2 id="admin-recent-title" class="owner-section-title">Recent orders</h2>
+				<a class="btn btn-ghost btn-sm" th:href="@{/admin/orders}" href="/admin/orders">All orders<svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg></a>
+			</div>
 			<p class="owner-latest-empty" th:if="${d.recent.isEmpty()}">No orders yet. The latest ten orders on Zaika show up here.</p>
 			<div class="table-wrap" th:unless="${d.recent.isEmpty()}">
 				<table class="table">
@@ -132,7 +135,7 @@
 					</thead>
 					<tbody>
 						<tr th:each="o : ${d.recent}">
-							<th scope="row" class="admin-code" th:text="${o.code}">ZK-26-000123</th>
+							<th scope="row"><a class="admin-code" th:href="@{/admin/orders/{code}(code=${o.code})}" href="/admin/orders/ZK-26-000123" th:text="${o.code}">ZK-26-000123</a></th>
 							<td th:text="${o.restaurant.name}">Rassa Darbar</td>
 							<td th:text="${o.customer.name}">Riya Shinde</td>
 							<td><span class="badge" th:classappend="|badge-${o.status.tone}|" th:text="${o.status.label}">Placed</span></td>

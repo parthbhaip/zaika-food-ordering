@@ -3279,6 +3279,27 @@ input.admin-coupon-code { background: var(--color-bg); color: var(--color-text-s
 	.admin-coupon-layout.has-side { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
 }
 
+/* Orders (/admin/orders and the order page) */
+.admin-order-form { display: grid; gap: var(--space-3); align-items: end; }
+.admin-order-form .field + .field { margin-top: 0; }
+.admin-order-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+a.admin-code { font-weight: var(--weight-semibold); white-space: nowrap; }
+.admin-order-pay { display: block; }
+.admin-orders td { vertical-align: top; }
+.admin-timeline { align-content: start; min-width: 0; }
+.admin-timeline .stepper { margin-top: var(--space-2); }
+.admin-timeline-note { display: block; color: var(--color-text-secondary); overflow-wrap: anywhere; white-space: pre-line; }
+.admin-order-items { display: grid; gap: var(--space-4); }
+@media (min-width: 640px) {
+	.admin-order-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.admin-order-code,
+	.admin-order-actions { grid-column: 1 / -1; }
+}
+@media (min-width: 960px) {
+	.admin-order-form { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+	.admin-order-code { grid-column: auto; }
+}
+
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */
 .error-body {
 	min-height: 100vh;

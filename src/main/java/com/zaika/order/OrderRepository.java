@@ -179,6 +179,28 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 			group by r.id, r.name order by sum(o.itemTotal) desc, r.name, r.id""")
 	List<RestaurantSales> findTopRestaurants(LocalDateTime from, Collection<OrderStatus> statuses, Limit limit);
 
+	/**
+	 * The admin's order list: a page of every order, newest checkout first, with restaurant and customer. Each filter
+	 * is optional (null = any): the code contains {@code codePattern} (lower-case LIKE pattern, {@code !} escapes), one
+	 * status, one restaurant, and checkout time in [{@code from}, {@code to}) (idx_orders_created,
+	 * idx_orders_status_created, idx_orders_restaurant_status_created). Dishes not loaded.
+	 */
+	@EntityGraph(attributePaths = { "restaurant", "customer" })
+	@Query(value = """
+			select o from Order o where (:codePattern is null or lower(o.code) like :codePattern escape '!')
+			and (:status is null or o.status = :status) and (:restaurantId is null or o.restaurant.id = :restaurantId)
+			and (:from is null or o.createdAt >= :from) and (:to is null or o.createdAt < :to)
+			order by o.createdAt desc, o.id desc""", countQuery = """
+			select count(o) from Order o where (:codePattern is null or lower(o.code) like :codePattern escape '!')
+			and (:status is null or o.status = :status) and (:restaurantId is null or o.restaurant.id = :restaurantId)
+			and (:from is null or o.createdAt >= :from) and (:to is null or o.createdAt < :to)""")
+	Page<Order> findForAdmin(String codePattern, OrderStatus status, Long restaurantId, LocalDateTime from,
+			LocalDateTime to, Pageable pageable);
+
+	/** Any order by its code with restaurant (and owner), customer, rider and dishes in one query: the admin's view. */
+	@EntityGraph(attributePaths = { "restaurant", "restaurant.owner", "customer", "rider", "items" })
+	Optional<Order> findDetailByCode(String code);
+
 	/** The ten latest placed orders on the platform, newest first, with restaurant and customer (idx_orders_placed). */
 	@EntityGraph(attributePaths = { "restaurant", "customer" })
 	List<Order> findTop10ByPlacedAtNotNullOrderByPlacedAtDescIdDesc();

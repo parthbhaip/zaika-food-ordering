@@ -160,6 +160,16 @@ public class PaymentService implements PaymentReceipts {
 
 	@Override
 	@Transactional(readOnly = true)
+	public List<Attempt> attempts(long orderId) {
+		return payments.findByOrderIdOrderByIdAsc(orderId)
+			.stream()
+			.map(p -> new Attempt(p.getCreatedAt(), p.getStatus() == Payment.Status.SUCCEEDED, p.getChannel().getLabel(),
+					p.getInstrument(), p.getAmount(), p.getGatewayReference(), p.getFailureReason()))
+			.toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public Optional<Receipt> paidWith(long orderId) {
 		return payments.findFirstByOrderIdAndStatusOrderByIdDesc(orderId, Payment.Status.SUCCEEDED)
 			.map(payment -> new Receipt(payment.getInstrument(), payment.getGatewayReference()));
