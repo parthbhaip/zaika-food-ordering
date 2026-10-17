@@ -6,6 +6,9 @@ import java.util.Optional;
 
 import jakarta.persistence.LockModeType;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -31,5 +34,13 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
 			and (c.totalLimit is null or c.totalLimit > (select count(r) from CouponRedemption r where r.coupon = c))
 			order by case when c.restaurant is null then 1 else 0 end, c.code""")
 	List<Coupon> findOffers(long restaurantId, LocalDateTime now);
+
+	/** The admin list, newest first, with each coupon's restaurant. */
+	@EntityGraph(attributePaths = "restaurant")
+	Page<Coupon> findAllByOrderByCreatedAtDescIdDesc(Pageable pageable);
+
+	/** With its restaurant, for the admin's edit page. */
+	@EntityGraph(attributePaths = "restaurant")
+	Optional<Coupon> findWithRestaurantById(long id);
 
 }

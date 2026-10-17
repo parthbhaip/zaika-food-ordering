@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!--/* The admin panel's sections, on every admin page. current: 'dashboard', 'restaurants', 'riders' or 'users'. */-->
+<!--/* The admin panel's sections, on every admin page. current: 'dashboard', 'restaurants', 'riders', 'users', 'coupons' or 'cuisines'. */-->
 <nav th:fragment="nav(current)" class="tabs owner-nav" aria-label="Admin panel">
 	<a class="tab" th:href="@{/admin}" href="/admin" th:aria-current="${current == 'dashboard'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('chart')}"></svg>Dashboard</a>
 	<a class="tab" th:href="@{/admin/restaurants}" href="/admin/restaurants" th:aria-current="${current == 'restaurants'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('store')}"></svg>Restaurants</a>
 	<a class="tab" th:href="@{/admin/riders}" href="/admin/riders" th:aria-current="${current == 'riders'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg>Riders</a>
 	<a class="tab" th:href="@{/admin/users}" href="/admin/users" th:aria-current="${current == 'users'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('user')}"></svg>Users</a>
+	<a class="tab" th:href="@{/admin/coupons}" href="/admin/coupons" th:aria-current="${current == 'coupons'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('tag')}"></svg>Coupons</a>
+	<a class="tab" th:href="@{/admin/cuisines}" href="/admin/cuisines" th:aria-current="${current == 'cuisines'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('dish')}"></svg>Cuisines</a>
 </nav>
 
 <!--/* The chips (one per value, counts over the whole table, the search kept) and the search box of an admin list.

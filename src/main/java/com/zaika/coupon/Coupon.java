@@ -186,6 +186,12 @@ public class Coupon extends BaseEntity {
 		return value;
 	}
 
+	/** Changes the kind of discount and its value together (the value is read by the type). */
+	public void setDiscount(CouponType type, BigDecimal value) {
+		this.type = Objects.requireNonNull(type, "type");
+		setValue(value);
+	}
+
 	public void setValue(BigDecimal value) {
 		Objects.requireNonNull(value, "value");
 		if (value.signum() <= 0 || (type == CouponType.PERCENT && value.compareTo(HUNDRED) > 0)) {

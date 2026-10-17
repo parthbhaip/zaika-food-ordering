@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${row == null} ? 'New coupon | Zaika' : ${row.coupon.code + ' | Zaika'}">New coupon | Zaika</title></head>
+<body>
+<!--/* /admin/coupons/new and /admin/coupons/{id}: create or edit a coupon. The form posts to the page's own URL and
+     comes back with inline errors and the typed values kept. Editing shows the code read-only (it never changes), the
+     usage so far, and delete (only for a coupon nobody has used; a used one is switched off instead).
+     Model: row (admin.CouponAdminService.Row, null when creating), form (admin.CouponForm), types, restaurants. */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="editing=${row != null}, c=${row?.coupon},
+			formUrl=${row == null ? '/admin/coupons/new' : '/admin/coupons/' + row.coupon.id}">
+		<nav th:replace="~{fragments/admin :: nav('coupons')}"></nav>
+
+		<a class="checkout-back" th:href="@{/admin/coupons}" href="/admin/coupons"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>All coupons</a>
+
+		<header class="admin-head">
+			<p class="eyebrow" th:text="${editing} ? 'Edit coupon' : 'Admin'">Admin</p>
+			<h1 id="coupon-form-title" class="owner-title" th:text="${editing} ? ${c.code} : 'New coupon'">New coupon</h1>
+			<p class="owner-head-meta" th:if="${editing}">
+				<span class="badge badge-dot" th:classappend="${row.state.badge}" th:text="${row.state.label}">Live</span>
+				<span th:text="${row.headline}">50% off up to ₹100</span>
+			</p>
+		</header>
+
+		<div class="alert alert-error" role="alert" th:if="${#fields.hasErrors('${form.*}')}">
+			<svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+			<p><strong>A few details need another look.</strong> Fix the fields marked below and save again.</p>
+		</div>
+
+		<div class="admin-coupon-layout" th:classappend="${editing} ? 'has-side'">
+			<form class="profile-form" th:action="@{${formUrl}}" action="/admin/coupons/new" method="post" th:object="${form}" novalidate aria-labelledby="coupon-form-title">
+				<fieldset class="card onboarding-step">
+					<legend class="checkout-step-title">Code</legend>
+					<div class="field" th:if="${editing}">
+						<label class="field-label" for="code">Code</label>
+						<input class="input admin-coupon-code" id="code" name="code" type="text" readonly th:value="${c.code}" value="WELCOME50" aria-describedby="code-help">
+						<p class="field-help" id="code-help">Codes can't change once created: customers may have saved this one.</p>
+					</div>
+					<th:block th:unless="${editing}">
+						<div th:replace="~{fragments/form :: field('code', 'Code', 'text', '3 to 20 letters and digits, like DIWALI100. Saved in capitals.', 'off')}"></div>
+					</th:block>
+					<div th:replace="~{fragments/form :: field('description', 'Description', 'text', 'One line customers see with the offer, like Flat ₹100 off on Diwali orders.', 'off')}"></div>
+				</fieldset>
+
+				<fieldset class="card onboarding-step">
+					<legend class="checkout-step-title">Discount</legend>
+					<fieldset class="field choice-field" th:with="invalid=${#fields.hasErrors('type')}" th:classappend="${invalid} ? 'has-error'"
+						th:aria-describedby="${invalid} ? 'type-error'">
+						<legend class="field-label">Kind of discount</legend>
+						<div class="choice-row">
+							<label class="choice"><input class="radio" type="radio" th:field="*{type}" value="PERCENT"><span>Percentage off</span></label>
+							<label class="choice"><input class="radio" type="radio" th:field="*{type}" value="FLAT"><span>Flat amount off</span></label>
+						</div>
+						<p class="field-error" th:if="${invalid}" id="type-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('type'), ' ')}">Choose a percentage or a flat amount.</span></p>
+					</fieldset>
+					<div class="onboarding-grid onboarding-grid-3" th:with="inputmode='decimal'">
+						<div th:replace="~{fragments/form :: field('value', 'Discount', 'text', 'Percent (up to 100) or rupees, by the kind above.', 'off')}"></div>
+						<div th:replace="~{fragments/form :: field('maxDiscount', 'Cap in ₹ (optional)', 'text', 'Most a percentage takes off, like 100.', 'off')}"></div>
+						<div th:replace="~{fragments/form :: field('minOrder', 'Minimum order in ₹', 'text', 'Item total needed. Empty or 0 for none.', 'off')}"></div>
+					</div>
+				</fieldset>
+
+				<fieldset class="card onboarding-step">
+					<legend class="checkout-step-title">When and where</legend>
+					<div class="onboarding-grid">
+						<div th:replace="~{fragments/form :: field('validFrom', 'Starts', 'datetime-local', 'India time.', 'off')}"></div>
+						<div th:replace="~{fragments/form :: field('validUntil', 'Ends (optional)', 'datetime-local', 'Stops working at this moment. Empty for no end date.', 'off')}"></div>
+					</div>
+					<div class="field" th:with="invalid=${#fields.hasErrors('restaurantId')}" th:classappend="${invalid} ? 'has-error'">
+						<label class="field-label" for="restaurantId">Works at</label>
+						<div class="select-wrap">
+							<select class="select" id="restaurantId" name="restaurantId" th:aria-invalid="${invalid} ? 'true'"
+								th:aria-describedby="${invalid} ? 'restaurantId-error restaurantId-help' : 'restaurantId-help'">
+								<option value="" th:selected="${form.restaurantId == null}">Every restaurant</option>
+								<option th:each="r : ${restaurants}" th:value="${r.id}" th:selected="${r.id == form.restaurantId}"
+									th:text="${r.status.name() == 'APPROVED'} ? |${r.name} · ${r.area}| : |${r.name} · ${r.area} (${T(com.zaika.admin.ModerationFilter).label(r.status)})|">Rassa Darbar · Rajarampuri</option>
+							</select>
+						</div>
+						<p class="field-help" id="restaurantId-help">A restaurant's own coupon is listed first on its page.</p>
+						<p class="field-error" th:if="${invalid}" id="restaurantId-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('restaurantId'), ' ')}">Choose a restaurant from the list.</span></p>
+					</div>
+				</fieldset>
+
+				<fieldset class="card onboarding-step">
+					<legend class="checkout-step-title">Limits</legend>
+					<div class="onboarding-grid" th:with="inputmode='numeric'">
+						<div th:replace="~{fragments/form :: field('totalLimit', 'Total uses (optional)', 'text', 'Across all customers. Empty for no limit.', 'off')}"></div>
+						<div th:replace="~{fragments/form :: field('perUserLimit', 'Uses per customer (optional)', 'text', 'Empty for no limit.', 'off')}"></div>
+					</div>
+					<div class="field">
+						<label class="check"><input class="switch" type="checkbox" role="switch" th:field="*{firstOrderOnly}"><span class="check-text">First order only <small>Only for customers who have never had an order go through on Zaika.</small></span></label>
+						<label class="check"><input class="switch" type="checkbox" role="switch" th:field="*{active}"><span class="check-text">Active <small>Switch it off to stop new uses at once. Orders already placed keep their discount.</small></span></label>
+					</div>
+				</fieldset>
+
+				<div class="profile-actions">
+					<button type="submit" class="btn btn-primary btn-lg" th:text="${editing} ? 'Save changes' : 'Create coupon'">Create coupon</button>
+					<a class="btn btn-ghost btn-lg" th:href="@{/admin/coupons}" href="/admin/coupons">Cancel</a>
+				</div>
+			</form>
+
+			<aside class="admin-side" th:if="${editing}" aria-label="Usage and delete">
+				<section class="card owner-listing" aria-labelledby="coupon-usage-title">
+					<h2 id="coupon-usage-title" class="owner-section-title">Usage</h2>
+					<dl class="owner-facts">
+						<div>
+							<dt>Used on orders</dt>
+							<dd th:text="${c.totalLimit == null} ? ${@fmt.count(row.uses)} : |${@fmt.count(row.uses)} of ${@fmt.count(c.totalLimit)}|">12 of 100</dd>
+						</div>
+						<div>
+							<dt>Customers</dt>
+							<dd th:text="${@fmt.count(row.customers)}">11</dd>
+						</div>
+						<div>
+							<dt>Discount given</dt>
+							<dd th:text="${@fmt.money(row.discount)}">₹1,240.00</dd>
+						</div>
+						<div>
+							<dt>Created</dt>
+							<dd th:text="${@fmt.date(c.createdAt)}">1 Oct 2026</dd>
+						</div>
+					</dl>
+					<p class="owner-listing-help">Orders that are cancelled, rejected or never paid give their use back, so they don't count.</p>
+				</section>
+
+				<section class="card owner-listing" aria-labelledby="coupon-delete-title">
+					<h2 id="coupon-delete-title" class="owner-section-title">Delete</h2>
+					<th:block th:if="${row.uses == 0}">
+						<p class="owner-listing-help">Nobody has used it yet, so it can go for good. Carts that have it applied lose it.</p>
+						<details class="confirm admin-reason" data-menu>
+							<summary class="btn btn-secondary"><svg th:replace="~{fragments/icon :: icon('trash')}"></svg>Delete coupon</summary>
+							<form class="confirm-panel admin-reason-form" method="post" th:action="@{/admin/coupons/{id}/delete(id=${c.id})}" action="/admin/coupons/1/delete">
+								<p th:text="|Delete ${c.code}? This can't be undone.|">Delete WELCOME50? This can't be undone.</p>
+								<button type="submit" class="btn btn-danger">Yes, delete</button>
+							</form>
+						</details>
+					</th:block>
+					<p class="owner-listing-help" th:unless="${row.uses == 0}"
+						th:text="|Used on ${row.uses == 1 ? 'one order' : @fmt.count(row.uses) + ' orders'}, so it stays for the records. Switch it off to stop new uses.|">Used on 12 orders, so it stays for the records. Switch it off to stop new uses.</p>
+				</section>
+			</aside>
+		</div>
+	</div>
+</main>
+</body>
+</html>

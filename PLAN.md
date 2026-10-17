@@ -208,7 +208,7 @@ How this file works
 - [x] T40 Riders and users
   - `/admin/riders`: approve / suspend. `/admin/users`: search, enable/disable (never self, never the last admin), view a user's orders. Tests.
 
-- [ ] T41 Coupons and cuisines admin
+- [x] T41 Coupons and cuisines admin
   - CRUD with validation; usage count per coupon. Tests.
 
 - [ ] T42 Orders admin `/admin/orders`

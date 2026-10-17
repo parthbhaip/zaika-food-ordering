@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Coupons | Zaika</title></head>
+<body>
+<!--/* /admin/coupons?page=: every coupon, newest first, 20 a page, with what it gives, where it works, its window, its
+     state now and how often it was used on orders that went through. Each row opens the edit page.
+     Model: rows (Page of admin.CouponAdminService.Row), listUrl (canonical URL of the first page). */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="page=${rows}">
+		<nav th:replace="~{fragments/admin :: nav('coupons')}"></nav>
+
+		<header class="owner-head admin-list-head">
+			<div class="admin-head">
+				<p class="eyebrow">Admin</p>
+				<h1 class="owner-title">Coupons</h1>
+				<p class="admin-head-meta">Codes customers apply in their cart. Uses count orders that went through: a cancelled, rejected or unpaid order gives its use back.</p>
+			</div>
+			<a class="btn btn-primary owner-head-action" th:href="@{/admin/coupons/new}" href="/admin/coupons/new"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg>New coupon</a>
+		</header>
+
+		<section class="admin-recent" aria-labelledby="admin-list-title">
+			<h2 id="admin-list-title" class="visually-hidden">All coupons</h2>
+			<div class="card" th:if="${page.totalElements == 0}">
+				<div th:replace="~{fragments/ui :: emptyState('tag', 'No coupons yet', 'Create a code like WELCOME50 and customers can apply it in their cart from its start time.', 'New coupon', '/admin/coupons/new')}"></div>
+			</div>
+			<th:block th:if="${page.hasContent()}">
+				<p class="report-count" th:with="first=${page.number * page.size + 1}, last=${page.number * page.size + page.numberOfElements}"
+					th:text="${page.totalElements == 1} ? 'One coupon' : |Showing ${@fmt.count(first)}–${@fmt.count(last)} of ${@fmt.count(page.totalElements)} coupons, newest first|">Showing 1–3 of 3 coupons, newest first</p>
+				<div class="table-wrap">
+					<table class="table admin-coupons">
+						<caption class="visually-hidden">Coupons, newest first</caption>
+						<thead>
+							<tr>
+								<th scope="col">Coupon</th>
+								<th scope="col">Works at</th>
+								<th scope="col">Valid</th>
+								<th scope="col">Status</th>
+								<th scope="col" class="num">Used</th>
+								<th scope="col"><span class="visually-hidden">Actions</span></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="row : ${page.content}" th:with="c=${row.coupon}">
+								<th scope="row">
+									<a class="admin-coupon-code" th:href="@{/admin/coupons/{id}(id=${c.id})}" href="/admin/coupons/1" th:text="${c.code}">WELCOME50</a>
+									<span class="admin-owner-name" th:text="${row.headline}">50% off up to ₹100</span>
+									<span class="admin-restaurant-meta" th:if="${!row.terms.isEmpty()}" th:text="${row.terms}">Min. order ₹199 · First order only</span>
+								</th>
+								<td th:text="${c.restaurant == null} ? 'Every restaurant' : ${c.restaurant.name}">Every restaurant</td>
+								<td>
+									<span class="admin-owner-name" th:text="|From ${@fmt.date(c.validFrom)}|">From 1 Oct 2026</span>
+									<span class="admin-restaurant-meta" th:text="${c.validUntil == null} ? 'No end date' : |Till ${@fmt.dateTime(c.validUntil.minusNanos(1))}|">Till 31 Dec 2026, 11:59 PM</span>
+								</td>
+								<td><span class="badge badge-dot" th:classappend="${row.state.badge}" th:text="${row.state.label}">Live</span></td>
+								<td class="num">
+									<span class="admin-owner-name" th:text="${c.totalLimit == null} ? ${@fmt.count(row.uses)} : |${@fmt.count(row.uses)} of ${@fmt.count(c.totalLimit)}|">12 of 100</span>
+									<span class="admin-restaurant-meta" th:if="${row.uses > 0}" th:text="|${@fmt.price(row.discount)} off in all|">₹1,240 off in all</span>
+								</td>
+								<td class="num"><a class="btn btn-secondary btn-sm" th:href="@{/admin/coupons/{id}(id=${c.id})}" href="/admin/coupons/1"
+									>Edit<span class="visually-hidden" th:text="| ${c.code}|"> WELCOME50</span></a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div th:replace="~{fragments/pagination :: pagination(${page}, ${listUrl})}"></div>
+			</th:block>
+		</section>
+	</div>
+</main>
+</body>
+</html>

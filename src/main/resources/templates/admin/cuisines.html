@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Cuisines | Zaika</title></head>
+<body>
+<!--/* /admin/cuisines: every cuisine by name with how many restaurants list it, an add form, and a rename and delete per
+     cuisine. A cuisine's link (its slug) never changes, even when renamed. Only a cuisine no restaurant lists can be
+     deleted. Model: rows (List of admin.CuisineAdminService.Row), newCuisine and renameForm (admin.CuisineForm),
+     renaming (the id whose rename failed, shown open with the error; null otherwise). */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container">
+		<nav th:replace="~{fragments/admin :: nav('cuisines')}"></nav>
+
+		<header class="admin-head">
+			<p class="eyebrow">Admin</p>
+			<h1 class="owner-title">Cuisines</h1>
+			<p class="admin-head-meta">Restaurants pick up to three on their profile, and customers filter by them. A cuisine keeps its link when renamed, so shared links keep working.</p>
+		</header>
+
+		<section class="card menu-admin-new" aria-labelledby="new-cuisine-title">
+			<h2 id="new-cuisine-title" class="owner-section-title">Add a cuisine</h2>
+			<form class="menu-admin-new-form" method="post" th:action="@{/admin/cuisines}" action="/admin/cuisines" th:object="${newCuisine}" novalidate>
+				<div th:replace="~{fragments/form :: field('name', 'Cuisine name', 'text', 'Like Konkani, Street Food or Desserts. Up to 40 characters.', 'off')}"></div>
+				<button type="submit" class="btn btn-secondary"><svg th:replace="~{fragments/icon :: icon('plus')}"></svg>Add cuisine</button>
+			</form>
+		</section>
+
+		<section class="card admin-cuisines" aria-labelledby="cuisine-list-title">
+			<h2 id="cuisine-list-title" class="owner-section-title" th:text="${rows.size() == 1} ? 'One cuisine' : |${rows.size()} cuisines|">10 cuisines</h2>
+			<th:block th:if="${rows.isEmpty()}">
+				<div th:replace="~{fragments/ui :: emptyState('dish', 'No cuisines yet', 'Add the first one above. Restaurants need at least one to finish their profile.', null, null)}"></div>
+			</th:block>
+			<ul class="admin-cuisine-list" th:unless="${rows.isEmpty()}">
+				<li class="admin-cuisine" th:each="row : ${rows}" th:id="|cuisine-${row.cuisine.id}|"
+					th:with="c=${row.cuisine}, renamingThis=${renaming == row.cuisine.id}">
+					<div class="menu-admin-category-text">
+						<p class="admin-cuisine-name" th:text="${c.name}">South Indian</p>
+						<p class="menu-admin-count">
+							<th:block th:text="${row.restaurants == 0} ? 'No restaurants yet' : |${row.restaurants == 1 ? 'One restaurant' : row.restaurants + ' restaurants'} · ${row.live} live|">4 restaurants · 3 live</th:block>
+							<span class="admin-slug" th:text="| · /restaurants?cuisine=${c.slug}|"> · /restaurants?cuisine=south-indian</span>
+						</p>
+					</div>
+					<div class="menu-admin-category-actions">
+						<a class="btn btn-ghost btn-sm" th:if="${row.live > 0}" th:href="@{/restaurants(cuisine=${c.slug})}" href="/restaurants?cuisine=south-indian">View<span class="visually-hidden" th:text="| ${c.name} restaurants|"> South Indian restaurants</span></a>
+						<details class="menu-admin-pop-wrap" data-menu th:open="${renamingThis}">
+							<summary class="btn btn-ghost btn-sm"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Rename<span class="visually-hidden" th:text="| ${c.name}|"> South Indian</span></summary>
+							<form class="menu-admin-pop menu-admin-rename" method="post" th:action="@{/admin/cuisines/{id}/rename(id=${c.id})}" action="/admin/cuisines/1/rename" novalidate
+								th:with="invalid=${renamingThis and #fields.hasErrors('${renameForm.name}')}">
+								<div class="field" th:classappend="${invalid} ? 'has-error'">
+									<label class="field-label" th:for="|rename-${c.id}|" for="rename-1">Cuisine name</label>
+									<input class="input" type="text" th:id="|rename-${c.id}|" name="name" maxlength="40" autocomplete="off"
+										th:value="${renamingThis} ? ${renameForm.name} : ${c.name}"
+										th:aria-invalid="${invalid} ? 'true'" th:aria-describedby="${invalid} ? |rename-${c.id}-error rename-${c.id}-help| : |rename-${c.id}-help|">
+									<p class="field-help" th:id="|rename-${c.id}-help|" th:text="|The link stays /restaurants?cuisine=${c.slug}.|">The link stays /restaurants?cuisine=south-indian.</p>
+									<p class="field-error" th:if="${invalid}" th:id="|rename-${c.id}-error|"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('${renameForm.name}'), ' ')}">Name the cuisine, like Konkani.</span></p>
+								</div>
+								<button type="submit" class="btn btn-primary btn-sm">Save name</button>
+							</form>
+						</details>
+						<details class="confirm menu-admin-pop-wrap" data-menu>
+							<summary class="btn btn-ghost btn-sm"><svg th:replace="~{fragments/icon :: icon('trash')}"></svg>Delete<span class="visually-hidden" th:text="| ${c.name}|"> South Indian</span></summary>
+							<div class="confirm-panel menu-admin-pop">
+								<th:block th:if="${row.restaurants == 0}">
+									<p th:text="|Delete “${c.name}”?|">Delete “South Indian”?</p>
+									<form method="post" th:action="@{/admin/cuisines/{id}/delete(id=${c.id})}" action="/admin/cuisines/1/delete">
+										<button type="submit" class="btn btn-danger btn-sm">Yes, delete</button>
+									</form>
+								</th:block>
+								<p th:unless="${row.restaurants == 0}" class="menu-admin-pop-text"
+									th:text="|${row.restaurants == 1 ? 'One restaurant lists' : row.restaurants + ' restaurants list'} “${c.name}”, so it can't be deleted. Rename it instead.|">4 restaurants list “South Indian”, so it can't be deleted. Rename it instead.</p>
+							</div>
+						</details>
+					</div>
+				</li>
+			</ul>
+		</section>
+	</div>
+</main>
+</body>
+</html>

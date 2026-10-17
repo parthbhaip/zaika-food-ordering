@@ -39,6 +39,11 @@ public class Cuisine extends BaseEntity {
 		return name;
 	}
 
+	/** A new display name; the slug stays, so links shared with the old name keep working. */
+	public void rename(String name) {
+		this.name = name.strip();
+	}
+
 	public String getSlug() {
 		return slug;
 	}

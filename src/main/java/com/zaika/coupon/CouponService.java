@@ -173,7 +173,7 @@ public class CouponService {
 	}
 
 	/** The fine print: "Min. order ₹199 · First order only · Valid till 31 Mar 2027"; empty when there is none. */
-	String terms(Coupon coupon) {
+	public String terms(Coupon coupon) {
 		List<String> parts = new ArrayList<>();
 		if (coupon.getMinOrder().signum() > 0) {
 			parts.add("Min. order " + fmt.price(coupon.getMinOrder()));
