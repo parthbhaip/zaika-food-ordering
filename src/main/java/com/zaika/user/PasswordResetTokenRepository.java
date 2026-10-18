@@ -26,4 +26,9 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
 	@Query("update PasswordResetToken t set t.usedAt = :now where t.user.id = :userId and t.usedAt is null")
 	int markAllUsed(long userId, LocalDateTime now);
 
+	/** Deletes every link that expired before {@code cutoff}. */
+	@Modifying
+	@Query("delete from PasswordResetToken t where t.expiresAt < :cutoff")
+	int deleteExpiredBefore(LocalDateTime cutoff);
+
 }

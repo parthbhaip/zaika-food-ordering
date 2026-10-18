@@ -14,12 +14,13 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.mail.MailException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.zaika.config.AppProperties;
+import com.zaika.notification.AfterCommit;
 import com.zaika.notification.MailService;
 
 /**
@@ -59,8 +60,9 @@ public class PasswordResetService {
 	}
 
 	/**
-	 * Emails a reset link if an enabled account has this email (any letter case); otherwise does nothing. A mail
-	 * server failure is logged, not thrown, so the visitor sees the same answer either way.
+	 * Emails a reset link if an enabled account has this email (any letter case); otherwise does nothing. The mail
+	 * goes out once the link is committed; a mail server failure is logged, not thrown, so the visitor sees the same
+	 * answer either way.
 	 */
 	@Transactional
 	public void requestReset(String email) {
@@ -73,12 +75,22 @@ public class PasswordResetService {
 		String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
 		tokens.save(new PasswordResetToken(user, hash(token), now().plus(LINK_LIFETIME)));
 		String link = app.baseUrl() + "/reset-password?token=" + token;
-		try {
-			mail.send(user.getEmail(), "Reset your " + app.brandName() + " password", message(user, link));
+		AfterCommit.mail(mail, user.getEmail(), "Reset your " + app.brandName() + " password", message(user, link),
+				"Password reset email for user " + user.getId());
+	}
+
+	/**
+	 * Nightly clean-up: deletes links that expired (used or not) more than a day ago. They can never work again, so
+	 * keeping them only grows the table.
+	 */
+	@Scheduled(cron = "0 30 3 * * *", zone = "Asia/Kolkata")
+	@Transactional
+	public int purgeExpired() {
+		int purged = tokens.deleteExpiredBefore(now().minusDays(1));
+		if (purged > 0) {
+			log.info("Purged {} expired password reset links", purged);
 		}
-		catch (MailException ex) {
-			log.warn("Password reset email for user {} could not be sent: {}", user.getId(), ex.getMessage());
-		}
+		return purged;
 	}
 
 	private String message(User user, String link) {

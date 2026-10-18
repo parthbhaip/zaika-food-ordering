@@ -580,9 +580,10 @@ class RiderDashboardTest {
 		stats.clear();
 		assertThat(page(rider)).contains("Waiting for a rider <span class=\"board-count\">7</span>");
 		long seven = stats.getPrepareStatementCount();
-		// profile with account, live delivery, waiting orders with restaurants, their dishes, cart count: none per order
+		// profile with account, live delivery, waiting orders with restaurants, their dishes, cart count, the header
+		// bell's unread count: none per order
 		assertThat(seven).isEqualTo(one);
-		assertThat(one).isLessThanOrEqualTo(5);
+		assertThat(one).isLessThanOrEqualTo(6);
 	}
 
 	@Test

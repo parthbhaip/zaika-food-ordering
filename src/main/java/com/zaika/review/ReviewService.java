@@ -19,6 +19,8 @@ import com.zaika.catalog.RestaurantBrowseService;
 import com.zaika.catalog.RestaurantRepository;
 import com.zaika.catalog.RestaurantStatus;
 import com.zaika.common.NotFoundException;
+import com.zaika.notification.Notification;
+import com.zaika.notification.NotificationService;
 import com.zaika.order.Order;
 import com.zaika.order.OrderRepository;
 import com.zaika.order.OrderStatus;
@@ -53,8 +55,11 @@ public class ReviewService {
 
 	private final Clock clock;
 
+	private final NotificationService notifications;
+
 	ReviewService(ReviewRepository reviews, OrderRepository orders, RestaurantRepository restaurants, EntityManager em,
-			Clock clock) {
+			Clock clock, NotificationService notifications) {
+		this.notifications = notifications;
 		this.reviews = reviews;
 		this.orders = orders;
 		this.restaurants = restaurants;
@@ -84,6 +89,11 @@ public class ReviewService {
 		}
 		Review review = reviews.save(new Review(order, stars, comment));
 		restaurant.addRating(stars);
+		notifications.notify(restaurant.getOwner(), Notification.Kind.REVIEW,
+				"New " + stars + "-star review",
+				review.getAuthorName() + " rated order " + order.getCode()
+						+ (review.getComment() == null ? " " + stars + " out of 5." : ": “" + review.getComment() + "”"),
+				"/owner/reviews");
 		return review;
 	}
 
@@ -132,6 +142,9 @@ public class ReviewService {
 			throw new ReviewException(ALREADY_REPLIED);
 		}
 		review.reply(text, LocalDateTime.now(clock));
+		notifications.notify(review.getCustomer(), Notification.Kind.REVIEW,
+				review.getRestaurant().getName() + " replied to your review", "“" + review.getReply() + "”",
+				"/orders/" + review.getOrder().getCode() + "#review");
 		return review;
 	}
 

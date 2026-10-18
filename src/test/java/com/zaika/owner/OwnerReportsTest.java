@@ -274,9 +274,10 @@ class OwnerReportsTest {
 		stats.clear();
 		html(get("/owner/reports").with(asMany));
 		long eight = stats.getPrepareStatementCount();
-		// restaurant, totals by status, top dishes, the page, its dishes: nothing per order, customer or dish
+		// restaurant, totals by status, top dishes, the page, its dishes, the header bell's unread count: nothing per
+		// order, customer or dish
 		assertThat(eight).isEqualTo(one);
-		assertThat(one).isLessThanOrEqualTo(5);
+		assertThat(one).isLessThanOrEqualTo(6);
 	}
 
 	@Test

@@ -1241,6 +1241,39 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	white-space: nowrap;
 }
 
+/* Header bell (signed in): the unread count sits on the icon's top right corner; at 0 only screen readers hear it */
+.header-bell { position: relative; text-decoration: none; }
+.bell-count {
+	position: absolute;
+	top: 4px;
+	right: 2px;
+	display: inline-grid;
+	place-items: center;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 5px;
+	border: 2px solid var(--color-surface);
+	border-radius: var(--radius-pill);
+	background: var(--color-primary);
+	color: var(--color-on-primary);
+	font-size: 0.6875rem;
+	font-weight: var(--weight-bold);
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+.bell-count.is-empty {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
+
 /* Phone drawer: a <details>. Its open summary also paints the backdrop, so a tap outside the panel closes it. */
 .nav-drawer[open] > summary { background: var(--color-surface-muted); }
 .nav-drawer[open] > summary::before {
@@ -3402,6 +3435,52 @@ a.admin-code { font-weight: var(--weight-semibold); white-space: nowrap; }
 }
 @media (min-width: 960px) {
 	.order-review { grid-column: 1 / -1; }
+}
+
+/* ------------------------------------------------------------------ Notifications (/notifications)
+   One column of rows, newest first. Each row is a whole-width button (opening marks it read); unread rows are
+   tinted, bolder and carry a dot. */
+.notifications-page { padding-block: var(--space-6) var(--space-16); }
+.notifications { display: grid; gap: var(--space-5); max-width: 720px; }
+.notifications-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.notifications-heading { display: grid; gap: var(--space-1); }
+.notifications-title { font-size: var(--text-2xl); font-weight: var(--weight-extrabold); letter-spacing: -0.02em; }
+.notifications-read-all .btn .icon { width: 18px; height: 18px; }
+.notifications-empty { padding: var(--space-4); }
+.notification-list { display: grid; margin: 0; padding: 0; list-style: none; overflow: hidden; border: 1px solid var(--color-line); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.notification + .notification { border-top: 1px solid var(--color-line); }
+.notification-open { margin: 0; }
+.notification-button {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: start;
+	gap: var(--space-3);
+	width: 100%;
+	padding: var(--space-4);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background var(--duration-fast) var(--ease-out);
+}
+.notification-button:hover { background: var(--color-surface-muted); }
+.notification-button:focus-visible { outline-offset: -2px; }
+.notification.is-unread .notification-button { background: var(--color-primary-tint); }
+.notification.is-unread .notification-button:hover { background: var(--color-surface-muted); }
+.notification-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--color-surface-muted); color: var(--color-text-secondary); }
+.notification-icon .icon { width: 20px; height: 20px; }
+.notification.is-unread .notification-icon { background: var(--color-surface); color: var(--color-primary); }
+.notification-text { display: grid; gap: 2px; min-width: 0; }
+.notification-title { font-weight: var(--weight-semibold); overflow-wrap: anywhere; }
+.notification.is-unread .notification-title { font-weight: var(--weight-bold); }
+.notification-body { color: var(--color-text-secondary); font-size: var(--text-sm); overflow-wrap: anywhere; }
+.notification-time { color: var(--color-text-muted); font-size: var(--text-xs); }
+.notification-dot { width: 10px; height: 10px; margin-top: var(--space-2); border-radius: 50%; background: var(--color-primary); }
+@media (min-width: 640px) {
+	.notifications-page { padding-top: var(--space-10); }
+	.notification-button { padding: var(--space-4) var(--space-5); }
 }
 
 /* ------------------------------------------------------------------ Error pages (403, 404, 500 and the generic fallback) */

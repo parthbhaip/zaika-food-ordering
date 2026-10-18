@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Notifications | Zaika</title></head>
+<body>
+<!--/* /notifications, for every signed-in account: newest first, 20 to a page. Unread ones are tinted and marked.
+     Opening one is a POST (it marks it read) that redirects to where it points; "Mark all as read" shows while
+     something is unread. Model: notifications (Page<notification.Notification>), unreadNotifications (long). */-->
+<main id="main" class="notifications-page">
+	<div class="container notifications" th:with="unread=${unreadNotifications}">
+		<header class="notifications-head">
+			<div class="notifications-heading">
+				<h1 class="notifications-title">Notifications</h1>
+				<p th:if="${notifications.totalElements > 0}" class="muted"
+					th:text="${unread == 0} ? 'You’re all caught up.' : (${unread == 1} ? '1 unread' : |${@fmt.count(unread)} unread|)">3 unread</p>
+			</div>
+			<form th:if="${unread > 0}" class="notifications-read-all" method="post" th:action="@{/notifications/read-all}" action="/notifications/read-all">
+				<button type="submit" class="btn btn-secondary btn-sm"><svg th:replace="~{fragments/icon :: icon('check')}"></svg>Mark all as read</button>
+			</form>
+		</header>
+
+		<div th:if="${notifications.totalElements == 0}" class="card notifications-empty">
+			<div th:replace="~{fragments/ui :: emptyState('bell', 'No notifications yet', 'Order updates, approvals and replies to reviews show up here as they happen.', null, null)}"></div>
+		</div>
+
+		<ol th:if="${notifications.hasContent()}" class="notification-list" aria-label="Notifications, newest first">
+			<li th:each="n : ${notifications.content}" class="notification" th:classappend="${n.unread} ? 'is-unread'">
+				<form class="notification-open" method="post" th:action="@{/notifications/{id}/open(id=${n.id})}" action="/notifications/1/open">
+					<button type="submit" class="notification-button">
+						<span class="notification-icon"><svg th:replace="~{fragments/icon :: icon(${n.kind.icon})}"></svg></span>
+						<span class="notification-text">
+							<span class="notification-title"><span th:if="${n.unread}" class="visually-hidden">Unread: </span><th:block th:text="${n.title}">Rassa Darbar accepted your order</th:block></span>
+							<span class="notification-body" th:text="${n.body}">ZK-26-000123 is confirmed. Expected at your door by 8:05 PM.</span>
+							<time class="notification-time" th:datetime="${n.createdAt}" th:text="${@fmt.relative(n.createdAt)}">2 min ago</time>
+						</span>
+						<span th:if="${n.unread}" class="notification-dot" aria-hidden="true"></span>
+					</button>
+				</form>
+			</li>
+		</ol>
+
+		<div th:replace="~{fragments/pagination :: pagination(${notifications}, '/notifications')}"></div>
+	</div>
+</main>
+</body>
+</html>

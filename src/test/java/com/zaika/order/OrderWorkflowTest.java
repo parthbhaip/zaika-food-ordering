@@ -281,6 +281,21 @@ class OrderWorkflowTest {
 	}
 
 	@Test
+	void everyMovePublishesOneEventWithWhereItCameFromAndWhoMadeIt() {
+		List<Object> events = new ArrayList<>();
+		OrderWorkflow publishing = new OrderWorkflow(Clock.fixed(NOW.atZone(IST).toInstant(), IST), events::add);
+		Order order = orderAt(OrderStatus.PLACED);
+		publishing.transition(order, OrderStatus.ACCEPTED, OrderActor.restaurant(OWNER));
+		assertThat(events).singleElement().isEqualTo(new OrderStatusChanged(order, OrderStatus.PLACED,
+				OrderStatus.ACCEPTED, OrderActor.restaurant(OWNER)));
+
+		// a refused move publishes nothing
+		assertThatThrownBy(() -> publishing.transition(order, OrderStatus.DELIVERED, OrderActor.rider(RIDER)))
+			.isInstanceOf(OrderTransitionException.class);
+		assertThat(events).hasSize(1);
+	}
+
+	@Test
 	void aConfirmedOnlinePaymentPlacesTheOrderAsPaid() {
 		Order order = orderAt(OrderStatus.PENDING_PAYMENT, PaymentMethod.ONLINE);
 		order.paymentFailed(); // an earlier attempt was declined

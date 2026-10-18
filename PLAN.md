@@ -224,7 +224,7 @@ How this file works
   - Heart a restaurant (htmx), `/account/favourites`.
   - "Reorder" puts available items from a past order into the cart and tells the user about unavailable items or changed prices. Tests.
 
-- [ ] T45 Notifications
+- [x] T45 Notifications
   - `Notification` entity, created on order status changes, restaurant/rider approval and similar events.
   - Header bell with unread count (htmx poll every 30 s when logged in), `/notifications` list, mark all read.
   - Emails through MailService for order placed, order delivered, restaurant approved. Tests.

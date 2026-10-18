@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import com.zaika.common.ForbiddenException;
@@ -35,7 +37,8 @@ import com.zaika.order.OrderActor.Kind;
  * assigned to them; anyone else gets {@link ForbiddenException}, as does a role that never makes that move. A role
  * that does make the move, but not from the order's current status (the order moved on meanwhile), gets
  * {@link OrderTransitionException}. Cancelling or rejecting needs a reason and records who did it; a paid order
- * that is cancelled or rejected goes to REFUND_PENDING, and a cash order is PAID once delivered.
+ * that is cancelled or rejected goes to REFUND_PENDING, and a cash order is PAID once delivered. Every move publishes
+ * an {@link OrderStatusChanged} event (notifications and mails listen to it).
  */
 @Component
 public class OrderWorkflow {
@@ -44,8 +47,18 @@ public class OrderWorkflow {
 
 	private final Clock clock;
 
-	public OrderWorkflow(Clock clock) {
+	private final ApplicationEventPublisher events;
+
+	@Autowired
+	public OrderWorkflow(Clock clock, ApplicationEventPublisher events) {
 		this.clock = clock;
+		this.events = events;
+	}
+
+	/** A workflow nobody listens to (unit tests). */
+	public OrderWorkflow(Clock clock) {
+		this(clock, event -> {
+		});
 	}
 
 	/** {@link #transition(Order, OrderStatus, OrderActor, String)} for moves that need no reason. */
@@ -76,6 +89,7 @@ public class OrderWorkflow {
 		boolean ending = target == OrderStatus.CANCELLED || target == OrderStatus.REJECTED;
 		String why = ending ? reason(reason) : null;
 
+		OrderStatus from = order.getStatus();
 		order.moveTo(target, LocalDateTime.now(clock));
 		if (ending) {
 			order.recordCancellation(why, actor.kind());
@@ -86,6 +100,7 @@ public class OrderWorkflow {
 		if (target == OrderStatus.DELIVERED && order.getPaymentMethod() == PaymentMethod.COD) {
 			order.setPaymentStatus(PaymentStatus.PAID);
 		}
+		events.publishEvent(new OrderStatusChanged(order, from, target, actor));
 		return order;
 	}
 

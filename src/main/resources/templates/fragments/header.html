@@ -3,7 +3,7 @@
 <body>
 <!--/* Sticky site header. Phones (< 960px): menu drawer, logo, search link, cart. Larger screens: logo, city, search
      box, nav, cart, account menu. Both menus are <details data-menu> so they work without JavaScript. */-->
-<header th:fragment="header" class="site-header" th:with="count=${cartCount ?: 0}">
+<header th:fragment="header" class="site-header" th:with="count=${cartCount ?: 0}, unread=${unreadNotifications ?: 0}">
 	<div class="container site-header-inner">
 		<details class="nav-drawer" data-menu>
 			<summary class="header-icon-btn"><svg th:replace="~{fragments/icon :: icon('menu')}"></svg><span class="visually-hidden">Menu</span></summary>
@@ -53,6 +53,14 @@
 				<span id="cart-count" aria-live="polite"><span th:replace="~{fragments/header :: cartBadge(${count})}"></span></span>
 			</a>
 
+			<th:block sec:authorize="isAuthenticated()">
+				<a class="header-icon-btn header-bell" th:href="@{/notifications}" href="/notifications">
+					<svg th:replace="~{fragments/icon :: icon('bell')}"></svg><span class="visually-hidden">Notifications</span>
+					<span id="notification-count" aria-live="polite"><span th:replace="~{fragments/header :: bellBadge(${unread})}"></span></span>
+				</a>
+				<span th:replace="~{fragments/header :: bellPoll(${unread})}"></span>
+			</th:block>
+
 			<div class="header-auth" sec:authorize="!isAuthenticated()">
 				<a class="btn btn-ghost btn-sm" th:href="@{/login}" href="/login">Sign in</a>
 				<a class="btn btn-primary btn-sm" th:href="@{/register}" href="/register">Sign up</a>
@@ -71,6 +79,17 @@
 <!--/* The header cart badge. #cart-count around it is the live region; htmx answers replace its content out of band:
        <span id="cart-count" hx-swap-oob="innerHTML"><span th:replace="~{fragments/header :: cartBadge(${cartCount})}"></span></span> */-->
 <span th:fragment="cartBadge(count)" class="cart-count" th:classappend="${count == 0} ? 'is-empty'"><span th:text="${count}">0</span><span class="visually-hidden" th:text="${count == 1} ? ' item' : ' items'"> items</span></span>
+
+<!--/* The header bell's unread count (hidden at 0, "99+" above 99). #notification-count around it is the live region. */-->
+<span th:fragment="bellBadge(unread)" class="bell-count" th:classappend="${unread == 0} ? 'is-empty'"><span th:text="${unread > 99} ? '99+' : ${unread}">3</span><span class="visually-hidden"> unread</span></span>
+
+<!--/* Polls the unread count every 30 seconds while signed in; the server answers 204 while it is still n. */-->
+<span th:fragment="bellPoll(unread)" id="notification-poll" hidden th:hx-get="@{/notifications/badge(n=${unread})}" hx-trigger="every 30s" hx-swap="outerHTML"></span>
+
+<!--/* GET /notifications/badge when the count changed: a new poller with the new count, and the badge out of band.
+       Model: unreadNotifications. */-->
+<th:block th:fragment="bell-update"><span th:replace="~{fragments/header :: bellPoll(${unreadNotifications})}"></span>
+<span id="notification-count" hx-swap-oob="innerHTML"><span th:replace="~{fragments/header :: bellBadge(${unreadNotifications})}"></span></span></th:block>
 
 <!--/* Account links for the signed-in role, or Sign in / Sign up. Shared by the drawer and the account menu. */-->
 <div th:fragment="accountLinks" class="account-links">

@@ -210,7 +210,8 @@ class MenuManagementTest {
 		long one = stats.getPrepareStatementCount();
 		stats.clear();
 		html(get("/owner/menu").with(many.owner(userDetails)));
-		assertThat(stats.getPrepareStatementCount()).isEqualTo(one).isLessThanOrEqualTo(4);
+		// restaurant, categories, dishes, the header bell's unread count
+		assertThat(stats.getPrepareStatementCount()).isEqualTo(one).isLessThanOrEqualTo(5);
 	}
 
 	// ---------------------------------------------------------------- categories

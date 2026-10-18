@@ -16,7 +16,10 @@ import com.zaika.catalog.RestaurantRepository.StatusCount;
 import com.zaika.catalog.RestaurantStatus;
 import com.zaika.common.NotFoundException;
 import com.zaika.config.AppProperties;
+import com.zaika.notification.AfterCommit;
 import com.zaika.notification.MailService;
+import com.zaika.notification.Notification;
+import com.zaika.notification.NotificationService;
 import com.zaika.order.OrderRepository;
 import com.zaika.order.OrderStatus;
 
@@ -40,13 +43,16 @@ public class RestaurantModerationService {
 
 	private final AppProperties app;
 
+	private final NotificationService notifications;
+
 	RestaurantModerationService(RestaurantRepository restaurants, MenuItemRepository dishes, OrderRepository orders,
-			MailService mail, AppProperties app) {
+			MailService mail, AppProperties app, NotificationService notifications) {
 		this.restaurants = restaurants;
 		this.dishes = dishes;
 		this.orders = orders;
 		this.mail = mail;
 		this.app = app;
+		this.notifications = notifications;
 	}
 
 	/** One page of the list (owners loaded) and how many restaurants each status has, all statuses included. */
@@ -85,6 +91,8 @@ public class RestaurantModerationService {
 			throw new ModerationException(refusal(r, decision));
 		}
 		r.changeStatus(decision.target, decision.target.needsReason() ? reason : null);
+		notifications.notify(r.getOwner(), Notification.Kind.RESTAURANT, subject(r, decision), note(r, decision),
+				decision == Decision.REJECT ? "/owner/restaurant" : "/owner");
 		AfterCommit.mail(mail, r.getOwner().getEmail(), subject(r, decision), message(r, decision),
 				"Moderation email (" + decision + ") for restaurant " + r.getId());
 		return r.getName();
@@ -106,6 +114,17 @@ public class RestaurantModerationService {
 			case REJECT -> "We couldn't approve " + r.getName() + " yet";
 			case SUSPEND -> r.getName() + " is suspended on " + app.brandName();
 			case REACTIVATE -> r.getName() + " is back on " + app.brandName();
+		};
+	}
+
+	/** The in-app version of the email: one or two sentences. */
+	private String note(Restaurant r, Decision decision) {
+		return switch (decision) {
+			case APPROVE -> "Customers can find it and order now. Manage orders and your menu from this panel.";
+			case REJECT -> "Reason: " + Notification.sentence(r.getStatusReason()) + " Fix the details in your restaurant profile, then "
+					+ "write to partners@zaika.test for another review.";
+			case SUSPEND -> "Customers can't see it or order until it is reactivated. Reason: " + Notification.sentence(r.getStatusReason());
+			case REACTIVATE -> "Customers can find it and order from it again.";
 		};
 	}
 

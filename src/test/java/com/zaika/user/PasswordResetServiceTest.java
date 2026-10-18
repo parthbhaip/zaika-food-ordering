@@ -20,6 +20,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.zaika.support.MutableClock;
 
@@ -57,6 +58,9 @@ class PasswordResetServiceTest {
 
 	@Autowired
 	MutableClock clock;
+
+	@Autowired
+	TransactionTemplate tx;
 
 	User user;
 
@@ -214,6 +218,31 @@ class PasswordResetServiceTest {
 		User reloaded = users.findByEmail(EMAIL).orElseThrow();
 		assertThat(reloaded.getFailedLoginCount()).isZero();
 		assertThat(reloaded.getLockedUntil()).isNull();
+	}
+
+	@Test
+	void theLinkIsMailedOnlyOnceItIsCommitted(CapturedOutput output) {
+		tx.executeWithoutResult(status -> {
+			resets.requestReset(EMAIL);
+			assertThat(output).doesNotContain("Reset your Zaika password"); // not before commit
+			status.setRollbackOnly();
+		});
+		assertThat(output).doesNotContain("Reset your Zaika password");
+		assertThat(tokensOf(user)).isEmpty();
+	}
+
+	@Test
+	void theNightlyPurgeDeletesLinksThatExpiredMoreThanADayAgo() {
+		resets.requestReset(EMAIL); // expires 4 Oct, 8:00 PM
+		clock.advance(Duration.ofDays(1));
+		resets.requestReset(EMAIL); // expires 5 Oct, 8:00 PM
+		resets.purgeExpired(); // 5 Oct, 7:30 PM: the first expired 23.5 hours ago, kept
+		assertThat(tokensOf(user)).hasSize(2);
+
+		clock.advance(Duration.ofMinutes(31));
+		resets.purgeExpired(); // 5 Oct, 8:01 PM: the first expired more than a day ago
+		assertThat(tokensOf(user)).singleElement()
+			.satisfies(t -> assertThat(t.getExpiresAt()).isEqualTo(MutableClock.DEFAULT_NOW.plusDays(1).plusMinutes(30)));
 	}
 
 	private List<PasswordResetToken> tokensOf(User account) {

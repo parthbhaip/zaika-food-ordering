@@ -387,9 +387,10 @@ class AdminDashboardTest {
 		stats.clear();
 		mvc.perform(get("/admin").with(signedIn)).andExpect(status().isOk());
 		long after = stats.getPrepareStatementCount();
-		// daily totals, 2 restaurant counts, customers, 2 rider counts, top five, recent ten: none per order
+		// daily totals, 2 restaurant counts, customers, 2 rider counts, top five, recent ten, the header bell's unread
+		// count: none per order
 		assertThat(after).isEqualTo(before);
-		assertThat(after).isLessThanOrEqualTo(8);
+		assertThat(after).isLessThanOrEqualTo(9);
 	}
 
 	@Test

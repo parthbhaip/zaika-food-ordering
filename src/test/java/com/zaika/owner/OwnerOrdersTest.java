@@ -241,9 +241,9 @@ class OwnerOrdersTest {
 		stats.clear();
 		html(get("/owner/orders").with(asMany));
 		long eight = stats.getPrepareStatementCount();
-		// restaurant, then orders with customer, rider and dishes: nothing per order
+		// restaurant, then orders with customer, rider and dishes, the header bell's unread count: nothing per order
 		assertThat(eight).isEqualTo(one);
-		assertThat(one).isLessThanOrEqualTo(2);
+		assertThat(one).isLessThanOrEqualTo(3);
 
 		// a board left open picks the pause up on its next poll, and loses it again on resume
 		String open = currentVersion(few);

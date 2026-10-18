@@ -590,8 +590,9 @@ class OrderTrackingPageTest {
 			.andExpect(status().isNoContent());
 		long poll = stats.getPrepareStatementCount();
 
-		// cart count, then the order with restaurant, rider and dishes
-		assertThat(page).isEqualTo(2);
+		// cart count, then the order with restaurant, rider and dishes, the header bell's unread count; the poll
+		// (htmx, no header) only reads the order
+		assertThat(page).isEqualTo(3);
 		assertThat(poll).isEqualTo(1);
 	}
 

@@ -214,9 +214,10 @@ class OwnerDashboardTest {
 		stats.clear();
 		html(get("/owner").with(asMany));
 		long eight = stats.getPrepareStatementCount();
-		// restaurant + cuisines, sales, latest orders, their dishes, waiting count: nothing per order or dish
+		// restaurant + cuisines, sales, latest orders, their dishes, waiting count, the header bell's unread count:
+		// nothing per order or dish
 		assertThat(eight).isEqualTo(one);
-		assertThat(one).isLessThanOrEqualTo(5);
+		assertThat(one).isLessThanOrEqualTo(6);
 	}
 
 	@Test

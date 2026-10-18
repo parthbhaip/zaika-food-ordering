@@ -17,7 +17,10 @@ import com.zaika.delivery.DeliveryPartnerProfileRepository.StatusCount;
 import com.zaika.delivery.DeliveryService;
 import com.zaika.delivery.RiderEarningRepository;
 import com.zaika.delivery.RiderStatus;
+import com.zaika.notification.AfterCommit;
 import com.zaika.notification.MailService;
+import com.zaika.notification.Notification;
+import com.zaika.notification.NotificationService;
 import com.zaika.order.Order;
 import com.zaika.order.OrderRepository;
 import com.zaika.user.User;
@@ -42,8 +45,11 @@ public class RiderModerationService {
 
 	private final AppProperties app;
 
+	private final NotificationService notifications;
+
 	RiderModerationService(DeliveryPartnerProfileRepository profiles, RiderEarningRepository earnings,
-			OrderRepository orders, MailService mail, AppProperties app) {
+			OrderRepository orders, MailService mail, AppProperties app, NotificationService notifications) {
+		this.notifications = notifications;
 		this.profiles = profiles;
 		this.earnings = earnings;
 		this.orders = orders;
@@ -89,6 +95,11 @@ public class RiderModerationService {
 		}
 		boolean wasSuspended = p.getStatus() == RiderStatus.SUSPENDED;
 		p.changeStatus(decision.target, decision == Decision.SUSPEND ? reason : null);
+		notifications.notify(rider, Notification.Kind.DELIVERY, subject(decision, wasSuspended),
+				decision == Decision.APPROVE ? "Go online from your dashboard whenever you're ready to take orders."
+						: "Reason: " + Notification.sentence(p.getStatusReason())
+								+ " A delivery you have already picked up can still be finished.",
+				"/partner");
 		AfterCommit.mail(mail, rider.getEmail(), subject(decision, wasSuspended), message(p, decision, wasSuspended),
 				"Rider email (" + decision + ") for user " + userId);
 		return rider.getName();
