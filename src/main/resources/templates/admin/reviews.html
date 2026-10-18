@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Reviews | Zaika</title></head>
+<body>
+<!--/* /admin/reviews: every review, newest first, 20 a page, with Shown / Hidden chips (counts over all reviews) and a
+     search over restaurant, customer and comment. Hide takes a review off the restaurant page and out of its rating;
+     Show again puts it back. Model: filter (admin.ModerationFilter, canonical), queue (admin.Queue), visibilities. */-->
+<main id="main" class="owner-page admin-page">
+	<div class="container owner-container" th:with="page=${queue.page}">
+		<nav th:replace="~{fragments/admin :: nav('reviews')}"></nav>
+
+		<header class="admin-head">
+			<p class="eyebrow">Admin</p>
+			<h1 class="owner-title">Reviews</h1>
+			<p class="admin-head-meta">Hide a review that is abusive, off-topic or shares personal details. Hidden reviews leave the restaurant page and no longer count towards its rating; you can show them again at any time.</p>
+		</header>
+
+		<section th:replace="~{fragments/admin :: filters(${filter}, ${queue}, ${visibilities}, 'review', 'Restaurant, customer or words in the review')}"></section>
+
+		<section class="admin-recent" aria-labelledby="admin-list-title">
+			<h2 id="admin-list-title" class="visually-hidden">Reviews found</h2>
+			<div class="card" th:if="${page.totalElements == 0}"
+				th:with="title=${filter.q != null} ? |No reviews match “${filter.q}”| : 'No reviews here',
+					hint=${filter.q != null} ? 'Check the spelling, or search by restaurant or customer name.' : 'Customers review their orders once they are delivered.'">
+				<div th:replace="~{fragments/ui :: emptyState('star', ${title}, ${hint}, null, null)}"></div>
+			</div>
+			<th:block th:if="${page.hasContent()}">
+				<p class="report-count" th:with="first=${page.number * page.size + 1}, last=${page.number * page.size + page.numberOfElements}"
+					th:text="${page.totalElements == 1} ? 'One review' : |Showing ${@fmt.count(first)}–${@fmt.count(last)} of ${@fmt.count(page.totalElements)} reviews, newest first|">Showing 1–20 of 64 reviews, newest first</p>
+				<div class="review-list admin-review-list">
+					<article th:each="rv : ${page.content}" class="card review admin-review" th:classappend="${rv.hidden} ? 'is-hidden'" th:id="|review-${rv.id}|" id="review-1">
+						<header class="review-head">
+							<div class="review-who">
+								<p class="review-author"><a th:href="@{/admin/restaurants/{slug}(slug=${rv.restaurant.slug})}" href="/admin/restaurants/rassa-darbar" th:text="${rv.restaurant.name}">Rassa Darbar</a></p>
+								<p class="review-meta"><span th:replace="~{fragments/review :: stars(${rv.stars})}"></span>
+									<span>by <a th:href="@{/admin/users/{id}(id=${rv.customer.id})}" href="/admin/users/7" th:text="${rv.customer.name}">Riya Shinde</a></span>
+									<span>· <a class="admin-code" th:href="@{/admin/orders/{code}(code=${rv.order.code})}" href="/admin/orders/ZK-26-000123" th:text="${rv.order.code}">ZK-26-000123</a></span>
+									<span>· <time th:datetime="${rv.createdAt}" th:text="${@fmt.date(rv.createdAt)}">4 Oct 2026</time></span></p>
+							</div>
+							<span class="badge badge-dot" th:classappend="${rv.hidden} ? 'badge-danger' : 'badge-success'" th:text="${rv.hidden} ? 'Hidden' : 'Shown'">Shown</span>
+						</header>
+						<p th:if="${rv.comment != null}" class="review-text" th:text="${rv.comment}">Proper Kolhapuri tambda rassa, fiery and full of flavour.</p>
+						<p th:if="${rv.comment == null}" class="review-text muted">Rated without a comment.</p>
+						<div th:if="${rv.reply != null}" class="review-reply">
+							<p class="review-reply-head">Reply from <strong th:text="${rv.restaurant.name}">Rassa Darbar</strong>
+								<time th:datetime="${rv.repliedAt}" th:text="${@fmt.date(rv.repliedAt)}">5 Oct 2026</time></p>
+							<p class="review-text" th:text="${rv.reply}">Thank you, Riya!</p>
+						</div>
+						<form class="admin-review-action" method="post" th:with="act=${rv.hidden} ? 'show' : 'hide'"
+							th:action="@{/admin/reviews/{id}/{act}(id=${rv.id},act=${act})}" action="/admin/reviews/1/hide">
+							<input type="hidden" name="status" th:if="${filter.status != null}" th:value="${T(com.zaika.admin.ModerationFilter).slug(filter.status)}">
+							<input type="hidden" name="q" th:if="${filter.q != null}" th:value="${filter.q}">
+							<input type="hidden" name="page" th:if="${filter.page > 1}" th:value="${filter.page}">
+							<span th:if="${rv.hidden}" class="muted" th:text="|Hidden ${@fmt.dateTime(rv.hiddenAt)}|">Hidden 5 Oct 2026, 9:10 AM</span>
+							<button type="submit" class="btn btn-sm" th:classappend="${rv.hidden} ? 'btn-secondary' : 'btn-danger'"
+								><th:block th:text="${rv.hidden} ? 'Show again' : 'Hide review'">Hide review</th:block><span class="visually-hidden" th:text="| by ${rv.customer.name} of ${rv.restaurant.name}|"> by Riya Shinde of Rassa Darbar</span></button>
+						</form>
+					</article>
+				</div>
+				<div th:replace="~{fragments/pagination :: pagination(${page}, ${filter.url()})}"></div>
+			</th:block>
+		</section>
+	</div>
+</main>
+</body>
+</html>

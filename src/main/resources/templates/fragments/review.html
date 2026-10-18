@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Review pieces (review.Review). stars(n): a read-only row of five stars, read out as "Rated 4 out of 5".
+     card(rv, restaurantName): one review with the author ("Riya S."), stars, date, comment and the owner's reply. */-->
+<span th:fragment="stars(n)" class="stars" role="img" th:aria-label="|Rated ${n} out of 5|" aria-label="Rated 4 out of 5"><th:block th:each="i : ${#numbers.sequence(1, 5)}"><svg class="icon" th:classappend="${i <= n} ? 'is-on'" aria-hidden="true" focusable="false"><use th:href="@{/img/icons.svg} + '#' + ${i <= n ? 'star-filled' : 'star'}" href="/img/icons.svg#star-filled"></use></svg></th:block></span>
+
+<article th:fragment="card(rv, restaurantName)" class="review" th:id="|review-${rv.id}|" id="review-1">
+	<header class="review-head">
+		<span class="review-avatar" aria-hidden="true"><svg th:replace="~{fragments/icon :: icon('user')}"></svg></span>
+		<div class="review-who">
+			<p class="review-author" th:text="${rv.authorName}">Riya S.</p>
+			<p class="review-meta"><span th:replace="~{fragments/review :: stars(${rv.stars})}"></span>
+				<time th:datetime="${rv.createdAt}" th:text="${@fmt.date(rv.createdAt)}">4 Oct 2026</time></p>
+		</div>
+	</header>
+	<p th:if="${rv.comment != null}" class="review-text" th:text="${rv.comment}">Proper Kolhapuri tambda rassa, fiery and full of flavour. Bhakri arrived warm.</p>
+	<div th:if="${rv.reply != null}" class="review-reply">
+		<p class="review-reply-head">Reply from <strong th:text="${restaurantName}">Rassa Darbar</strong>
+			<time th:datetime="${rv.repliedAt}" th:text="${@fmt.date(rv.repliedAt)}">5 Oct 2026</time></p>
+		<p class="review-text" th:text="${rv.reply}">Thank you, Riya! See you again soon.</p>
+	</div>
+</article>
+</body>
+</html>

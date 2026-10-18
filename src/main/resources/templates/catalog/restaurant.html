@@ -109,6 +109,22 @@
 			</div>
 		</div>
 	</section>
+
+	<!--/* The newest reviews (reviews: up to 3, review.ReviewService.latest) and the way to all of them */-->
+	<section th:if="${reviews != null}" class="container rp-reviews" id="reviews" aria-labelledby="rp-reviews-title">
+		<div class="rp-reviews-head">
+			<div>
+				<h2 class="rp-reviews-title" id="rp-reviews-title">Ratings and reviews</h2>
+				<p class="rp-reviews-summary"><span th:replace="~{fragments/ui :: rating(${r.ratingAverage}, ${r.ratingCount})}"></span>
+					<span class="muted" aria-hidden="true" th:text="${r.ratingCount == 0} ? 'No ratings yet' : |from ${@fmt.count(r.ratingCount)} ${r.ratingCount == 1 ? 'rating' : 'ratings'}|">from 2,140 ratings</span></p>
+			</div>
+			<a th:unless="${reviews.isEmpty()}" class="btn btn-secondary btn-sm" th:href="@{/r/{slug}/reviews(slug=${r.slug})}" href="/r/rassa-darbar/reviews">See all reviews</a>
+		</div>
+		<div th:unless="${reviews.isEmpty()}" class="review-list review-list-preview">
+			<th:block th:each="rv : ${reviews}"><article th:replace="~{fragments/review :: card(${rv}, ${r.name})}"></article></th:block>
+		</div>
+		<p th:if="${reviews.isEmpty()}" class="rp-reviews-empty muted">No written reviews yet. Customers can review their order once it arrives.</p>
+	</section>
 </main>
 
 <!--/* "14 dishes", or "3 of 14 dishes" with a filter on. Shared by the visible count and the live region. */-->

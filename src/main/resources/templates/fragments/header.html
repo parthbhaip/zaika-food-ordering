@@ -95,6 +95,7 @@
 				<a th:href="@{/owner/menu}" href="/owner/menu"><svg th:replace="~{fragments/icon :: icon('dish')}"></svg>Menu</a>
 				<a th:href="@{/owner/restaurant}" href="/owner/restaurant"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Restaurant profile</a>
 				<a th:href="@{/owner/reports}" href="/owner/reports"><svg th:replace="~{fragments/icon :: icon('chart')}"></svg>Reports</a>
+				<a th:href="@{/owner/reviews}" href="/owner/reviews"><svg th:replace="~{fragments/icon :: icon('star')}"></svg>Reviews</a>
 			</th:block>
 			<th:block sec:authorize="hasRole('DELIVERY_PARTNER')">
 				<a th:href="@{/partner}" href="/partner"><svg th:replace="~{fragments/icon :: icon('bike')}"></svg>Rider dashboard</a>

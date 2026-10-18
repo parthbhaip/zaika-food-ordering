@@ -217,6 +217,30 @@ public class Restaurant extends BaseEntity {
 		this.ratingCount = count;
 	}
 
+	/**
+	 * Counts one more rating of {@code stars} into the stored average. Incremental on purpose: seeded restaurants have
+	 * an average and count but no review rows, so the rating is never recomputed from reviews.
+	 */
+	public void addRating(int stars) {
+		BigDecimal total = ratingAverage.multiply(BigDecimal.valueOf(ratingCount)).add(BigDecimal.valueOf(stars));
+		ratingCount++;
+		ratingAverage = total.divide(BigDecimal.valueOf(ratingCount), 2, RoundingMode.HALF_UP);
+	}
+
+	/** Takes one rating of {@code stars} back out (a review hidden by an admin); kept within 1-5 against rounding drift. */
+	public void removeRating(int stars) {
+		if (ratingCount <= 1) {
+			ratingCount = 0;
+			ratingAverage = BigDecimal.ZERO.setScale(2);
+			return;
+		}
+		BigDecimal total = ratingAverage.multiply(BigDecimal.valueOf(ratingCount)).subtract(BigDecimal.valueOf(stars));
+		ratingCount--;
+		ratingAverage = total.divide(BigDecimal.valueOf(ratingCount), 2, RoundingMode.HALF_UP)
+			.max(BigDecimal.ONE.setScale(2))
+			.min(BigDecimal.valueOf(5).setScale(2));
+	}
+
 	public void setCuisines(Collection<Cuisine> cuisines) {
 		this.cuisines.clear();
 		this.cuisines.addAll(cuisines);

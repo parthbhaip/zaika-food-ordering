@@ -216,7 +216,7 @@ How this file works
 
 ## Phase 7 - Engagement
 
-- [ ] T43 Ratings and reviews
+- [x] T43 Ratings and reviews
   - After DELIVERED: one review per order (1-5 stars, optional text up to 500 chars). Restaurant rating updated in the same transaction.
   - Reviews on the restaurant page (paginated, sort newest/highest); owner can reply once; admin can hide a review. Tests.
 

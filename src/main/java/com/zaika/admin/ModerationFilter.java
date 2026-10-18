@@ -13,8 +13,8 @@ import com.zaika.user.Role;
 
 /**
  * The query of an admin list ({@code /admin/restaurants?status=&q=&page=}, {@code /admin/riders?status=...},
- * {@code /admin/users?role=...}): one enum value as a lower-case slug ({@code pending}, {@code restaurant-owner}; every
- * value when absent), search text and a 1-based page. Unknown or unreadable values fall back to the defaults, and
+ * {@code /admin/users?role=...}, {@code /admin/reviews?status=...}): one enum value as a lower-case slug
+ * ({@code pending}, {@code restaurant-owner}; every value when absent), search text and a 1-based page. Unknown or unreadable values fall back to the defaults, and
  * {@link #url()} is the canonical form (only non-default values, fixed order, form-encoded), so the controller can
  * redirect every other spelling to it.
  *
@@ -27,6 +27,8 @@ public final class ModerationFilter<S extends Enum<S>> {
 	static final String RIDERS = "/admin/riders";
 
 	static final String USERS = "/admin/users";
+
+	static final String REVIEWS = "/admin/reviews";
 
 	/** Same limit as the other search boxes. */
 	static final int MAX_QUERY_LENGTH = 80;
@@ -57,6 +59,11 @@ public final class ModerationFilter<S extends Enum<S>> {
 	/** {@code /admin/riders}: the raw request parameters (each may be null). */
 	static ModerationFilter<RiderStatus> riders(String status, String q, String page) {
 		return of(RIDERS, "status", RiderStatus.values(), status, q, page);
+	}
+
+	/** {@code /admin/reviews}: the raw request parameters (each may be null). */
+	static ModerationFilter<ReviewVisibility> reviews(String status, String q, String page) {
+		return of(REVIEWS, "status", ReviewVisibility.values(), status, q, page);
 	}
 
 	/** {@code /admin/users}: the raw request parameters (each may be null). */
@@ -136,6 +143,10 @@ public final class ModerationFilter<S extends Enum<S>> {
 				case PENDING -> "Under review";
 				case APPROVED -> "Approved";
 				case SUSPENDED -> "Suspended";
+			};
+			case ReviewVisibility v -> switch (v) {
+				case SHOWN -> "Shown";
+				case HIDDEN -> "Hidden";
 			};
 			case Role r -> switch (r) {
 				case CUSTOMER -> "Customers";

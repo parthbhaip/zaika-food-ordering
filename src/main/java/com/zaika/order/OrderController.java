@@ -9,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +20,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.zaika.common.Formatters;
 import com.zaika.common.Requests;
+import com.zaika.review.ReviewException;
+import com.zaika.review.ReviewForm;
+import com.zaika.review.ReviewService;
 import com.zaika.security.CurrentUser;
 
 /**
@@ -45,11 +49,15 @@ public class OrderController {
 
 	private final OrderTrackingService tracking;
 
+	private final ReviewService reviews;
+
 	private final Formatters fmt;
 
-	OrderController(OrderHistoryService history, OrderTrackingService tracking, Formatters fmt) {
+	OrderController(OrderHistoryService history, OrderTrackingService tracking, ReviewService reviews,
+			Formatters fmt) {
 		this.history = history;
 		this.tracking = tracking;
+		this.reviews = reviews;
 		this.fmt = fmt;
 	}
 
@@ -69,10 +77,46 @@ public class OrderController {
 
 	@GetMapping("/{code}")
 	String detail(@AuthenticationPrincipal CurrentUser me, @PathVariable String code, Model model) {
-		OrderHistoryService.Detail detail = history.detail(me.getId(), code);
+		showDetail(history.detail(me.getId(), code), new ReviewForm(), model);
+		return DETAIL_VIEW;
+	}
+
+	/**
+	 * Rates a delivered order (once): PRG back to the order page, whose review card then shows the review. Validation
+	 * errors re-render the page with the stars and comment kept.
+	 */
+	@PostMapping("/{code}/review")
+	String review(@AuthenticationPrincipal CurrentUser me, @PathVariable String code,
+			@Validated @ModelAttribute("reviewForm") ReviewForm form, BindingResult errors, Model model,
+			RedirectAttributes redirect) {
+		if (errors.hasErrors()) {
+			OrderHistoryService.Detail detail = history.detail(me.getId(), code); // 404 for someone else's order
+			String problem = reviews.problem(detail.order());
+			if (problem == null) {
+				showDetail(detail, form, model);
+				return DETAIL_VIEW;
+			}
+			redirect.addFlashAttribute("flashError", problem); // the rule wins over the input
+			return "redirect:/orders/" + code;
+		}
+		try {
+			var review = reviews.post(me.getId(), code, form.getStars(), form.getComment());
+			redirect.addFlashAttribute("flashSuccess",
+					"Thanks for rating " + review.getRestaurant().getName() + "! Your review is now on its page.");
+		}
+		catch (ReviewException ex) {
+			redirect.addFlashAttribute("flashError", ex.getMessage());
+		}
+		return "redirect:/orders/" + code + "#review";
+	}
+
+	private void showDetail(OrderHistoryService.Detail detail, ReviewForm form, Model model) {
 		model.addAttribute("detail", detail);
 		model.addAttribute("order", detail.order());
-		return DETAIL_VIEW;
+		if (detail.order().getStatus() == OrderStatus.DELIVERED) {
+			model.addAttribute("review", reviews.ofOrder(detail.order().getId()).orElse(null));
+			model.addAttribute("reviewForm", form);
+		}
 	}
 
 	/**

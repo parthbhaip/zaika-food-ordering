@@ -56,6 +56,52 @@
 			<svg th:replace="~{fragments/icon :: icon('check')}"></svg>
 			<p>Delivered on <strong th:text="${@fmt.dateTime(order.timestampOf(order.status))}">4 Oct 2026, 8:02 PM</strong>. Enjoy your meal!</p>
 		</div>
+
+		<!--/* Delivered orders: rate it once (reviewForm), then the review as posted (review) with the kitchen's reply */-->
+		<section th:if="${reviewForm != null}" class="card order-review" id="review" aria-labelledby="order-review-title">
+			<th:block th:if="${review == null}">
+				<h2 class="order-section-title" id="order-review-title"><svg th:replace="~{fragments/icon :: icon('star')}"></svg>How was your food?</h2>
+				<p class="muted">Rate your order from <strong th:text="${r.name}">Rassa Darbar</strong>. Your review helps other people choose, and helps the kitchen get better.</p>
+				<form class="review-form" th:action="@{/orders/{code}/review(code=${order.code})}" action="/orders/ZK-26-000123/review" method="post"
+					th:object="${reviewForm}" novalidate>
+					<fieldset class="field star-field" th:with="invalid=${#fields.hasErrors('stars')}" th:classappend="${invalid} ? 'has-error'"
+						th:aria-describedby="${invalid} ? 'stars-error'">
+						<legend class="field-label">Your rating</legend>
+						<div class="star-input" th:with="words=${ {'', 'Poor', 'Not great', 'Okay', 'Good', 'Loved it'} }">
+							<label th:each="i : ${#numbers.sequence(1, 5)}" class="star-option">
+								<input class="star-radio" type="radio" name="stars" th:value="${i}" value="4" th:checked="${reviewForm.stars == i}">
+								<svg th:replace="~{fragments/icon :: icon('star-filled')}"></svg>
+								<span class="visually-hidden" th:text="|${i} ${i == 1 ? 'star' : 'stars'}, ${words[i]}|">4 stars, Good</span>
+							</label>
+						</div>
+						<p class="field-error" th:if="${invalid}" id="stars-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('stars'), ' ')}">Choose a rating from 1 to 5 stars.</span></p>
+					</fieldset>
+					<div class="field" th:with="invalid=${#fields.hasErrors('comment')}" th:classappend="${invalid} ? 'has-error'">
+						<label class="field-label" for="comment">Tell others about it <span class="optional">(optional)</span></label>
+						<textarea class="textarea" id="comment" name="comment" rows="3" maxlength="500" th:text="*{comment}"
+							placeholder="Taste, portion size, packaging, anything that stood out"
+							th:aria-invalid="${invalid} ? 'true'"
+							th:aria-describedby="${invalid} ? 'comment-error comment-help' : 'comment-help'"></textarea>
+						<p class="field-help" id="comment-help">Up to 500 characters. Reviews show your first name and initial, and can't be edited later.</p>
+						<p class="field-error" th:if="${invalid}" id="comment-error"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('comment'), ' ')}">Keep your review under 500 characters.</span></p>
+					</div>
+					<button type="submit" class="btn btn-primary">Post review</button>
+				</form>
+			</th:block>
+			<th:block th:if="${review != null}">
+				<h2 class="order-section-title" id="order-review-title"><svg th:replace="~{fragments/icon :: icon('star')}"></svg>Your review</h2>
+				<p class="review-meta"><span th:replace="~{fragments/review :: stars(${review.stars})}"></span>
+					<time th:datetime="${review.createdAt}" th:text="|Posted ${@fmt.date(review.createdAt)}|">Posted 4 Oct 2026</time></p>
+				<p th:if="${review.comment != null}" class="review-text" th:text="${review.comment}">Proper Kolhapuri tambda rassa.</p>
+				<p th:if="${review.hidden}" class="alert alert-warning order-review-hidden"><svg th:replace="~{fragments/icon :: icon('info')}"></svg>
+					<span>Zaika has hidden this review from the restaurant page because it breaks our review guidelines. Questions? <a th:href="@{/contact}" href="/contact">Contact us</a>.</span></p>
+				<div th:if="${review.reply != null}" class="review-reply">
+					<p class="review-reply-head">Reply from <strong th:text="${r.name}">Rassa Darbar</strong>
+						<time th:datetime="${review.repliedAt}" th:text="${@fmt.date(review.repliedAt)}">5 Oct 2026</time></p>
+					<p class="review-text" th:text="${review.reply}">Thank you, Riya! See you again soon.</p>
+				</div>
+			</th:block>
+		</section>
 		<div th:if="${detail.endedBy() != null}" class="alert alert-error order-alert" role="status">
 			<svg th:replace="~{fragments/icon :: icon('x')}"></svg>
 			<div>

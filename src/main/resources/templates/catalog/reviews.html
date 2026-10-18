@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title th:text="${'Reviews of ' + listing.restaurant().name + ' | Zaika'}">Reviews of Rassa Darbar | Zaika</title></head>
+<body>
+<!--/* /r/{slug}/reviews: a restaurant's public reviews, newest first or highest rated, 10 a page.
+     Model: listing (review.ReviewService.Listing), sort (review.ReviewSort), sorts, base (canonical URL of page 1). */-->
+<main id="main" class="reviews-page" th:with="r=${listing.restaurant()}, page=${listing.reviews()}">
+	<div class="container reviews-container">
+		<header class="reviews-head">
+			<a class="checkout-back" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar"><svg th:replace="~{fragments/icon :: icon('chevron-right')}"></svg>Back to the menu</a>
+			<div class="reviews-head-row">
+				<img class="reviews-logo" th:with="src=${@img.logo(r)}" th:src="@{${src}}" src="/placeholder/logo/rassa-darbar.svg" alt="" width="64" height="64">
+				<div>
+					<p class="eyebrow" th:text="${r.name}">Rassa Darbar</p>
+					<h1 class="reviews-title">Ratings and reviews</h1>
+				</div>
+			</div>
+			<div class="reviews-summary">
+				<span th:replace="~{fragments/ui :: rating(${r.ratingAverage}, ${r.ratingCount})}"></span>
+				<p class="muted" aria-hidden="true" th:text="${r.ratingCount == 0} ? 'No ratings yet' : |from ${@fmt.count(r.ratingCount)} ${r.ratingCount == 1 ? 'rating' : 'ratings'}|">from 2,140 ratings</p>
+				<p class="muted" th:if="${page.totalElements > 0}" th:text="|${@fmt.count(page.totalElements)} written ${page.totalElements == 1 ? 'review' : 'reviews'}|">12 written reviews</p>
+			</div>
+		</header>
+
+		<nav th:if="${page.totalElements > 1}" class="chip-row reviews-sort" aria-label="Sort reviews">
+			<a th:each="s : ${sorts}" class="chip" th:with="href=${s.name() == 'NEWEST'} ? |/r/${r.slug}/reviews| : |/r/${r.slug}/reviews?sort=${s.slug()}|"
+				th:href="@{${href}}" href="/r/rassa-darbar/reviews" th:aria-current="${s == sort} ? 'true'" th:text="${s.label}">Newest</a>
+		</nav>
+
+		<div th:if="${page.hasContent()}" class="review-list">
+			<th:block th:each="rv : ${page.content}"><article th:replace="~{fragments/review :: card(${rv}, ${r.name})}"></article></th:block>
+		</div>
+		<nav th:replace="~{fragments/pagination :: pagination(${page}, ${base})}"></nav>
+
+		<th:block th:unless="${page.hasContent()}">
+			<div th:replace="~{fragments/ui :: emptyState('star', 'No written reviews yet',
+				|Customers review ${r.name} after their order arrives. Order from here and tell everyone how it was.|, 'See the menu', |/r/${r.slug}|)}"></div>
+		</th:block>
+	</div>
+</main>
+</body>
+</html>

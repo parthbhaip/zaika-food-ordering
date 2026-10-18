@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Reviews | Zaika</title></head>
+<body>
+<!--/* /owner/reviews: every review of the owner's restaurant, newest first, 10 a page, each with one public reply.
+     Model: data (review.ReviewService.OwnerReviews, null for an owner account without a restaurant), replyForm,
+     replyTo (id of the review whose reply failed validation, or null), base. */-->
+<main id="main" class="owner-page">
+	<div class="container owner-container">
+		<th:block th:if="${data == null}">
+			<div th:replace="~{fragments/ui :: emptyState('store', 'No restaurant on this account', 'This partner account has no restaurant linked to it. Write to partners@zaika.test and we will sort it out.', 'Contact us', '/contact')}"></div>
+		</th:block>
+
+		<th:block th:if="${data != null}" th:with="r=${data.restaurant()}, page=${data.reviews()}">
+			<nav th:replace="~{fragments/owner :: nav('reviews')}"></nav>
+
+			<header class="owner-head-text">
+				<p class="eyebrow" th:text="${r.name}">Rassa Darbar</p>
+				<h1 class="owner-title">Reviews</h1>
+				<p class="owner-board-lede">What customers say after their order arrives. Reply once to each review: everyone sees your reply under it.</p>
+			</header>
+
+			<div th:replace="~{fragments/owner :: statusBanner(${r})}"></div>
+
+			<dl class="owner-stats owner-review-stats">
+				<div class="card owner-stat">
+					<dt>Rating</dt>
+					<dd class="owner-stat-value" th:text="${r.ratingCount == 0} ? '–' : ${@fmt.rating(r.ratingAverage)}">4.5</dd>
+					<dd class="muted" th:text="${r.ratingCount == 0} ? 'No ratings yet' : |from ${@fmt.count(r.ratingCount)} ${r.ratingCount == 1 ? 'rating' : 'ratings'}|">from 2,140 ratings</dd>
+				</div>
+				<div class="card owner-stat">
+					<dt>Written reviews</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.count(page.totalElements)}">12</dd>
+				</div>
+				<div class="card owner-stat" th:classappend="${data.waiting() > 0} ? 'is-waiting'">
+					<dt>Waiting for a reply</dt>
+					<dd class="owner-stat-value" th:text="${@fmt.count(data.waiting())}">2</dd>
+				</div>
+			</dl>
+
+			<div th:if="${page.hasContent()}" class="review-list owner-review-list">
+				<article th:each="rv : ${page.content}" class="card review owner-review" th:id="|review-${rv.id}|" id="review-1">
+					<header class="review-head">
+						<span class="review-avatar" aria-hidden="true"><svg th:replace="~{fragments/icon :: icon('user')}"></svg></span>
+						<div class="review-who">
+							<p class="review-author" th:text="${rv.authorName}">Riya S.</p>
+							<p class="review-meta"><span th:replace="~{fragments/review :: stars(${rv.stars})}"></span>
+								<time th:datetime="${rv.createdAt}" th:text="${@fmt.date(rv.createdAt)}">4 Oct 2026</time>
+								<span>· Order <th:block th:text="${rv.order.code}">ZK-26-000123</th:block></span></p>
+						</div>
+						<span th:if="${rv.hidden}" class="badge badge-warning owner-review-badge">Hidden by Zaika</span>
+						<span th:if="${!rv.hidden and rv.reply == null}" class="badge badge-dot badge-warning owner-review-badge">Needs a reply</span>
+					</header>
+					<p th:if="${rv.comment != null}" class="review-text" th:text="${rv.comment}">Proper Kolhapuri tambda rassa, fiery and full of flavour.</p>
+					<p th:if="${rv.comment == null}" class="review-text muted">Rated without a comment.</p>
+					<p th:if="${rv.hidden}" class="muted owner-review-note">Customers can't see this review and it doesn't count towards your rating.</p>
+
+					<div th:if="${rv.reply != null}" class="review-reply">
+						<p class="review-reply-head">Your reply <time th:datetime="${rv.repliedAt}" th:text="${@fmt.date(rv.repliedAt)}">5 Oct 2026</time></p>
+						<p class="review-text" th:text="${rv.reply}">Thank you, Riya! See you again soon.</p>
+					</div>
+
+					<details th:if="${rv.reply == null}" class="owner-reply" th:open="${replyTo == rv.id}">
+						<summary class="btn btn-secondary btn-sm"><svg th:replace="~{fragments/icon :: icon('edit')}"></svg>Reply</summary>
+						<form class="owner-reply-form" method="post" novalidate th:action="@{/owner/reviews/{id}/reply(id=${rv.id})}" action="/owner/reviews/1/reply"
+							th:with="invalid=${replyTo == rv.id and #fields.hasErrors('${replyForm.reply}')}">
+							<input type="hidden" name="page" th:if="${page.number > 0}" th:value="${page.number + 1}">
+							<div class="field" th:classappend="${invalid} ? 'has-error'">
+								<label class="field-label" th:for="|reply-${rv.id}|">Your public reply</label>
+								<textarea class="textarea" th:id="|reply-${rv.id}|" name="reply" rows="3" maxlength="500"
+									th:text="${replyTo == rv.id} ? ${replyForm.reply}" placeholder="Thank them, or tell them what you're doing about it"
+									th:aria-invalid="${invalid} ? 'true'"
+									th:aria-describedby="${invalid} ? |reply-${rv.id}-error reply-${rv.id}-help| : |reply-${rv.id}-help|"></textarea>
+								<p class="field-help" th:id="|reply-${rv.id}-help|">Up to 500 characters. You can reply only once, so check it before posting.</p>
+								<p class="field-error" th:if="${invalid}" th:id="|reply-${rv.id}-error|"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${#strings.listJoin(#fields.errors('${replyForm.reply}'), ' ')}">Write your reply.</span></p>
+							</div>
+							<button type="submit" class="btn btn-primary btn-sm">Post reply</button>
+						</form>
+					</details>
+				</article>
+			</div>
+			<nav th:replace="~{fragments/pagination :: pagination(${page}, ${base})}"></nav>
+
+			<th:block th:unless="${page.hasContent()}">
+				<div th:replace="~{fragments/ui :: emptyState('star', 'No reviews yet', 'Customers can review an order once it is delivered. Their reviews and your replies show up here.', null, null)}"></div>
+			</th:block>
+		</th:block>
+	</div>
+</main>
+</body>
+</html>

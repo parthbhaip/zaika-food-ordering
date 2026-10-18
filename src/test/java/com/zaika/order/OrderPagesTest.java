@@ -473,8 +473,8 @@ class OrderPagesTest {
 		// (today: cart count, the page of orders with restaurants, their dishes, and the total when the page is full)
 		assertThat(listMany).isBetween(listFew, listFew + 1);
 		assertThat(listFew).isLessThanOrEqualTo(6);
-		// today: cart count, the order with its restaurant and dishes
-		assertThat(detailBig).isEqualTo(detailCash);
+		// today: cart count, the order with its restaurant and dishes; a delivered order (big) also looks up its review (T43)
+		assertThat(detailBig).isEqualTo(detailCash + 1);
 		assertThat(detailCash).isLessThanOrEqualTo(5);
 	}
 
