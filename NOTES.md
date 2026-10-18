@@ -250,7 +250,7 @@ Every unfinished instruction from this file, grouped by the task that must handl
 
 ## Seed photos (2026-10-18)
 - Decision (user, 2026-10-09): real photos for seeded restaurants and dishes come from Wikimedia Commons under CC0 / public domain / CC BY / CC BY-SA, with attribution on the public `/photo-credits` page (linked from the footer). This overrides "everything is original" for those photos only. NC/ND licenses are never allowed.
-- Sitaphal (custard-apple) ice cream has no photo of that flavour on Commons; it uses a similar vanilla scoop marked as a generic match.
+- 37 photos are generic matches (`match=generic`): the closest truthful photo of that kind of food, shown on `/photo-credits` as "Similar dish" (dishes) or "Representative photo" (covers). Example: sitaphal (custard-apple) ice cream has no photo of that flavour on Commons, so it uses a similar vanilla scoop.
 - Any later task adding seed restaurants or dishes must add a cropped photo (cover 960x600, dish 400x400) plus a credit entry, or the seed-photo test fails.
 - Files: 13 covers in `static/img/seed/cover/<restaurant-slug>.jpg`, 145 dishes in `static/img/seed/dish/<slugified dish name>.jpg` (what `storage.ImageUrls` already looks for; an upload still wins). Logos stay generated. Credits: `src/main/resources/seed-photo-credits.json` (kind, slug, file, title, author, license, licenseUrl, sourceUrl, match = exact|generic).
 - `config.SeedPhotoCredits` reads the JSON once at startup and names each photo from `DemoData` (slug in words as fallback); `web.PhotoCreditsController` + `pages/photo-credits.html` render it (public in `SecurityConfig.PUBLIC_PAGES`; generic matches get a "Similar dish" badge).

@@ -78,9 +78,11 @@ class PhotoCreditsPageTest {
 		}
 		assertThat(html).contains(
 				"src=\"/img/seed/cover/rassa-darbar.jpg\" alt=\"Rassa Darbar\" width=\"96\" height=\"60\" loading=\"lazy\"");
-		long generic = all.stream().filter(e -> e.credit().generic()).count();
-		assertThat(generic).isPositive();
-		assertThat(html.split(">Similar dish<", -1)).hasSize((int) generic + 1);
+		long genericDishes = credits.dishes().stream().filter(e -> e.credit().generic()).count();
+		long genericCovers = credits.restaurants().stream().filter(e -> e.credit().generic()).count();
+		assertThat(genericDishes).isPositive();
+		assertThat(html.split(">Similar dish<", -1)).hasSize((int) genericDishes + 1);
+		assertThat(html.split(">Representative photo<", -1)).hasSize((int) genericCovers + 1);
 	}
 
 	@Test

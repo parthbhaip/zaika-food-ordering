@@ -31,7 +31,8 @@
 	<div class="credit-body">
 		<h3 th:text="${entry.name}">Rassa Darbar</h3>
 		<p class="credit-use"><span th:text="${use}">Restaurant cover photo</span>
-			<span th:if="${entry.credit.generic()}" class="badge badge-warning">Similar dish</span></p>
+			<span th:if="${entry.credit.generic()}" class="badge badge-warning"
+				th:text="${entry.credit.kind() == 'cover'} ? 'Representative photo' : 'Similar dish'">Similar dish</span></p>
 		<p class="credit-meta">Photo by <span th:text="${entry.credit.author}">Photographer</span>,
 			<a th:href="${entry.credit.licenseUrl}" rel="license noopener" target="_blank" th:text="${entry.credit.license}">CC BY-SA 4.0</a></p>
 		<a class="credit-source" th:href="${entry.credit.sourceUrl}" rel="noopener" target="_blank">View on Wikimedia Commons<span class="visually-hidden" th:text="|: ${entry.credit.title} (opens in a new tab)|"></span></a>
