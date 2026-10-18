@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Photo credits | Zaika</title></head>
+<body>
+<main id="main" class="page">
+	<section class="page-hero">
+		<div class="container page-hero-inner">
+			<p class="eyebrow">Photo credits</p>
+			<h1>The people behind our food photos</h1>
+			<p class="lede">The restaurant and dish photos you see on Zaika come from Wikimedia Commons, shared by photographers under the free licenses listed below. Thank you for letting us use them.</p>
+		</div>
+	</section>
+
+	<section class="container page-section" aria-labelledby="credits-restaurants">
+		<h2 id="credits-restaurants" class="section-title">Restaurants</h2>
+		<ul class="credit-grid">
+			<th:block th:each="entry : ${restaurants}"><li th:replace="~{::credit(${entry}, 'Restaurant cover photo', 96, 60)}"></li></th:block>
+		</ul>
+	</section>
+
+	<section class="container page-section" aria-labelledby="credits-dishes">
+		<h2 id="credits-dishes" class="section-title">Dishes</h2>
+		<ul class="credit-grid">
+			<th:block th:each="entry : ${dishes}"><li th:replace="~{::credit(${entry}, 'Dish photo', 72, 72)}"></li></th:block>
+		</ul>
+	</section>
+</main>
+<!--/* One credit: thumbnail, what it is used for, author, license and source. */-->
+<li th:fragment="credit(entry, use, width, height)" class="credit-card">
+	<img class="credit-thumb" th:src="@{'/img/seed/' + ${entry.credit.file}}" th:alt="${entry.name}" th:width="${width}" th:height="${height}" loading="lazy">
+	<div class="credit-body">
+		<h3 th:text="${entry.name}">Rassa Darbar</h3>
+		<p class="credit-use"><span th:text="${use}">Restaurant cover photo</span>
+			<span th:if="${entry.credit.generic()}" class="badge badge-warning">Similar dish</span></p>
+		<p class="credit-meta">Photo by <span th:text="${entry.credit.author}">Photographer</span>,
+			<a th:href="${entry.credit.licenseUrl}" rel="license noopener" target="_blank" th:text="${entry.credit.license}">CC BY-SA 4.0</a></p>
+		<a class="credit-source" th:href="${entry.credit.sourceUrl}" rel="noopener" target="_blank">View on Wikimedia Commons<span class="visually-hidden" th:text="|: ${entry.credit.title} (opens in a new tab)|"></span></a>
+	</div>
+</li>
+</body>
+</html>

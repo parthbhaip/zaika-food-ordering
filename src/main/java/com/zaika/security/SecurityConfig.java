@@ -65,9 +65,9 @@ public class SecurityConfig {
 	public static final String H2_CONSOLE_POLICY = "default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
 			+ "style-src 'self' 'unsafe-inline'; frame-ancestors 'self'";
 
-	static final String[] PUBLIC_PAGES = { "/", "/about", "/contact", "/terms", "/privacy", "/refund-policy", "/error",
-			"/login", "/register", "/forgot-password", "/reset-password", "/restaurants/**", "/r/**", "/search/**",
-			"/partner-with-us/**" };
+	static final String[] PUBLIC_PAGES = { "/", "/about", "/contact", "/terms", "/privacy", "/refund-policy",
+			"/photo-credits", "/error", "/login", "/register", "/forgot-password", "/reset-password", "/restaurants/**",
+			"/r/**", "/search/**", "/partner-with-us/**" };
 
 	/** The cart is for guests and customers; staff accounts have none (CartController checks it again). */
 	static final AuthorizationManager<RequestAuthorizationContext> GUEST_OR_CUSTOMER = AuthorizationManagers.anyOf(

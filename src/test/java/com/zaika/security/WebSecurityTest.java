@@ -50,7 +50,8 @@ class WebSecurityTest {
 	static final List<String> PUBLIC_URLS = List.of("/", "/restaurants", "/restaurants?veg=true", "/r/misal-house",
 			"/search?q=misal", "/cart", "/login", "/register", "/forgot-password", "/reset-password?token=abc",
 			"/partner-with-us", "/partner-with-us/restaurant", "/partner-with-us/rider", "/about", "/contact", "/terms",
-			"/privacy", "/refund-policy", "/css/app.css", "/js/menus.js", "/img/logo.svg", "/fonts/OFL.txt",
+			"/privacy", "/refund-policy", "/photo-credits", "/css/app.css", "/js/menus.js", "/img/logo.svg",
+			"/img/seed/dish/vada-pav.jpg", "/fonts/OFL.txt",
 			"/webjars/htmx.org/dist/htmx.min.js", "/uploads/menu/abc.jpg", "/placeholder/restaurant/misal.svg");
 
 	@Autowired

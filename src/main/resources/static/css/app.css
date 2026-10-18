@@ -1501,10 +1501,29 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 .prose .table td { white-space: normal; }
 .legal-updated { color: var(--color-text-muted); font-size: var(--text-sm); }
 
+.credit-grid { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.credit-card {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-4);
+	padding: var(--space-4);
+	border: 1px solid var(--color-line);
+	border-radius: var(--radius-md);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-sm);
+}
+.credit-thumb { flex-shrink: 0; border-radius: var(--radius-sm); background: var(--color-surface-muted); object-fit: cover; }
+.credit-body { display: grid; gap: var(--space-1); min-width: 0; font-size: var(--text-sm); }
+.credit-body h3 { font-size: var(--text-md); }
+.credit-use { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); color: var(--color-text-muted); }
+.credit-meta { color: var(--color-text-secondary); overflow-wrap: anywhere; }
+.credit-source { font-weight: var(--weight-semibold); }
+
 @media (min-width: 640px) {
 	.page-hero h1,
 	.prose h1 { font-size: var(--text-3xl); }
 	.contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.credit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 960px) {
 	.feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -1513,6 +1532,7 @@ a.page-link:hover { background: var(--color-primary-tint); color: var(--color-pr
 	.legal-nav { position: sticky; top: calc(var(--header-height) + var(--space-6)); flex-direction: column; flex-wrap: nowrap; gap: 2px; }
 	.legal-nav a { border-color: transparent; border-radius: var(--radius-sm); background: transparent; }
 	.legal-nav a:hover { border-color: transparent; background: var(--color-primary-tint); color: var(--color-primary-hover); }
+	.credit-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (min-width: 1200px) {
 	.contact-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }

@@ -260,7 +260,7 @@ class RestaurantPageTest {
 			.contains("<span class=\"badge badge-danger\">Very spicy</span>")
 			.contains("<span class=\"price\">₹420</span>")
 			.contains("<p class=\"menu-item-desc\">Sukka mutton, both rassas and two bhakris.</p>")
-			.contains("src=\"/placeholder/dish/mutton-thali.svg\" alt=\"Mutton Thali\" width=\"136\" height=\"136\" loading=\"lazy\"")
+			.contains("src=\"/img/seed/dish/mutton-thali.jpg\" alt=\"Mutton Thali\" width=\"136\" height=\"136\" loading=\"lazy\"")
 			.containsPattern("<form action=\"/cart/items/" + muttonThali.getId() + "\" method=\"post\" hx-post=\"/cart/items/"
 					+ muttonThali.getId() + "\" hx-target=\"#dish-" + muttonThali.getId() + "\" hx-swap=\"outerHTML\">"
 					+ "<input type=\"hidden\" name=\"_csrf\" value=\"[^\"]+\"/?>")
