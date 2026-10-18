@@ -5,7 +5,8 @@
 <!--/* /cart: the dishes in the visitor's cart, re-checked against the menu on every view, the note for the restaurant,
      the coupon box, the bill and the checkout button. Model: cart (cart.CartView), coupon
      (coupon.CouponService.CartCoupon), bill (cart.PriceBreakdown, priced with the coupon's discount), freeDeliveryGap
-     (BigDecimal or null), gstPercent, instructionsForm; couponError / couponCode after a coupon that did not work. Every form works without JavaScript (PRG back to /cart);
+     (BigDecimal or null), gstPercent, instructionsForm; couponError / couponCode after a coupon that did not work;
+     reorderNotice (flash, after "Reorder": the dishes left out). Every form works without JavaScript (PRG back to /cart);
      with htmx the steppers swap #cart-items and, out of band, #cart-side (cart/htmx :: cart-update), or the whole
      #cart-body once the cart is empty. Phones: the checkout box sticks to the bottom of the screen. */-->
 <main id="main" class="cart-page">
@@ -18,6 +19,7 @@
      focus moves to the restaurant name, or to the page title once the cart is empty. */-->
 <div th:fragment="cart-body" id="cart-body" class="cart-body" th:classappend="${cart.empty} ? 'is-empty'">
 	<h1 class="cart-title" id="cart-title" tabindex="-1" th:autofocus="${focusCart == true and cart.empty}">Your cart</h1>
+	<p th:if="${reorderNotice != null}" class="alert alert-warning cart-notices" role="status"><svg th:replace="~{fragments/icon :: icon('info')}"></svg><span th:text="${reorderNotice}">Bhakri is not available right now, so we left it out.</span></p>
 
 	<th:block th:if="${cart.empty}">
 		<div th:replace="~{cart/cart :: notices}"></div>

@@ -3,7 +3,8 @@
 <head><title th:text="${menu.restaurant.name + ' | Zaika'}">Rassa Darbar | Zaika</title></head>
 <body>
 <!--/* A restaurant page. Model: menu (catalog.RestaurantMenu), filter (catalog.MenuFilter), optional cartQuantities
-     (Map<Long, Integer> of item id -> quantity in the cart; T21). The menu search and the "Pure veg only" toggle
+     (Map<Long, Integer> of item id -> quantity in the cart; T21), favouriteCustomer (+ favouriteSlug, favouriteSaved
+     for the Favourite toggle, fragments/favourite). The menu search and the "Pure veg only" toggle
      are a plain GET form; with htmx every change reloads only #menu-results (the htmx-menu fragment below). */-->
 <main id="main" class="restaurant-page" th:with="r=${menu.restaurant}, card=${menu.card}">
 	<section class="rp-hero" aria-labelledby="rp-name">
@@ -20,6 +21,7 @@
 					<p th:if="${r.tagline != null}" class="rp-tagline" th:text="${r.tagline}">Tambda-pandhra rassa, the Kolhapur way</p>
 					<p class="rp-cuisines" th:text="${#strings.listJoin(card.cuisines, ', ')}">Kolhapuri, Maharashtrian</p>
 					<p class="rp-address"><svg th:replace="~{fragments/icon :: icon('location')}"></svg><span th:text="|${r.address}, ${r.area}|">14, Mahadwar Road, Mahadwar Road</span></p>
+					<th:block th:if="${favouriteCustomer}"><form th:replace="~{fragments/favourite :: heart}"></form></th:block>
 				</div>
 				<div class="rp-rating">
 					<span th:replace="~{fragments/ui :: rating(${r.ratingAverage}, ${r.ratingCount})}"></span>

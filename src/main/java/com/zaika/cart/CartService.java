@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -283,6 +284,37 @@ public class CartService {
 			saved.setInstructions(guest.instructions());
 		}
 		return notice;
+	}
+
+	/**
+	 * "Reorder": the cart afterwards holds exactly these dishes (quantities capped at {@link #MAX_QUANTITY}). Each
+	 * dish remembers {@code lastPrice} as the price the customer saw, so {@link #view} reports a price change once.
+	 * The caller has checked that every dish is orderable and from one restaurant that is taking orders. The note and
+	 * coupon stay only when a dish of the old cart stays (same restaurant).
+	 *
+	 * @return whether the cart held other dishes that were taken out
+	 */
+	public boolean replaceWith(CartOwner owner, List<Pick> picks) {
+		return guarded(owner, () -> {
+			CartContents cart = loadForUpdate(owner, true);
+			Set<Long> wanted = picks.stream().map(pick -> pick.item().getId()).collect(Collectors.toSet());
+			boolean replaced = false;
+			for (Long id : cart.quantities().keySet()) {
+				if (!wanted.contains(id)) {
+					cart.remove(id); // not clear(): a kept dish's row is updated, never deleted and re-inserted
+					replaced = true;
+				}
+			}
+			for (Pick pick : picks) {
+				cart.put(pick.item(), Math.min(pick.quantity(), MAX_QUANTITY));
+				cart.markSeen(pick.item().getId(), pick.lastPrice());
+			}
+			return replaced;
+		});
+	}
+
+	/** A dish for {@link #replaceWith}: how many, and the price the customer paid last time. */
+	public record Pick(MenuItem item, int quantity, BigDecimal lastPrice) {
 	}
 
 	private MenuItem visibleItem(long itemId) {

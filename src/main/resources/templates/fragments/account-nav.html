@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!--/* Heading and tabs shared by the customer account pages. current: 'profile' or 'addresses'. */-->
+<!--/* Heading and tabs shared by the customer account pages. current: 'profile', 'addresses' or 'favourites'. */-->
 <header th:fragment="head(current)" class="account-head">
 	<div class="account-title">
 		<span class="account-avatar" aria-hidden="true"><svg th:replace="~{fragments/icon :: icon('user')}"></svg></span>
@@ -13,6 +13,7 @@
 	<nav class="tabs" aria-label="Account sections">
 		<a class="tab" th:href="@{/account}" href="/account" th:aria-current="${current == 'profile'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('user')}"></svg>Profile and password</a>
 		<a class="tab" th:href="@{/account/addresses}" href="/account/addresses" th:aria-current="${current == 'addresses'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('location')}"></svg>Addresses</a>
+		<a class="tab" th:href="@{/account/favourites}" href="/account/favourites" th:aria-current="${current == 'favourites'} ? 'page'"><svg th:replace="~{fragments/icon :: icon('heart')}"></svg>Favourites</a>
 	</nav>
 </header>
 </body>

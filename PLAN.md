@@ -220,7 +220,7 @@ How this file works
   - After DELIVERED: one review per order (1-5 stars, optional text up to 500 chars). Restaurant rating updated in the same transaction.
   - Reviews on the restaurant page (paginated, sort newest/highest); owner can reply once; admin can hide a review. Tests.
 
-- [ ] T44 Favourites and reorder
+- [x] T44 Favourites and reorder
   - Heart a restaurant (htmx), `/account/favourites`.
   - "Reorder" puts available items from a past order into the cart and tells the user about unavailable items or changed prices. Tests.
 

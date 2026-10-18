@@ -3,7 +3,8 @@
 <head><title>Your orders | Zaika</title></head>
 <body>
 <!--/* /orders: the customer's orders, newest first, 10 to a page. Each card: restaurant, status chip, when, what, the
-     total, and a link to the order (plus "Pay now" while an online order waits for its payment).
+     total, and a link to the order (plus "Pay now" while an online order waits for its payment, "Track" while it is live
+     and "Reorder" once it is finished and its restaurant is still on Zaika).
      Model: orders (Page<order.Order>, restaurants and dishes loaded). */-->
 <main id="main" class="orders-page">
 	<div class="container orders">
@@ -33,6 +34,9 @@
 						<span class="muted" th:text="${o.paymentMethod.name() == 'COD'} ? 'Cash on delivery' : |Online · ${o.paymentStatus.label}|">Cash on delivery</span></p>
 					<a th:if="${o.status.name() == 'PENDING_PAYMENT'}" class="btn btn-primary btn-sm order-card-pay" th:href="@{/pay/{code}(code=${o.code})}" href="/pay/ZK-26-000123">Pay now</a>
 					<a th:if="${o.status.name() != 'PENDING_PAYMENT' and !o.status.isFinal()}" class="btn btn-primary btn-sm order-card-track" th:href="@{/orders/{code}/track(code=${o.code})}" href="/orders/ZK-26-000123/track">Track<span class="visually-hidden" th:text="| order ${o.code}|"> order ZK-26-000123</span></a>
+					<form th:if="${o.status.isFinal() and r.status.name() == 'APPROVED'}" class="order-card-reorder" method="post" th:action="@{/orders/{code}/reorder(code=${o.code})}" action="/orders/ZK-26-000123/reorder">
+						<button type="submit" class="btn btn-primary btn-sm">Reorder<span class="visually-hidden" th:text="| ${o.code}|"> ZK-26-000123</span></button>
+					</form>
 					<a class="btn btn-secondary btn-sm order-card-more" th:href="@{/orders/{code}(code=${o.code})}" href="/orders/ZK-26-000123">View order<span class="visually-hidden" th:text="| ${o.code}|"> ZK-26-000123</span></a>
 				</div>
 			</li>

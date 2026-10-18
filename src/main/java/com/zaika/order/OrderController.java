@@ -51,13 +51,16 @@ public class OrderController {
 
 	private final ReviewService reviews;
 
+	private final ReorderService reorders;
+
 	private final Formatters fmt;
 
 	OrderController(OrderHistoryService history, OrderTrackingService tracking, ReviewService reviews,
-			Formatters fmt) {
+			ReorderService reorders, Formatters fmt) {
 		this.history = history;
 		this.tracking = tracking;
 		this.reviews = reviews;
+		this.reorders = reorders;
 		this.fmt = fmt;
 	}
 
@@ -108,6 +111,27 @@ public class OrderController {
 			redirect.addFlashAttribute("flashError", ex.getMessage());
 		}
 		return "redirect:/orders/" + code + "#review";
+	}
+
+	/**
+	 * "Reorder": the order's available dishes go into the cart, which opens with a toast; dishes left out are named
+	 * above the cart ({@code reorderNotice}) and changed prices show among the cart's notices. A refusal (order still
+	 * open, kitchen closed, nothing available) goes back to the order page with the reason.
+	 */
+	@PostMapping("/{code}/reorder")
+	String reorder(@AuthenticationPrincipal CurrentUser me, @PathVariable String code, RedirectAttributes redirect) {
+		try {
+			ReorderService.Reorder done = reorders.reorder(me.getId(), code);
+			redirect.addFlashAttribute("flashSuccess", done.message());
+			if (done.leftOutNotice() != null) {
+				redirect.addFlashAttribute("reorderNotice", done.leftOutNotice());
+			}
+			return "redirect:/cart";
+		}
+		catch (ReorderException ex) {
+			redirect.addFlashAttribute("flashError", ex.getMessage());
+			return "redirect:/orders/" + code;
+		}
 	}
 
 	private void showDetail(OrderHistoryService.Detail detail, ReviewForm form, Model model) {

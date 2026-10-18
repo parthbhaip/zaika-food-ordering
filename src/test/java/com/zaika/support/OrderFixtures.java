@@ -127,6 +127,12 @@ public class OrderFixtures {
 		});
 	}
 
+	/** Adds another dish line to a saved order, for orders of several dishes. */
+	public void addLine(Order order, MenuItem dish, int quantity) {
+		tx.executeWithoutResult(status -> orders.findById(order.getId()).orElseThrow()
+			.addItem(items.findWithRestaurantById(dish.getId()).orElseThrow(), quantity));
+	}
+
 	/** An order placed (PLACED) and then cancelled by its customer, the way a customer cancels from tracking. */
 	public Order placeThenCancel(long customerId, long menuItemId, int quantity, PaymentMethod method) {
 		Order placed = place(customerId, menuItemId, quantity, method, OrderStatus.PLACED);

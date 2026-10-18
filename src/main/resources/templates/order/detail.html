@@ -167,7 +167,10 @@
 			</section>
 
 			<div class="order-actions">
-				<a th:if="${order.status.isFinal() and approved}" class="btn btn-primary btn-block" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar" th:text="|Order again from ${r.name}|">Order again from Rassa Darbar</a>
+				<form th:if="${order.status.isFinal() and approved}" method="post" th:action="@{/orders/{code}/reorder(code=${order.code})}" action="/orders/ZK-26-000123/reorder">
+					<button type="submit" class="btn btn-primary btn-block"><svg th:replace="~{fragments/icon :: icon('cart')}"></svg>Reorder these dishes</button>
+				</form>
+				<a th:if="${order.status.isFinal() and approved}" class="btn btn-secondary btn-block" th:href="@{/r/{slug}(slug=${r.slug})}" href="/r/rassa-darbar">See the full menu</a>
 				<a class="btn btn-ghost btn-block" th:href="@{/contact}" href="/contact"><svg th:replace="~{fragments/icon :: icon('phone')}"></svg>Help with this order</a>
 			</div>
 		</aside>

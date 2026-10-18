@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* The "Favourite" toggle on a restaurant page (customers only). Model: favouriteSlug, favouriteSaved; after an htmx
+     toggle also favouriteMessage, added to the toasts out of band. The label never changes: aria-pressed and a filled
+     heart carry the state. Without JavaScript the form posts and redirects back to the page. */-->
+<th:block th:fragment="heart">
+	<form id="restaurant-favourite" class="rp-favourite" method="post" th:action="@{/account/favourites/{slug}(slug=${favouriteSlug})}"
+		th:hx-post="@{/account/favourites/{slug}(slug=${favouriteSlug})}" hx-target="#restaurant-favourite" hx-swap="outerHTML" action="/account/favourites/rassa-darbar">
+		<button id="favourite-toggle" class="btn btn-secondary btn-sm favourite-toggle" type="submit" th:attr="aria-pressed=${favouriteSaved} ? 'true' : 'false'"><svg th:replace="~{fragments/icon :: icon(${favouriteSaved} ? 'heart-filled' : 'heart')}"></svg>Favourite</button>
+	</form>
+	<div th:if="${favouriteMessage != null}" hx-swap-oob="beforeend:#toasts"><div th:replace="~{fragments/flash :: toast('success', ${favouriteMessage})}"></div></div>
+</th:block>
+</body>
+</html>

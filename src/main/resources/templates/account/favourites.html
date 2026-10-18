@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/base :: layout(~{::title}, ~{::main})}" xmlns:th="http://www.thymeleaf.org">
+<head><title>Favourites | Zaika</title></head>
+<body>
+<!--/* /account/favourites: the customer's saved restaurants, newest first (only ones live on Zaika). Model: favourites
+     (List<catalog.RestaurantCard>). Each card has a Remove button under it (a plain form, PRG back here). */-->
+<main id="main" class="account-page">
+	<div class="container account-container">
+		<header th:replace="~{fragments/account-nav :: head('favourites')}"></header>
+
+		<th:block th:unless="${#lists.isEmpty(favourites)}">
+			<div>
+				<h2 class="section-title">Favourite kitchens</h2>
+				<p class="muted" th:text="${#lists.size(favourites) == 1} ? '1 kitchen saved. Tap the heart on any restaurant page to add more.' : |${#lists.size(favourites)} kitchens saved. Tap the heart on any restaurant page to add more.|">3 kitchens saved.</p>
+			</div>
+			<ul class="restaurant-grid favourite-grid">
+				<li th:each="r : ${favourites}" class="favourite-item">
+					<article th:replace="~{fragments/restaurant-card :: card(${r})}"></article>
+					<form method="post" th:action="@{/account/favourites/{slug}(slug=${r.slug})}" action="/account/favourites/rassa-darbar">
+						<input type="hidden" name="returnTo" value="/account/favourites">
+						<button class="btn btn-ghost btn-sm" type="submit"><svg th:replace="~{fragments/icon :: icon('trash')}"></svg>Remove<span class="visually-hidden" th:text="| ${r.name} from favourites|"> Rassa Darbar from favourites</span></button>
+					</form>
+				</li>
+			</ul>
+		</th:block>
+		<th:block th:if="${#lists.isEmpty(favourites)}">
+			<div th:replace="~{fragments/ui :: emptyState('heart', 'No favourites yet', 'Tap the heart on a restaurant page and that kitchen will be waiting here next time.', 'Browse restaurants', '/restaurants')}"></div>
+		</th:block>
+	</div>
+</main>
+</body>
+</html>

@@ -316,7 +316,8 @@ class OrderPagesTest {
 			.contains("class=\"badge order-status badge-success\">Delivered</span>")
 			.contains("Delivered on <strong>4 Oct 2026, 7:30 PM</strong>")
 			.contains("<dt>Status</dt><dd>Paid</dd>").contains("<dt>Paid</dt><dd>₹297.50</dd>")
-			.contains("href=\"/r/order-kitchen\">Order again from Order Kitchen</a>")
+			.contains("method=\"post\" action=\"/orders/" + code + "/reorder\"").contains("Reorder these dishes")
+			.contains("href=\"/r/order-kitchen\">See the full menu</a>")
 			.doesNotContain("Arriving by");
 	}
 
@@ -328,7 +329,7 @@ class OrderPagesTest {
 		assertThat(html(get("/orders/" + code).with(as(me))))
 			.contains("class=\"badge order-status badge-danger\">Cancelled</span>")
 			.contains("<strong>You cancelled this order.</strong>").contains("Reason: Ordered by mistake.")
-			.contains("You have not been charged.").contains("Order again from Order Kitchen");
+			.contains("You have not been charged.").contains("Reorder these dishes");
 	}
 
 	@Test
