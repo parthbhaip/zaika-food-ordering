@@ -128,19 +128,25 @@ public class SecurityConfig {
 		return http.build();
 	}
 
-	@Bean
-	@Order(2)
-	SecurityFilterChain webSecurity(HttpSecurity http, ZaikaUserDetailsService users, PasswordEncoder passwordEncoder,
-			UserService userService, LoginSuccessHandler successHandler, SessionRegistry sessionRegistry, Clock clock,
-			Environment env, @Value("${app.remember-me-key:}") String rememberMeKey) throws Exception {
-		boolean dev = env.acceptsProfiles(Profiles.of("dev"));
-		LoginUrlAuthenticationEntryPoint toLogin = new LoginUrlAuthenticationEntryPoint("/login");
-		String key = rememberMeKey.isBlank() ? randomKey() : rememberMeKey;
+	/** The key that signs remember-me cookies: {@code app.remember-me-key}, or a random one per startup. */
+	record RememberMeKey(String value) {
+	}
 
-		// A sign-in lock (too many wrong passwords) rejects even the right password, before it is checked, so
-		// attempts during the lock are not counted. Other account status (disabled) is checked only after the
-		// password matched, so a wrong password never reveals whether an account exists or is switched off.
-		// The right password then wipes the failure count (LoginFailureHandler does the counting).
+	@Bean
+	RememberMeKey rememberMeKey(@Value("${app.remember-me-key:}") String rememberMeKey) {
+		return new RememberMeKey(rememberMeKey.isBlank() ? randomKey() : rememberMeKey);
+	}
+
+	/**
+	 * Password sign-in (website form and API login) plus remember-me cookies. A sign-in lock (too many wrong
+	 * passwords) rejects even the right password, before it is checked, so attempts during the lock are not counted.
+	 * Other account status (disabled) is checked only after the password matched, so a wrong password never reveals
+	 * whether an account exists or is switched off. The right password then wipes the failure count; the caller counts
+	 * the failures ({@link LoginFailureHandler} on the website, {@link ApiAuthService} for the API).
+	 */
+	@Bean
+	ProviderManager authenticationManager(ZaikaUserDetailsService users, PasswordEncoder passwordEncoder,
+			UserService userService, Clock clock, RememberMeKey rememberMeKey) {
 		AccountStatusUserDetailsChecker statusChecker = new AccountStatusUserDetailsChecker();
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(users);
 		provider.setPasswordEncoder(passwordEncoder);
@@ -155,9 +161,20 @@ public class SecurityConfig {
 				userService.recordSuccessfulLogin(current.getId());
 			}
 		});
+		return new ProviderManager(provider, new RememberMeAuthenticationProvider(rememberMeKey.value()));
+	}
+
+	@Bean
+	@Order(2)
+	SecurityFilterChain webSecurity(HttpSecurity http, ZaikaUserDetailsService users,
+			ProviderManager authenticationManager, LoginSuccessHandler successHandler, UserService userService,
+			SessionRegistry sessionRegistry, RememberMeKey rememberMeKey, Environment env) throws Exception {
+		boolean dev = env.acceptsProfiles(Profiles.of("dev"));
+		LoginUrlAuthenticationEntryPoint toLogin = new LoginUrlAuthenticationEntryPoint("/login");
+		String key = rememberMeKey.value();
 
 		// set explicitly, so it must also accept the tokens the remember-me filter hands it
-		http.authenticationManager(new ProviderManager(provider, new RememberMeAuthenticationProvider(key)))
+		http.authenticationManager(authenticationManager)
 			.authorizeHttpRequests(auth -> {
 				// error pages render for everyone, so anonymous 404s and crashes show the branded page
 				auth.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()

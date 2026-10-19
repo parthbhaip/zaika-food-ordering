@@ -7,6 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -26,6 +30,8 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
@@ -45,6 +51,25 @@ import com.zaika.notification.SmtpMailService;
 @AutoConfigureMockMvc
 @ActiveProfiles("mysql")
 class MysqlProfileTest {
+
+	/** A real RSA key as JWT_PRIVATE_KEY (bare base64 PKCS#8, the documented .env format). */
+	static final KeyPair JWT_KEYS = jwtKeys();
+
+	@DynamicPropertySource
+	static void jwtPrivateKey(DynamicPropertyRegistry registry) {
+		registry.add("JWT_PRIVATE_KEY", () -> Base64.getEncoder().encodeToString(JWT_KEYS.getPrivate().getEncoded()));
+	}
+
+	private static KeyPair jwtKeys() {
+		try {
+			KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+			generator.initialize(2048);
+			return generator.generateKeyPair();
+		}
+		catch (NoSuchAlgorithmException ex) {
+			throw new IllegalStateException(ex);
+		}
+	}
 
 	private static final Pattern ENV_PLACEHOLDER = Pattern.compile("\\$\\{([A-Z][A-Z0-9_]*)");
 
@@ -91,9 +116,18 @@ class MysqlProfileTest {
 		// no built-in admin password outside dev: without ADMIN_EMAIL / ADMIN_PASSWORD no admin is created
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.admin.email"))).isEmpty();
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.admin.password"))).isEmpty();
+		// no API signing key: one is made at startup (tokens end with a restart)
+		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("app.jwt.private-key"))).isEmpty();
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.properties.mail.smtp.auth"))).isEqualTo("true");
 		assertThat(noVariables.resolvePlaceholders(mysql.getProperty("spring.mail.properties.mail.smtp.starttls.enable")))
 			.isEqualTo("true");
+	}
+
+	@Test
+	void apiTokensAreSignedWithTheKeyFromTheEnvironment() {
+		KeyPair signing = context.getBean("apiSigningKeys", KeyPair.class);
+		assertThat(signing.getPrivate()).isEqualTo(JWT_KEYS.getPrivate());
+		assertThat(signing.getPublic()).isEqualTo(JWT_KEYS.getPublic());
 	}
 
 	@Test

@@ -231,7 +231,7 @@ How this file works
 
 ## Phase 8 - REST API for the mobile app
 
-- [ ] T46 API security
+- [x] T46 API security
   - Second `SecurityFilterChain` for `/api/**`: stateless, CSRF off, JWT bearer through Spring's OAuth2 resource server, RSA-signed tokens (key generated at startup in dev/test, loaded from env in mysql).
   - `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/me`. Errors as RFC 9457 ProblemDetail. Web chain unchanged. Tests.
 

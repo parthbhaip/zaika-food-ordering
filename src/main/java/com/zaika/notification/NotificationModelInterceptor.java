@@ -31,7 +31,7 @@ class NotificationModelInterceptor implements HandlerInterceptor, WebMvcConfigur
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(this);
+		registry.addInterceptor(this).excludePathPatterns("/api/**"); // the REST API has no pages
 	}
 
 	@Override
