@@ -238,7 +238,7 @@ How this file works
 - [x] T47 Public API
   - Restaurants (filters, sort, paging), restaurant detail + menu, search, cuisines. Java record DTOs only, never entities. Tests.
 
-- [ ] T48 Customer API
+- [x] T48 Customer API
   - Addresses CRUD; cart (get/add/update/remove/clear, apply/remove coupon, price breakdown); place order (COD, or ONLINE returning the payment page URL); orders list/detail/tracking; cancel; review.
   - Uses the same services as the website. Tests.
 

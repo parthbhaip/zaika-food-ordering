@@ -71,6 +71,9 @@ class ApiSecurityConfig {
 
 	/** Role-only API areas: URL prefix and the one role allowed in (everything else needs any signed-in account). */
 	static final Map<String, Role> AREAS = Map.of(
+			"/api/v1/addresses", Role.CUSTOMER,
+			"/api/v1/cart", Role.CUSTOMER,
+			"/api/v1/orders", Role.CUSTOMER,
 			"/api/v1/owner", Role.RESTAURANT_OWNER,
 			"/api/v1/rider", Role.DELIVERY_PARTNER);
 

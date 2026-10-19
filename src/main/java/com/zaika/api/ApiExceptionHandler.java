@@ -1,10 +1,13 @@
 package com.zaika.api;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +24,7 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -30,8 +34,14 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import com.zaika.common.ForbiddenException;
 import com.zaika.common.Formatters;
 import com.zaika.common.NotFoundException;
+import com.zaika.order.CheckoutException;
+import com.zaika.review.ReviewException;
 import com.zaika.security.ApiSignInException;
+import com.zaika.user.AddressLimitException;
+import com.zaika.user.AddressService;
 import com.zaika.user.EmailTakenException;
+
+import tools.jackson.databind.exc.MismatchedInputException;
 
 /**
  * Every error from an API controller as an RFC 9457 problem detail ({@code application/problem+json}). Ordered
@@ -63,8 +73,73 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@Override
 	protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
 			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+		for (Throwable cause = ex.getCause(); cause != null; cause = cause.getCause()) {
+			if (cause instanceof MismatchedInputException mismatch && !mismatch.getPath().isEmpty()
+					&& mismatch.getPath().getLast().getPropertyName() != null) {
+				return ResponseEntity.badRequest()
+					.body(fieldProblem(mismatch.getPath().getLast().getPropertyName(), wrongType(mismatch.getTargetType())));
+			}
+		}
 		return ResponseEntity.badRequest()
 			.body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request body is missing or is not valid JSON."));
+	}
+
+	/** A JSON value of the wrong type ({@code "paymentMethod": "CARD"}, {@code "quantity": "two"}). */
+	private static String wrongType(Class<?> type) {
+		if (type != null && type.isEnum()) {
+			return "Use one of: " + Arrays.stream(type.getEnumConstants())
+				.map(constant -> ((Enum<?>) constant).name())
+				.collect(Collectors.joining(", ")) + ".";
+		}
+		if (type == boolean.class || type == Boolean.class) {
+			return "Use true or false.";
+		}
+		if (type == int.class || type == Integer.class || type == long.class || type == Long.class) {
+			return "Use a whole number.";
+		}
+		if (type == BigDecimal.class) {
+			return "Use a number, like 249.50.";
+		}
+		return "This value has the wrong type.";
+	}
+
+	private static ProblemDetail fieldProblem(String field, String message) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+				"Some fields need fixing. See errors for each field.");
+		problem.setProperty("errors", Map.of(field, message));
+		return problem;
+	}
+
+	/** A 409 answer from a controller: the request is fine, but the rules say no right now. */
+	static ErrorResponseException conflict(String detail, Map<String, Object> properties) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, detail);
+		properties.forEach(problem::setProperty);
+		return new ErrorResponseException(HttpStatus.CONFLICT, problem, null);
+	}
+
+	/** A 400 for one field, from a controller (a rule Bean Validation cannot see, such as a coupon code). */
+	static ErrorResponseException invalidField(String field, String message) {
+		return new ErrorResponseException(HttpStatus.BAD_REQUEST, fieldProblem(field, message), null);
+	}
+
+	@ExceptionHandler(AddressLimitException.class)
+	ProblemDetail addressBookFull() {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "You can save up to "
+				+ AddressService.MAX_ADDRESSES + " addresses. Delete one to add another.");
+	}
+
+	/** The order was not placed: the cart, the coupon or the total changed (or the kitchen closed). */
+	@ExceptionHandler(CheckoutException.class)
+	ProblemDetail checkoutRefused(CheckoutException ex) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage() != null
+				? ex.getMessage() : "Your cart changed. Check it with GET /api/v1/cart, then place your order again.");
+		problem.setProperty("checkCart", ex.isBackToCart());
+		return problem;
+	}
+
+	@ExceptionHandler(ReviewException.class)
+	ProblemDetail reviewRefused(ReviewException ex) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
 	}
 
 	/** A query parameter of the wrong type ({@code veg=maybe}, {@code page=two}). */
