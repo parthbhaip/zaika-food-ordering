@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.zaika.common.ForbiddenException;
@@ -63,6 +65,24 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 		return ResponseEntity.badRequest()
 			.body(ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request body is missing or is not valid JSON."));
+	}
+
+	/** A query parameter of the wrong type ({@code veg=maybe}, {@code page=two}). */
+	@Override
+	protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers,
+			HttpStatusCode status, WebRequest request) {
+		String name = ex instanceof MethodArgumentTypeMismatchException mismatch ? mismatch.getName() : ex.getPropertyName();
+		Class<?> type = ex.getRequiredType();
+		String expected = type == boolean.class || type == Boolean.class ? "true or false"
+				: type == int.class || type == Integer.class || type == long.class || type == Long.class
+						? "a whole number" : null;
+		if (name == null || expected == null) {
+			return super.handleTypeMismatch(ex, headers, status, request);
+		}
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST,
+				"Some fields need fixing. See errors for each field.");
+		problem.setProperty("errors", Map.of(name, "Use " + expected + "."));
+		return ResponseEntity.badRequest().body(problem);
 	}
 
 	/** Input checked by hand in a controller (sign-up uses the website's form rules). */

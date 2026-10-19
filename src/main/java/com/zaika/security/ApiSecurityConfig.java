@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -63,6 +64,10 @@ class ApiSecurityConfig {
 
 	/** Sign-up and sign-in need no token. */
 	static final String[] PUBLIC_ENDPOINTS = { "/api/v1/auth/register", "/api/v1/auth/login" };
+
+	/** The public catalog: read-only, no token needed (a token that is sent must still be valid). */
+	static final String[] PUBLIC_READS = { "/api/v1/cuisines", "/api/v1/restaurants", "/api/v1/restaurants/*",
+			"/api/v1/search" };
 
 	/** Role-only API areas: URL prefix and the one role allowed in (everything else needs any signed-in account). */
 	static final Map<String, Role> AREAS = Map.of(
@@ -105,6 +110,7 @@ class ApiSecurityConfig {
 		http.securityMatcher("/api/**")
 			.authorizeHttpRequests(authz -> {
 				authz.requestMatchers(PUBLIC_ENDPOINTS).permitAll();
+				authz.requestMatchers(HttpMethod.GET, PUBLIC_READS).permitAll();
 				AREAS.forEach((prefix, role) -> authz.requestMatchers(prefix + "/**").hasRole(role.name()));
 				authz.anyRequest().authenticated();
 			})

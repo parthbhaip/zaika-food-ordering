@@ -235,7 +235,7 @@ How this file works
   - Second `SecurityFilterChain` for `/api/**`: stateless, CSRF off, JWT bearer through Spring's OAuth2 resource server, RSA-signed tokens (key generated at startup in dev/test, loaded from env in mysql).
   - `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/me`. Errors as RFC 9457 ProblemDetail. Web chain unchanged. Tests.
 
-- [ ] T47 Public API
+- [x] T47 Public API
   - Restaurants (filters, sort, paging), restaurant detail + menu, search, cuisines. Java record DTOs only, never entities. Tests.
 
 - [ ] T48 Customer API

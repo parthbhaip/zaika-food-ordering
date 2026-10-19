@@ -104,7 +104,7 @@ public class SearchService {
 	private DishHit toHit(MenuItem item, LocalTime now) {
 		Restaurant r = item.getRestaurant();
 		return new DishHit(item.getId(), item.getName(), item.getDescription(), item.getPrice(), item.isVeg(),
-				item.isBestseller(), item.isAvailable(), images.dish(item), r.getName(), r.getArea(),
+				item.isBestseller(), item.isAvailable(), images.dish(item), r.getSlug(), r.getName(), r.getArea(),
 				r.isAcceptingOrders() && r.isOpenAt(now), dishUrl(item));
 	}
 
@@ -133,8 +133,8 @@ public class SearchService {
 
 	/** One matching dish with its restaurant. {@code url} opens the restaurant's menu at that dish. */
 	public record DishHit(Long id, String name, String description, BigDecimal price, boolean veg, boolean bestseller,
-			boolean available, String imageUrl, String restaurantName, String restaurantArea, boolean restaurantOpen,
-			String url) {
+			boolean available, String imageUrl, String restaurantSlug, String restaurantName, String restaurantArea,
+			boolean restaurantOpen, String url) {
 	}
 
 	/**
