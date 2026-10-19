@@ -34,7 +34,10 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import com.zaika.common.ForbiddenException;
 import com.zaika.common.Formatters;
 import com.zaika.common.NotFoundException;
+import com.zaika.delivery.DeliveryRuleException;
+import com.zaika.delivery.OtpException;
 import com.zaika.order.CheckoutException;
+import com.zaika.owner.OwnerRuleException;
 import com.zaika.review.ReviewException;
 import com.zaika.security.ApiSignInException;
 import com.zaika.user.AddressLimitException;
@@ -140,6 +143,25 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(ReviewException.class)
 	ProblemDetail reviewRefused(ReviewException ex) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+	}
+
+	/** A menu or restaurant change the rules do not allow: a field error, or 409 for the whole request. */
+	@ExceptionHandler(OwnerRuleException.class)
+	ProblemDetail ownerRuleRefused(OwnerRuleException ex) {
+		return ex.getField() != null ? fieldProblem(ex.getField(), ex.getMessage())
+				: ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+	}
+
+	/** The delivery rules say no right now (not approved, offline, busy, taken, not ready yet). */
+	@ExceptionHandler(DeliveryRuleException.class)
+	ProblemDetail deliveryRefused(DeliveryRuleException ex) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+	}
+
+	/** A badly formed, wrong or locked delivery code (wrong tries are counted). */
+	@ExceptionHandler(OtpException.class)
+	ProblemDetail otpRefused(OtpException ex) {
+		return fieldProblem("otp", ex.getMessage());
 	}
 
 	/** A query parameter of the wrong type ({@code veg=maybe}, {@code page=two}). */

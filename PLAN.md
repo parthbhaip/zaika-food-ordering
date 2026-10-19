@@ -242,7 +242,7 @@ How this file works
   - Addresses CRUD; cart (get/add/update/remove/clear, apply/remove coupon, price breakdown); place order (COD, or ONLINE returning the payment page URL); orders list/detail/tracking; cancel; review.
   - Uses the same services as the website. Tests.
 
-- [ ] T49 Owner and rider API
+- [x] T49 Owner and rider API
   - Owner: orders list, accept/reject/preparing/ready, item availability, accepting-orders toggle.
   - Rider: online toggle, available orders, claim, picked up, deliver with OTP, earnings. Tests.
 
