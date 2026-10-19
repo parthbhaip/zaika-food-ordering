@@ -19,6 +19,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.zaika.cart.CartChange;
 import com.zaika.cart.CartOwner;
 import com.zaika.cart.CartService;
@@ -39,6 +44,8 @@ import com.zaika.storage.ImageUrls;
  */
 @RestController
 @RequestMapping("/api/v1/cart")
+@Tag(name = OpenApiConfig.CART)
+@SecurityRequirement(name = OpenApiConfig.BEARER)
 class CartApiController {
 
 	private final CartService carts;
@@ -60,6 +67,9 @@ class CartApiController {
 		this.baseUrl = app.baseUrl();
 	}
 
+	@Operation(summary = "The cart",
+			description = "Re-checked on every call: sold-out or archived dishes are taken out and new prices noted in "
+					+ "`notices`.")
 	@GetMapping
 	CartResponse cart(@AuthenticationPrincipal CurrentUser me) {
 		return show(owner(me));
@@ -69,6 +79,11 @@ class CartApiController {
 	 * Adds a dish or changes its quantity (0 removes it). A dish from another restaurant than the cart's is a 409
 	 * unless {@code startNew} is true, which empties the cart first.
 	 */
+	@Operation(summary = "Add a dish or change its quantity",
+			description = "`quantity` 1-20 sets it, 0 removes the dish. A dish from another restaurant than the cart's "
+					+ "is a 409 with `reason: OTHER_RESTAURANT` unless `startNew` is true, which empties the cart "
+					+ "first. Sold out or kitchen closed: 409 with `reason` SOLD_OUT or CLOSED. Answers the whole "
+					+ "cart.")
 	@PutMapping("/items/{itemId}")
 	CartResponse setQuantity(@AuthenticationPrincipal CurrentUser me, @PathVariable long itemId,
 			@Valid @RequestBody QuantityRequest body) {
@@ -93,6 +108,7 @@ class CartApiController {
 	}
 
 	/** Takes a dish out of the cart (nothing happens if it was not there). */
+	@Operation(summary = "Remove a dish")
 	@DeleteMapping("/items/{itemId}")
 	CartResponse remove(@AuthenticationPrincipal CurrentUser me, @PathVariable long itemId) {
 		CartOwner owner = owner(me);
@@ -101,6 +117,8 @@ class CartApiController {
 	}
 
 	/** Empties the cart: 204. */
+	@Operation(summary = "Empty the cart")
+	@ApiResponse(responseCode = "204", description = "The cart is empty.")
 	@DeleteMapping
 	ResponseEntity<Void> clear(@AuthenticationPrincipal CurrentUser me) {
 		carts.clear(owner(me));
@@ -108,6 +126,9 @@ class CartApiController {
 	}
 
 	/** The note for the restaurant (blank removes it); 409 while the cart is empty. */
+	@Operation(summary = "Note for the kitchen",
+			description = "Up to 250 characters; blank removes it. 409 with `reason: EMPTY_CART` while the cart is "
+					+ "empty.")
 	@PutMapping("/note")
 	CartResponse note(@AuthenticationPrincipal CurrentUser me, @Valid @RequestBody NoteRequest body) {
 		CartOwner owner = owner(me);
@@ -119,6 +140,9 @@ class CartApiController {
 	}
 
 	/** Applies a coupon (replacing any applied one); a code that does not work is a 400 with the reason. */
+	@Operation(summary = "Apply a coupon",
+			description = "Replaces any applied coupon. A code that does not work is a 400 with the reason in "
+					+ "`errors.code`; `coupon.offers` in the cart lists the codes this restaurant takes.")
 	@PostMapping("/coupon")
 	CartResponse applyCoupon(@AuthenticationPrincipal CurrentUser me, @RequestBody CouponRequest body) {
 		CouponResult result = coupons.apply(me.getId(), body.code());
@@ -128,6 +152,7 @@ class CartApiController {
 		return show(owner(me));
 	}
 
+	@Operation(summary = "Remove the coupon")
 	@DeleteMapping("/coupon")
 	CartResponse removeCoupon(@AuthenticationPrincipal CurrentUser me) {
 		coupons.remove(me.getId());

@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.zaika.security.CurrentUser;
 import com.zaika.user.AddressForm;
 import com.zaika.user.AddressService;
@@ -28,6 +33,8 @@ import com.zaika.user.AddressService;
  */
 @RestController
 @RequestMapping("/api/v1/addresses")
+@Tag(name = OpenApiConfig.ADDRESSES)
+@SecurityRequirement(name = OpenApiConfig.BEARER)
 class AddressApiController {
 
 	private final AddressService addresses;
@@ -37,17 +44,25 @@ class AddressApiController {
 	}
 
 	/** Default first, then newest first. */
+	@Operation(operationId = "listAddresses", summary = "Saved addresses",
+			description = "The default first, then the newest.")
 	@GetMapping
 	List<AddressResponse> list(@AuthenticationPrincipal CurrentUser me) {
 		return addresses.list(me.getId()).stream().map(AddressResponse::of).toList();
 	}
 
+	@Operation(operationId = "getAddress", summary = "One saved address")
 	@GetMapping("/{id}")
 	AddressResponse get(@AuthenticationPrincipal CurrentUser me, @PathVariable long id) {
 		return AddressResponse.of(addresses.get(me.getId(), id));
 	}
 
 	/** 201 with the new address; the first one becomes the default. */
+	@Operation(operationId = "createAddress", summary = "Add an address",
+			description = "`label` is HOME, WORK or OTHER; `pincode` is a 6-digit Indian PIN code. The first address "
+					+ "becomes the default; `makeDefault: true` makes a later one the default. 409 when the book "
+					+ "already holds 10.")
+	@ApiResponse(responseCode = "201", description = "The new address.")
 	@PostMapping
 	ResponseEntity<AddressResponse> create(@AuthenticationPrincipal CurrentUser me,
 			@Valid @RequestBody AddressForm form) {
@@ -56,6 +71,9 @@ class AddressApiController {
 	}
 
 	/** Replaces every field; {@code makeDefault: true} makes it the default (false leaves the default as it is). */
+	@Operation(operationId = "updateAddress", summary = "Change an address",
+			description = "Replaces every field. `makeDefault: true` makes it the default; false leaves the default as "
+					+ "it is.")
 	@PutMapping("/{id}")
 	AddressResponse update(@AuthenticationPrincipal CurrentUser me, @PathVariable long id,
 			@Valid @RequestBody AddressForm form) {
@@ -63,6 +81,9 @@ class AddressApiController {
 	}
 
 	/** 204; deleting the default makes the newest remaining address the default. */
+	@Operation(operationId = "deleteAddress", summary = "Delete an address",
+			description = "Deleting the default makes the newest remaining address the default.")
+	@ApiResponse(responseCode = "204", description = "Deleted.")
 	@DeleteMapping("/{id}")
 	ResponseEntity<Void> delete(@AuthenticationPrincipal CurrentUser me, @PathVariable long id) {
 		addresses.delete(me.getId(), id);

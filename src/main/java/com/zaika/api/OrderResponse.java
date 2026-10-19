@@ -6,6 +6,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import com.zaika.order.DeliveryAddress;
 import com.zaika.order.Order;
 import com.zaika.order.OrderHistoryService.Detail;
@@ -62,6 +64,7 @@ public record OrderResponse(String code, OrderStatus status, String statusLabel,
 	}
 
 	/** The restaurant; {@code phone} is its business number, to call about the order. */
+	@Schema(name = "OrderRestaurant")
 	public record RestaurantRef(String slug, String name, String phone) {
 
 		static RestaurantRef of(Order o) {

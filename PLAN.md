@@ -246,7 +246,7 @@ How this file works
   - Owner: orders list, accept/reject/preparing/ready, item availability, accepting-orders toggle.
   - Rider: online toggle, available orders, claim, picked up, deliver with OTP, earnings. Tests.
 
-- [ ] T50 API documentation
+- [x] T50 API documentation
   - springdoc-openapi at `/swagger-ui.html` with JWT bearer auth, grouped by area, example payloads.
   - `docs/API.md` quick start for the app team (register -> login -> token -> calls). Test that `/v3/api-docs` returns 200.
 

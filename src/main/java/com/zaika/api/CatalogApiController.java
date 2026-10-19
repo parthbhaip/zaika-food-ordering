@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.zaika.catalog.Cuisine;
 import com.zaika.catalog.MenuFilter;
 import com.zaika.catalog.RestaurantBrowseService;
@@ -31,6 +34,7 @@ import com.zaika.storage.ImageUrls;
  */
 @RestController
 @RequestMapping("/api/v1")
+@Tag(name = OpenApiConfig.CATALOG)
 class CatalogApiController {
 
 	private static final String SORTS = Arrays.stream(RestaurantSort.values())
@@ -57,6 +61,8 @@ class CatalogApiController {
 	}
 
 	/** Every cuisine, by name. */
+	@Operation(summary = "Every cuisine, by name",
+			description = "Use a cuisine's `slug` as the `cuisine` filter of the restaurant list.")
 	@GetMapping("/cuisines")
 	List<CuisineResponse> cuisines() {
 		return browse.cuisines().stream().map(CuisineResponse::of).toList();
@@ -66,6 +72,11 @@ class CatalogApiController {
 	 * Approved restaurants, 12 a page. {@code q} matches the restaurant name, a cuisine or a dish; {@code open} =
 	 * open and taking orders now; {@code top} = rated 4.0+; {@code veg} = pure veg.
 	 */
+	@Operation(summary = "Restaurants, 12 a page",
+			description = "Approved restaurants with the website's filters and sorts. `q` matches a restaurant, "
+					+ "cuisine or dish name; `cuisine` is a cuisine slug; `veg` = pure veg; `top` = rated 4.0+; `open` "
+					+ "= open and taking orders now; `sort` = relevance, rating, fastest, cost-asc or cost-desc. "
+					+ "Unknown values are a 400 with `errors`.")
 	@GetMapping("/restaurants")
 	PageResponse<RestaurantSummary> restaurants(@RequestParam(required = false) String q,
 			@RequestParam(required = false) String cuisine, @RequestParam(defaultValue = "false") boolean veg,
@@ -99,12 +110,17 @@ class CatalogApiController {
 	}
 
 	/** One approved restaurant with its menu; 404 for unknown and not approved ones. */
+	@Operation(summary = "One restaurant with its menu",
+			description = "Sections in menu order; sold-out dishes have `available: false`. 404 for unknown or "
+					+ "unapproved restaurants.")
 	@GetMapping("/restaurants/{slug}")
 	RestaurantDetail restaurant(@PathVariable String slug) {
 		return RestaurantDetail.of(menus.menu(slug, new MenuFilter()), images, baseUrl);
 	}
 
 	/** Restaurants and dishes matching {@code q} (required, at most 80 characters are used). */
+	@Operation(summary = "Search restaurants and dishes",
+			description = "`q` is required; only the first 80 characters are used.")
 	@GetMapping("/search")
 	SearchResponse search(@RequestParam(required = false) String q) throws BindException {
 		String query = Requests.searchText(q, RestaurantFilter.MAX_QUERY_LENGTH);

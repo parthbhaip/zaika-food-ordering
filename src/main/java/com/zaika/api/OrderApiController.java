@@ -29,6 +29,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.zaika.cart.CartService;
 import com.zaika.common.Formatters;
 import com.zaika.config.AppProperties;
@@ -52,6 +57,8 @@ import com.zaika.security.CurrentUser;
  */
 @RestController
 @RequestMapping("/api/v1/orders")
+@Tag(name = OpenApiConfig.ORDERS)
+@SecurityRequirement(name = OpenApiConfig.BEARER)
 class OrderApiController {
 
 	private final CheckoutService checkout;
@@ -88,6 +95,15 @@ class OrderApiController {
 	 * {@code idempotencyKey} again answers 200 with the order it already placed. 409 when the cart, coupon or total
 	 * changed or the kitchen cannot take it ({@code checkCart}: fix the cart first).
 	 */
+	@Operation(summary = "Place the cart as an order",
+			description = "Priced and checked again on the server. `addressId` is a saved address; `expectedTotal` is "
+					+ "the cart's `bill.grandTotal` the customer saw; `idempotencyKey` is a new random UUID per "
+					+ "checkout (send the same one on a retry and you get 200 with the order already placed). COD "
+					+ "orders go straight to the restaurant; ONLINE orders answer `paymentUrl` (the website's TEST "
+					+ "MODE payment page, pay within 15 minutes). 409 with `checkCart` when the cart, coupon or total "
+					+ "changed or the kitchen cannot take it.")
+	@ApiResponse(responseCode = "201", description = "The new order.")
+	@ApiResponse(responseCode = "200", description = "The order this idempotencyKey already placed.")
 	@PostMapping
 	ResponseEntity<OrderResponse> place(@AuthenticationPrincipal CurrentUser me,
 			@Valid @RequestBody PlaceOrderRequest body) {
@@ -99,6 +115,7 @@ class OrderApiController {
 	}
 
 	/** The customer's orders, newest first, {@link OrderHistoryService#PAGE_SIZE} a page. */
+	@Operation(operationId = "listOrders", summary = "Order history, 10 a page", description = "Newest first.")
 	@GetMapping
 	PageResponse<OrderSummary> list(@AuthenticationPrincipal CurrentUser me,
 			@RequestParam(defaultValue = "1") int page) throws BindException {
@@ -112,11 +129,17 @@ class OrderApiController {
 				order -> OrderSummary.of(order, now, baseUrl, zone()));
 	}
 
+	@Operation(operationId = "getOrder", summary = "One order",
+			description = "Dishes, bill, address, payment and the review once it is rated.")
 	@GetMapping("/{code}")
 	OrderResponse order(@AuthenticationPrincipal CurrentUser me, @PathVariable String code) {
 		return detail(me, code);
 	}
 
+	@Operation(summary = "Live tracking",
+			description = "Poll every 10-15 seconds while `live`; `version` changes whenever the order does. "
+					+ "`deliveryOtp` (the code to give the rider) shows only while the order is out for delivery; "
+					+ "`cancelReasons` only while it can be cancelled.")
 	@GetMapping("/{code}/tracking")
 	TrackingResponse track(@AuthenticationPrincipal CurrentUser me, @PathVariable String code) {
 		return TrackingResponse.of(tracking.track(me.getId(), code), fmt, zone());
@@ -127,6 +150,10 @@ class OrderApiController {
 	 * required for "Something else"). Answers with the tracking; an order already cancelled answers the same way. 409
 	 * once the restaurant has accepted it, or while it still waits for payment (cancel on the payment page).
 	 */
+	@Operation(summary = "Cancel an order",
+			description = "Only while the restaurant has not accepted it, with one of the tracking's `cancelReasons` "
+					+ "(`details` required for \"Something else\"). Answers the tracking. 409 `reason: TOO_LATE` once "
+					+ "accepted, `AWAITING_PAYMENT` (with `paymentUrl`) while an online order is unpaid.")
 	@PostMapping("/{code}/cancel")
 	TrackingResponse cancel(@AuthenticationPrincipal CurrentUser me, @PathVariable String code,
 			@RequestBody CancelOrderForm form) throws BindException {
@@ -147,6 +174,10 @@ class OrderApiController {
 	}
 
 	/** Rates a delivered order once: 201 with the review. 409 when it is not delivered yet or already rated. */
+	@Operation(summary = "Rate a delivered order",
+			description = "Once per order: `stars` 1-5 and an optional `comment` up to 500 characters. 409 when it is "
+					+ "not delivered yet or already rated.")
+	@ApiResponse(responseCode = "201", description = "The review.")
 	@PostMapping("/{code}/review")
 	ResponseEntity<ReviewResponse> review(@AuthenticationPrincipal CurrentUser me, @PathVariable String code,
 			@RequestBody ReviewForm form) throws BindException {

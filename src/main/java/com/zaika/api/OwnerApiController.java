@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.zaika.common.NotFoundException;
 import com.zaika.order.Order;
 import com.zaika.order.OrderStatus;
@@ -36,6 +40,8 @@ import com.zaika.security.CurrentUser;
  */
 @RestController
 @RequestMapping("/api/v1/owner")
+@Tag(name = OpenApiConfig.OWNER)
+@SecurityRequirement(name = OpenApiConfig.BEARER)
 class OwnerApiController {
 
 	private static final String PREP_RULE = "Choose a preparation time: "
@@ -59,6 +65,10 @@ class OwnerApiController {
 	}
 
 	/** The live board. 404 for an owner account without a restaurant. */
+	@Operation(summary = "Live orders board",
+			description = "New, accepted, preparing and ready orders, oldest first, with the `accepting` switch, the "
+					+ "`prepChoices` for accepting and the `rejectReasons`. Poll it; `version` changes whenever the "
+					+ "board does. 404 for an owner account without a restaurant.")
 	@GetMapping("/orders")
 	OwnerBoardResponse board(@AuthenticationPrincipal CurrentUser me) {
 		return OwnerBoardResponse.of(kitchen.board(me.getId())
@@ -66,12 +76,17 @@ class OwnerApiController {
 	}
 
 	/** Any order that reached the kitchen (live or finished): its kitchen ticket. */
+	@Operation(operationId = "kitchenTicket", summary = "Kitchen ticket",
+			description = "Any order that reached the kitchen, live or finished.")
 	@GetMapping("/orders/{code}")
 	OwnerOrderResponse order(@AuthenticationPrincipal CurrentUser me, @PathVariable String code) {
 		return OwnerOrderResponse.of(kitchen.ticket(me.getId(), code), LocalDateTime.now(clock), clock.getZone());
 	}
 
 	/** Accepts a new order: the customer's ETA becomes now + {@code prepMinutes} + the ride. */
+	@Operation(summary = "Accept a new order",
+			description = "`prepMinutes` is one of the board's `prepChoices`; the customer's ETA becomes now + prep "
+					+ "time + the ride. 409 with `status` when the order moved on (say, the customer cancelled).")
 	@PostMapping("/orders/{code}/accept")
 	OwnerOrderResponse accept(@AuthenticationPrincipal CurrentUser me, @PathVariable String code,
 			@RequestBody AcceptRequest body) {
@@ -89,6 +104,9 @@ class OwnerApiController {
 	 * Rejects a new order with one of the board's {@code rejectReasons} ({@code details} required for "Something
 	 * else"); the customer sees it, a paid order is refunded in full.
 	 */
+	@Operation(summary = "Reject a new order",
+			description = "With one of the board's `rejectReasons` (`details` required for \"Something else\"). The "
+					+ "customer sees the reason; a paid order is refunded in full.")
 	@PostMapping("/orders/{code}/reject")
 	OwnerOrderResponse reject(@AuthenticationPrincipal CurrentUser me, @PathVariable String code,
 			@RequestBody RejectOrderForm form) throws BindException {
@@ -104,23 +122,28 @@ class OwnerApiController {
 		return move(me, code, () -> kitchen.reject(me.getId(), code, form.fullReason()));
 	}
 
+	@Operation(summary = "Start preparing", description = "ACCEPTED -> PREPARING.")
 	@PostMapping("/orders/{code}/preparing")
 	OwnerOrderResponse preparing(@AuthenticationPrincipal CurrentUser me, @PathVariable String code) {
 		return move(me, code, () -> kitchen.advance(me.getId(), code, OrderStatus.PREPARING));
 	}
 
 	/** Packed: the order shows up for delivery partners. */
+	@Operation(summary = "Mark ready for pick-up",
+			description = "PREPARING -> READY_FOR_PICKUP: the order shows up for delivery partners.")
 	@PostMapping("/orders/{code}/ready")
 	OwnerOrderResponse ready(@AuthenticationPrincipal CurrentUser me, @PathVariable String code) {
 		return move(me, code, () -> kitchen.advance(me.getId(), code, OrderStatus.READY_FOR_PICKUP));
 	}
 
+	@Operation(summary = "The menu", description = "Every dish by section, with its `available` flag.")
 	@GetMapping("/menu")
 	OwnerMenuResponse menu(@AuthenticationPrincipal CurrentUser me) {
 		return OwnerMenuResponse.of(menus.menu(me.getId()));
 	}
 
 	/** Marks a dish sold out ({@code "available": false}) or back in stock. */
+	@Operation(summary = "Sold out or back in stock", description = "`available: false` marks the dish sold out.")
 	@PutMapping("/menu/items/{itemId}/availability")
 	OwnerMenuResponse.Dish availability(@AuthenticationPrincipal CurrentUser me, @PathVariable long itemId,
 			@RequestBody AvailabilityRequest body) {
@@ -134,6 +157,9 @@ class OwnerApiController {
 	 * Pauses ({@code false}) or resumes new orders; orders already placed are not touched. 409 unless the restaurant
 	 * is approved.
 	 */
+	@Operation(summary = "Pause or resume new orders",
+			description = "`acceptingOrders: false` pauses new orders; orders already placed are not touched. 409 "
+					+ "unless the restaurant is approved.")
 	@PutMapping("/accepting-orders")
 	OwnerBoardResponse.Accepting acceptingOrders(@AuthenticationPrincipal CurrentUser me,
 			@RequestBody AcceptingRequest body) {

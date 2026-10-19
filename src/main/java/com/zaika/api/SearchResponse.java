@@ -5,6 +5,8 @@ import static com.zaika.api.RestaurantSummary.absolute;
 import java.math.BigDecimal;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import com.zaika.catalog.SearchService;
 
 /**
@@ -40,6 +42,7 @@ public record SearchResponse(String q, List<RestaurantSummary> restaurants, long
 	}
 
 	/** The restaurant of a dish; {@code slug} opens it with {@code GET /api/v1/restaurants/{slug}}. */
+	@Schema(name = "SearchRestaurant")
 	public record RestaurantRef(String slug, String name, String area, boolean openNow) {
 	}
 

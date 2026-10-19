@@ -69,6 +69,9 @@ public class SecurityConfig {
 			"/photo-credits", "/error", "/login", "/register", "/forgot-password", "/reset-password", "/restaurants/**",
 			"/r/**", "/search/**", "/partner-with-us/**" };
 
+	/** The API description and Swagger UI (springdoc): public, like the API's own catalog. */
+	static final String[] API_DOCS = { "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**" };
+
 	/** The cart is for guests and customers; staff accounts have none (CartController checks it again). */
 	static final AuthorizationManager<RequestAuthorizationContext> GUEST_OR_CUSTOMER = AuthorizationManagers.anyOf(
 			AuthenticatedAuthorizationManager.anonymous(), AuthorityAuthorizationManager.hasRole(Role.CUSTOMER.name()));
@@ -182,7 +185,8 @@ public class SecurityConfig {
 					// the cart page's "Sign in to apply a coupon" link: sign-in leads back to the cart
 					.requestMatchers("/cart/sign-in").hasRole(Role.CUSTOMER.name())
 					.requestMatchers("/cart/**").access(GUEST_OR_CUSTOMER)
-					.requestMatchers(PUBLIC_PAGES).permitAll();
+					.requestMatchers(PUBLIC_PAGES).permitAll()
+					.requestMatchers(HttpMethod.GET, API_DOCS).permitAll();
 				if (dev) {
 					auth.requestMatchers("/dev/**").permitAll();
 				}

@@ -7,6 +7,8 @@ import java.time.LocalTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import com.zaika.cart.CartView;
 import com.zaika.cart.PriceBreakdown;
 import com.zaika.catalog.MenuItem;
@@ -48,6 +50,7 @@ public record CartResponse(RestaurantRef restaurant, boolean takingOrders, @Json
 	}
 
 	/** The cart's restaurant; {@code minimumOrder} is the least food value it takes an order for. */
+	@Schema(name = "CartRestaurant")
 	public record RestaurantRef(String slug, String name, BigDecimal minimumOrder) {
 	}
 
@@ -68,6 +71,7 @@ public record CartResponse(RestaurantRef restaurant, boolean takingOrders, @Json
 	}
 
 	/** A coupon the customer can apply here; {@code terms} may be empty. */
+	@Schema(name = "CouponOffer")
 	public record Offer(String code, String headline, String description, String terms) {
 	}
 

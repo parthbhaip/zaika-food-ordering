@@ -7,6 +7,8 @@ import java.time.LocalTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import com.zaika.catalog.Cuisine;
 import com.zaika.catalog.MenuItem;
 import com.zaika.catalog.Restaurant;
@@ -50,10 +52,12 @@ public record RestaurantDetail(String slug, String name, String tagline, String 
 	}
 
 	/** "Free delivery above ₹499" / "₹30 delivery fee below that", or a coupon: "50% off up to ₹100" / "Use WELCOME50". */
+	@Schema(name = "RestaurantOffer")
 	public record Offer(String title, String detail) {
 	}
 
 	/** A menu section with its dishes, in menu order. */
+	@Schema(name = "MenuSection")
 	public record Section(long id, String name, List<Dish> items) {
 	}
 
@@ -63,6 +67,7 @@ public record RestaurantDetail(String slug, String name, String tagline, String 
 	 * @param spiceLevel 0 (not spicy) to 3
 	 * @param available false while sold out
 	 */
+	@Schema(name = "MenuDish")
 	public record Dish(long id, String name, String description, BigDecimal price, boolean veg, boolean bestseller,
 			int spiceLevel, boolean available, String imageUrl) {
 
